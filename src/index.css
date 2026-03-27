@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-gold-main: #D4AF37; /* Metallic Gold - More vibrant and readable */
+  --color-gold-light: #F9EBC7; /* Lighter and clearer */
+  --color-gold-deep: #996515; /* Golden Brown - Better contrast */
+  --color-deep-black: #050505;
+  --color-glass: rgba(255, 255, 255, 0.02);
+  --color-glass-border: rgba(255, 255, 255, 0.05);
+}
+
+@layer base {
+  body {
+    @apply bg-deep-black text-white font-sans antialiased overflow-x-hidden;
+    background: radial-gradient(circle at 50% -20%, #1a1a1a 0%, #050505 100%);
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, .serif {
+    @apply font-serif tracking-tight;
+    line-height: 1.1;
+  }
+}
+
+@layer components {
+  .atmosphere {
+    @apply fixed inset-0 pointer-events-none z-0 overflow-hidden;
+  }
+
+  .atmosphere::before, .atmosphere::after {
+    content: '';
+    @apply absolute inset-0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(197, 160, 40, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(197, 160, 40, 0.05) 0%, transparent 50%);
+    filter: blur(100px);
+    animation: float 20s ease-in-out infinite alternate;
+  }
+
+  .atmosphere::after {
+    background: radial-gradient(circle at 50% 50%, rgba(197, 160, 40, 0.03) 0%, transparent 60%);
+    animation-delay: -10s;
+    animation-duration: 25s;
+  }
+
+  @keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(2%, 2%) scale(1.1); }
+  }
+
+  .glass-card {
+    background-color: var(--color-glass);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: 40px;
+    padding: 1.5rem;
+    @apply md:p-10;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-card:hover {
+    border-color: rgba(197, 160, 40, 0.2);
+    background-color: rgba(255, 255, 255, 0.04);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .button {
+    @apply bg-gold-main text-deep-black font-semibold px-8 py-4 md:px-12 md:py-5 rounded-full transition-all duration-700 
+           hover:bg-gold-light hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-gold-main/10 text-center
+           uppercase tracking-[0.2em] text-[9px] md:text-[10px] relative overflow-hidden;
+  }
+
+  .button::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-700;
+  }
+
+  .button:hover::after {
+    @apply opacity-100;
+  }
+
+  .btn-primary {
+    @apply bg-gold-main text-deep-black font-semibold px-8 py-4 md:px-12 md:py-5 rounded-full transition-all duration-700 
+           hover:bg-gold-light hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-gold-main/10 text-center
+           uppercase tracking-[0.2em] text-[9px] md:text-[10px] relative overflow-hidden w-full;
+  }
+
+  .button-outline {
+    @apply border border-gold-main/30 text-gold-main font-semibold px-8 py-4 md:px-12 md:py-5 rounded-full transition-all duration-700 
+           hover:bg-gold-main/5 hover:border-gold-main/60 text-center
+           uppercase tracking-[0.2em] text-[9px] md:text-[10px] backdrop-blur-sm;
+  }
+
+  .input {
+    @apply w-full bg-white/[0.02] border border-white/5 rounded-2xl px-4 py-3 md:px-6 md:py-4 text-white placeholder:text-white/20 
+           focus:outline-none focus:border-gold-main/30 focus:bg-white/[0.04] transition-all duration-500;
+  }
+
+  .back {
+    @apply inline-flex items-center gap-3 text-gold-main/50 hover:text-gold-main cursor-pointer mb-6 md:mb-10 transition-all duration-300 text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-bold;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gold-main/10 rounded-full hover:bg-gold-main/30 transition-colors;
+  }
+}
+
+.animate-screen {
+  @apply relative z-10 max-w-3xl mx-auto px-6 py-10 md:px-8 md:py-16;
+}
+
+.price {
+  @apply text-3xl md:text-4xl font-serif text-gold-light tracking-tighter mb-2;
+}
+
+.card-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-10 md:mt-16;
+}
+
+/* Legacy support for existing classes if needed, but we'll migrate them */
+.card { 
+  background-color: var(--color-glass);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 40px;
+  padding: 1.5rem;
+  @apply md:p-10;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 2rem;
+  @apply md:mb-10;
+}
+.card.primary { @apply border-gold-main/30 bg-gold-main/[0.01]; }
+.card h2 { @apply text-3xl text-gold-light mb-3; }
+.card p { @apply text-white/50 text-sm leading-relaxed mb-8; }
+
+.markdown-body h1 {
+  @apply font-serif text-4xl text-gold-light mb-8 mt-12;
+}
+
+.markdown-body h2 {
+  @apply font-serif text-3xl text-gold-light mb-6 mt-10;
+}
+
+.markdown-body h3 {
+  @apply text-gold-main uppercase tracking-widest text-xs font-bold mb-4 mt-8;
+}
+
+.markdown-body p {
+  @apply text-white/70 leading-relaxed mb-4 font-light;
+}
+
+.markdown-body ul {
+  @apply list-disc list-inside mb-6 space-y-2 text-white/60 font-light;
+}
+
+.markdown-body li {
+  @apply leading-relaxed;
+}
+
+.markdown-body strong {
+  @apply text-gold-main font-medium;
+}
+
+.markdown-body hr {
+  @apply border-gold-main/10 my-12;
+}

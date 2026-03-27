@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+         request.auth.token.email == "andreiapreto@gmail.com");
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAny(['uid', 'name', 'email', 'whatsapp', 'role']) &&
+             (!('name' in data) || (data.name is string && data.name.size() < 100)) &&
+             (!('email' in data) || (data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"))) &&
+             (!('role' in data) || (data.role in ['admin', 'user']));
+    }
+
+    function isValidDiagnostico(data) {
+      return data.keys().hasAll(['userId', 'archetype', 'theme']) &&
+             data.userId is string &&
+             data.archetype is string &&
+             data.theme is string;
+    }
+
+    function isValidMapping(data) {
+      return data.keys().hasAll(['userId', 'createdAt', 'emocao', 'padrao', 'defesa', 'ferida', 'desejo', 'arquetipo', 'florais', 'result', 'alignmentScore', 'phrase']) &&
+             data.userId is string &&
+             data.createdAt is string &&
+             data.emocao is string &&
+             data.padrao is string &&
+             data.defesa is string &&
+             data.ferida is string &&
+             data.desejo is string &&
+             data.arquetipo is string &&
+             data.florais is string &&
+             data.result is string &&
+             data.alignmentScore is number &&
+             data.phrase is string;
+    }
+
+    function isValidReprogramacaoRequest(data) {
+      return data.keys().hasAll(['userId', 'productName', 'estadoEmocional', 'objetivo', 'status', 'createdAt']) &&
+             data.userId is string &&
+             data.productName is string &&
+             data.estadoEmocional is string &&
+             data.objetivo is string &&
+             data.status in ['pending', 'completed'] &&
+             data.createdAt is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /test/connection {
+      allow read: if isAuthenticated();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    (isOwner(userId) && request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    ((isOwner(userId) && (request.resource.data.role == resource.data.role || !('role' in request.resource.data))) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /diagnosticos/{diagId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidDiagnostico(request.resource.data) && 
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    match /mappings/{mappingId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidMapping(request.resource.data) && 
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    match /reprogramacao_requests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidReprogramacaoRequest(request.resource.data) && 
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+  }
+}

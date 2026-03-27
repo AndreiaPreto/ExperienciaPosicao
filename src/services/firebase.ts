@@ -1,0 +1,17 @@
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import firebaseConfig from "../../firebase-applet-config.json";
+
+// Inicializa app
+const app = initializeApp(firebaseConfig);
+
+// Serviços
+// Use named database if provided in config
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Standard Auth initialization
+const auth = getAuth(app);
+
+// Exporta tudo centralizado
+export { app, db, auth };

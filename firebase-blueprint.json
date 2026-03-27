@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and registration data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "description": "Email address" },
+        "whatsapp": { "type": "string", "description": "WhatsApp number" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "User role" },
+        "paidStatus": { "type": "boolean", "description": "Whether the user has paid for access" },
+        "clube_ativo": { "type": "boolean", "description": "Whether the user has an active club subscription" },
+        "subscriptionStatus": { "type": "string", "description": "Stripe subscription status" },
+        "subscriptionId": { "type": "string", "description": "Stripe subscription ID" },
+        "lastPaymentAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "whatsapp", "role"]
+    },
+    "Diagnostico": {
+      "title": "Diagnostico",
+      "description": "User diagnostic results",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "archetype": { "type": "string" },
+        "theme": { "type": "string" },
+        "answers": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "archetype", "theme"]
+    },
+    "Mapping": {
+      "title": "Mapping",
+      "description": "Emotional mapping results",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "emocao": { "type": "string" },
+        "padrao": { "type": "string" },
+        "defesa": { "type": "string" },
+        "ferida": { "type": "string" },
+        "desejo": { "type": "string" },
+        "arquetipo": { "type": "string" },
+        "florais": { "type": "string" },
+        "result": { "type": "string" },
+        "alignmentScore": { "type": "number" }
+      },
+      "required": ["userId", "createdAt", "emocao", "padrao", "defesa", "ferida", "desejo", "arquetipo", "florais", "result", "alignmentScore"]
+    },
+    "ReprogramacaoRequest": {
+      "title": "ReprogramacaoRequest",
+      "description": "User request for personal frequency audio",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "productName": { "type": "string" },
+        "estadoEmocional": { "type": "string" },
+        "objetivo": { "type": "string" },
+        "observacoes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "productName", "estadoEmocional", "objetivo", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/diagnosticos/{diagId}": {
+      "schema": "Diagnostico",
+      "description": "Diagnostic results"
+    },
+    "/mappings/{mappingId}": {
+      "schema": "Mapping",
+      "description": "Emotional mapping results"
+    },
+    "/reprogramacao_requests/{requestId}": {
+      "schema": "ReprogramacaoRequest",
+      "description": "Requests for personal frequency audio"
+    }
+  }
+}
