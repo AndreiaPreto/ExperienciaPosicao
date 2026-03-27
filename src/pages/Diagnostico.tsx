@@ -1203,7 +1203,7 @@ const Diagnostico = () => {
                   ))}
                 </div>
                 <div className="text-center">
-                  <div className="text-gold-main text-3xl serif mb-8">R$ 9,00</div>
+                  <div className="text-gold-main text-3xl serif mb-8">R$ 27,00</div>
                   {access?.diagnostico_comprado ? (
                     <button 
                       onClick={() => showPage('mapeamento_form')}
@@ -1214,7 +1214,7 @@ const Diagnostico = () => {
                   ) : (
                     <button 
                       onClick={() => {
-                        setSelectedProduct({ name: 'Mapeamento Emocional Floral', price: 'R$ 9' });
+                        setSelectedProduct({ name: 'Mapeamento Emocional Floral', price: 'R$ 27' });
                         showPage('checkout');
                       }}
                       className="button w-full"
