@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { questions } from '../data/questions';
+import { triageQuestions } from '../data/triageQuestions';
 import { auth, db } from '../services/firebase';
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
@@ -50,7 +51,7 @@ const meditations = [
   }
 ];
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'triage_quiz' | 'triage_result';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -209,6 +210,9 @@ const Diagnostico = () => {
   };
   
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [triageIndex, setTriageIndex] = useState(0);
+  const [triageAnswers, setTriageAnswers] = useState<string[]>([]);
+  const [triageResult, setTriageResult] = useState<{title: string, text: string, button: string, target: Page} | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [analysisText, setAnalysisText] = useState("Observando padrões de posicionamento...");
   const navigate = useNavigate();
@@ -779,6 +783,66 @@ const Diagnostico = () => {
     }
   };
 
+  const handleTriageAnswer = (index: number) => {
+    const letters = ["A", "B", "C", "D"];
+    const newAnswers = [...triageAnswers, letters[index]];
+    setTriageAnswers(newAnswers);
+    
+    if (triageIndex < triageQuestions.length - 1) {
+      setTriageIndex(triageIndex + 1);
+    } else {
+      calculateTriageResult(newAnswers);
+    }
+  };
+
+  const calculateTriageResult = (finalAnswers: string[]) => {
+    const contagem: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
+    finalAnswers.forEach(r => contagem[r]++);
+    
+    const maior = Object.keys(contagem).reduce((a, b) => contagem[a] > contagem[b] ? a : b);
+    
+    let result = { title: "", text: "", button: "", target: 'home' as Page };
+    
+    if (maior === "A") {
+      result = {
+        title: "Clareza emocional",
+        text: "Você está em um momento de excesso mental e precisa organizar o que está confuso antes de agir.",
+        button: "Ir para Clube Clarear",
+        target: 'clube_clarear_info'
+      };
+    } else if (maior === "B") {
+      result = {
+        title: "Regulação emocional",
+        text: "Existe uma carga emocional ativa influenciando suas decisões.",
+        button: "Ir para Reprogramação Pessoal",
+        target: 'reprogramacao_pessoal_info'
+      };
+    } else if (maior === "C") {
+      result = {
+        title: "Direcionamento",
+        text: "Você precisa de respostas externas claras para avançar.",
+        button: "Ir para Clube do Tarô",
+        target: 'clube_taro_info'
+      };
+    } else {
+      result = {
+        title: "Estrutura",
+        text: "Você precisa organizar sua posição interna e suas decisões.",
+        button: "Ir para Diagnóstico POSIÇÃO",
+        target: 'diagnostico_info'
+      };
+    }
+    
+    setTriageResult(result);
+    setPage('triage_result');
+  };
+
+  const startTriage = () => {
+    setTriageIndex(0);
+    setTriageAnswers([]);
+    setPage('triage_quiz');
+  };
+
   const finishQuiz = async (finalAnswers: string[]) => {
     showPage('analysis');
     
@@ -910,6 +974,21 @@ const Diagnostico = () => {
               </motion.header>
 
               <motion.div variants={itemVariants} className="space-y-24">
+                {/* Triage Quiz Section */}
+                <div className="glass-card border-gold-main/20 bg-gold-main/[0.02] p-8 md:p-12 text-center max-w-3xl mx-auto">
+                  <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.5em] block font-bold mb-6">Orientação</span>
+                  <h2 className="serif text-4xl text-gold-light mb-6">Não sabe por onde começar?</h2>
+                  <p className="text-white/40 text-sm font-light leading-relaxed mb-10 max-w-xl mx-auto">
+                    Faça o teste rápido de 15 perguntas para identificar sua necessidade imediata e descobrir qual caminho do POSIÇÃO é o mais indicado para o seu momento atual.
+                  </p>
+                  <button 
+                    onClick={startTriage}
+                    className="button px-12"
+                  >
+                    Descobrir meu Caminho
+                  </button>
+                </div>
+
                 {/* Main Journeys Section */}
                 <div className="space-y-12">
                   <div className="flex items-center gap-6">
@@ -2713,6 +2792,93 @@ FORMATO: Texto organizado, claro, fluido e humano em Markdown.`,
                     Ambiente Seguro
                     <div className="w-8 h-[1px] bg-white/5" />
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'triage_quiz' && (
+            <motion.div 
+              key="triage_quiz"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="animate-screen max-w-2xl mx-auto"
+            >
+              <div className="mb-12 flex justify-between items-center">
+                <div className="flex-1 mr-8">
+                  <div className="flex justify-between items-center mb-4 text-[10px] uppercase tracking-[0.3em] text-white/20 font-bold">
+                    <span>Progresso</span>
+                    <span>{Math.round(((triageIndex + 1) / triageQuestions.length) * 100)}%</span>
+                  </div>
+                  <div className="h-[2px] bg-white/5 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-gold-main"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${((triageIndex + 1) / triageQuestions.length) * 100}%` }}
+                      transition={{ duration: 0.5, ease: "circOut" }}
+                    />
+                  </div>
+                </div>
+                <div className="text-white/20 text-[10px] font-bold tracking-widest">
+                  {triageIndex + 1} / {triageQuestions.length}
+                </div>
+              </div>
+
+              <div className="glass-card p-6 md:p-12 border-gold-main/10">
+                <h3 className="serif text-3xl text-gold-light mb-10 leading-snug">
+                  {triageQuestions[triageIndex].q}
+                </h3>
+                <div className="grid gap-4">
+                  {triageQuestions[triageIndex].a.map((texto, idx) => (
+                    <motion.div 
+                      key={idx}
+                      whileHover={{ x: 10, backgroundColor: "rgba(197, 160, 40, 0.05)" }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleTriageAnswer(idx)}
+                      className="p-6 rounded-3xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
+                    >
+                      {texto}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'triage_result' && triageResult && (
+            <motion.div 
+              key="triage_result"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-center max-w-2xl mx-auto"
+            >
+              <div className="glass-card p-6 md:p-12 border-gold-main/20 bg-gold-main/[0.01]">
+                <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.5em] block font-bold mb-6">Resultado do seu Momento</span>
+                <h2 className="serif text-5xl text-gold-light mb-8">{triageResult.title}</h2>
+                <p className="text-white/40 font-light leading-relaxed mb-12 text-lg">
+                  {triageResult.text}
+                </p>
+                <div className="flex flex-col gap-4">
+                  <button 
+                    onClick={() => showPage(triageResult.target)}
+                    className="button w-full"
+                  >
+                    {triageResult.button}
+                  </button>
+                  <button 
+                    onClick={startTriage}
+                    className="text-gold-main/40 hover:text-gold-main transition-colors text-[10px] uppercase tracking-[0.2em] font-bold mt-4"
+                  >
+                    Refazer teste
+                  </button>
+                  <button 
+                    onClick={() => setPage('home')}
+                    className="text-white/20 hover:text-white/40 transition-colors text-[10px] uppercase tracking-[0.2em] font-bold"
+                  >
+                    Voltar ao Início
+                  </button>
                 </div>
               </div>
             </motion.div>
