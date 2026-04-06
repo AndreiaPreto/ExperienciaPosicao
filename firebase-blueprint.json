@@ -79,6 +79,22 @@
         "expiryDate": { "type": "string", "format": "date-time", "description": "Optional expiry date" }
       },
       "required": ["code", "discountType", "value", "active"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "User scheduled appointments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "date": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+        "time": { "type": "string", "description": "HH:MM" },
+        "productName": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "time", "productName", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -101,6 +117,10 @@
     "/coupons/{couponId}": {
       "schema": "Coupon",
       "description": "Discount coupons"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "User appointments"
     }
   }
 }

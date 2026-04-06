@@ -152,7 +152,7 @@ const rituais_mes = [
   }
 ];
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'triage_quiz' | 'triage_result';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -766,42 +766,77 @@ const AdminProductsTab = () => (
   </div>
 );
 
-const AdminSessionsTab = () => (
-  <div className="glass-card p-6 md:p-10">
-    <h3 className="serif text-2xl text-gold-light mb-10">Agenda de Sessões</h3>
-    <div className="space-y-6">
-      <div className="flex items-center gap-4 p-6 border border-white/5 rounded-2xl bg-white/[0.01]">
-        <div className="w-12 h-12 rounded-full bg-gold-main/5 flex items-center justify-center text-gold-main/40">
-          <Calendar size={20} />
-        </div>
-        <div className="flex-1">
-          <h4 className="serif text-lg text-gold-light">Próximas Sessões Individuais</h4>
-          <p className="text-white/20 text-[10px] uppercase tracking-widest font-bold">Sincronizado com Google Calendar</p>
-        </div>
-        <button className="button-outline py-2 px-4 text-xs">Ver Agenda Completa</button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[
-          { user: 'ana.silva@email.com', time: '14:30', date: 'Hoje', type: 'Reprogramação' },
-          { user: 'marcos.oliveira@email.com', time: '16:00', date: 'Hoje', type: 'Diagnóstico' },
-          { user: 'julia.costa@email.com', time: '09:00', date: 'Amanhã', type: 'Reprograme-se' },
-        ].map((s, i) => (
-          <div key={i} className="p-6 border border-white/5 rounded-2xl hover:border-gold-main/20 transition-all">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-gold-main/40 text-[9px] uppercase tracking-widest font-bold">{s.type}</span>
-              <span className="text-white/20 text-[10px]">{s.date} • {s.time}</span>
-            </div>
-            <p className="text-gold-light font-medium mb-4">{s.user}</p>
-            <div className="flex gap-3">
-              <button className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all">Reagendar</button>
-              <button className="flex-1 py-2 bg-gold-main/10 hover:bg-gold-main text-gold-main hover:text-black rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all">Iniciar</button>
-            </div>
+const AdminSessionsTab = ({ appointments, users, onRefresh }: { appointments: any[], users: any[], onRefresh: () => void }) => {
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await updateDoc(doc(db, 'appointments', id), { status });
+      onRefresh();
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+    }
+  };
+
+  const sortedAppointments = [...appointments].sort((a, b) => {
+    const dateA = new Date(`${a.date}T${a.time}`);
+    const dateB = new Date(`${b.date}T${b.time}`);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  return (
+    <div className="glass-card p-6 md:p-10">
+      <h3 className="serif text-2xl text-gold-light mb-10">Agenda de Sessões</h3>
+      <div className="space-y-6">
+        {sortedAppointments.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl">
+            <Calendar className="mx-auto text-white/10 mb-4" size={48} />
+            <p className="text-white/20 text-sm font-light">Nenhum agendamento encontrado.</p>
           </div>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {sortedAppointments.map((s, i) => {
+              const user = users.find(u => u.id === s.userId || u.uid === s.userId);
+              const userName = user?.name || user?.displayName || s.userName || 'Cliente';
+              const userEmail = user?.email || s.userEmail || 'N/A';
+              
+              return (
+                <div key={i} className={`p-6 border rounded-2xl transition-all ${s.status === 'completed' ? 'border-emerald-500/20 bg-emerald-500/[0.02]' : 'border-white/5 hover:border-gold-main/20'}`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-gold-main/40 text-[9px] uppercase tracking-widest font-bold">{s.productName}</span>
+                    <span className="text-white/20 text-[10px]">{s.date} • {s.time}</span>
+                  </div>
+                  <p className="text-gold-light font-medium mb-2">{userName}</p>
+                  <p className="text-white/40 text-xs mb-4">{userEmail}</p>
+                  <div className="flex gap-3">
+                    {s.status === 'scheduled' ? (
+                      <>
+                        <button 
+                          onClick={() => handleStatusChange(s.id, 'cancelled')}
+                          className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          onClick={() => handleStatusChange(s.id, 'completed')}
+                          className="flex-1 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all"
+                        >
+                          Concluir
+                        </button>
+                      </>
+                    ) : (
+                      <span className={`text-[10px] uppercase tracking-widest font-bold ${s.status === 'completed' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {s.status === 'completed' ? 'Concluída' : 'Cancelada'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AdminReportsTab = () => (
   <div className="glass-card p-6 md:p-10">
@@ -1016,6 +1051,13 @@ const Diagnostico = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [reprogramacaoData, setReprogramacaoData] = useState({ estadoEmocional: '', objetivo: '', observacoes: '' });
   const [isSubmittingReprogramacao, setIsSubmittingReprogramacao] = useState(false);
+  
+  // Scheduling State
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [allAppointments, setAllAppointments] = useState<any[]>([]);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discountType: string, value: number} | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -1052,26 +1094,54 @@ const Diagnostico = () => {
 
   const handleReprogramacaoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmittingReprogramacao(true);
-    
-    const path = 'reprogramacao_requests';
+    showPage('reprogramacao_scheduling');
+  };
+
+  const handleSchedulingSubmit = async () => {
+    if (!selectedDate || !selectedTime) {
+      setNotification({ message: 'Por favor, selecione uma data e horário.', type: 'error' });
+      return;
+    }
+
+    setIsScheduling(true);
     try {
       if (user) {
-        await addDoc(collection(db, path), {
+        // 1. Save Reprogramacao Request
+        await addDoc(collection(db, 'reprogramacao_requests'), {
           userId: user.uid,
+          userEmail: user.email,
           productName: selectedProduct?.name || 'Reprogramação Pessoal',
           estadoEmocional: reprogramacaoData.estadoEmocional,
           objetivo: reprogramacaoData.objetivo,
           observacoes: reprogramacaoData.observacoes || '',
           status: 'pending',
+          createdAt: new Date().toISOString(),
+          appointmentDate: selectedDate,
+          appointmentTime: selectedTime
+        });
+
+        // 2. Save Appointment
+        await addDoc(collection(db, 'appointments'), {
+          userId: user.uid,
+          date: selectedDate,
+          time: selectedTime,
+          productName: selectedProduct?.name || 'Reprogramação Pessoal',
+          status: 'scheduled',
           createdAt: new Date().toISOString()
         });
+
+        setNotification({ message: 'Agendamento realizado com sucesso!', type: 'success' });
+        showPage('home');
+        // Reset states
+        setReprogramacaoData({ estadoEmocional: '', objetivo: '', observacoes: '' });
+        setSelectedDate('');
+        setSelectedTime('');
       }
-      showPage('home');
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      handleFirestoreError(error, OperationType.WRITE, 'appointments');
+      setNotification({ message: 'Erro ao realizar agendamento. Tente novamente.', type: 'error' });
     } finally {
-      setIsSubmittingReprogramacao(false);
+      setIsScheduling(false);
     }
   };
   const refreshAdminData = async () => {
@@ -1086,6 +1156,9 @@ const Diagnostico = () => {
 
     const couponsSnapshot = await getDocs(collection(db, 'coupons'));
     setAdminCoupons(couponsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+    const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
+    setAdminAppointments(appointmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
   const [currentAudio, setCurrentAudio] = useState<number | null>(null);
@@ -1104,6 +1177,7 @@ const Diagnostico = () => {
   const [adminDiagnosticos, setAdminDiagnosticos] = useState<any[]>([]);
   const [adminRequests, setAdminRequests] = useState<any[]>([]);
   const [adminCoupons, setAdminCoupons] = useState<any[]>([]);
+  const [adminAppointments, setAdminAppointments] = useState<any[]>([]);
   const [selectedAdminUser, setSelectedAdminUser] = useState<any | null>(null);
   const [meditationList, setMeditationList] = useState(meditations);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
@@ -1145,6 +1219,20 @@ const Diagnostico = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [analysisText, setAnalysisText] = useState("Observando padrões de posicionamento...");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const q = query(collection(db, 'appointments'), where('status', '==', 'scheduled'));
+        const querySnapshot = await getDocs(q);
+        const docs = querySnapshot.docs.map(doc => doc.data());
+        setAllAppointments(docs);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
+    };
+    fetchAppointments();
+  }, [page]);
 
   useEffect(() => {
     const testConnection = async () => {
@@ -1521,6 +1609,11 @@ const Diagnostico = () => {
   };
 
   const showPage = (newPage: Page) => {
+    if ((newPage === 'clube_clarear_info' || newPage === 'clube_clarear_content') && !isAdmin) {
+      setNotification({ message: "O Clube Clarear está em construção. Acesso em breve!", type: 'info' });
+      return;
+    }
+
     if (newPage === 'reprogramacao_pessoal_info' && access?.reprogramacao_pessoal_comprada) {
       setPage('reprogramacao_form');
       return;
@@ -2006,9 +2099,9 @@ const Diagnostico = () => {
                   <div className="grid md:grid-cols-2 gap-12">
                     {[
                       { id: 'mapeamento_intro', title: 'Mapeamento Emocional Floral', desc: 'Descubra sua emoção dominante, seu arquétipo ativo e sua fórmula floral personalizada.', tag: 'Mapeamento' },
-                      { id: 'clube_taro_info', title: 'Clube do Tarô', desc: 'Orientação semanal e leitura energética mensal para manter o fluxo constante.', tag: 'Comunidade' },
-                      { id: 'clube_clarear_info', title: 'Clube Clarear', desc: 'Práticas semanais focadas em clareza mental e estabilidade emocional profunda.', tag: 'Prática' },
                       { id: 'rituais_mes_info', title: 'Rituais do Mês', desc: 'Rituais coletivos realizados off-line e enviados por mensagem vídeo e áudio.', tag: 'Agenda' },
+                      { id: 'clube_taro_info', title: 'Clube do Tarô', desc: 'Orientação semanal e leitura energética mensal para manter o fluxo constante.', tag: 'Comunidade' },
+                      { id: 'clube_clarear_info', title: 'Clube Clarear', desc: isAdmin ? 'Práticas semanais focadas em clareza mental e estabilidade emocional profunda.' : 'Em construção. Práticas semanais focadas em clareza mental e estabilidade emocional profunda.', tag: isAdmin ? 'Prática' : 'Em Construção' },
                       { id: 'reprogramacao_pessoal_info', title: 'Reprogramação Pessoal', desc: 'Áudio de frequência personalizada para alinhar sua base interna através de uma sessão individual.', tag: 'Atendimento Único' },
                       { id: 'diagnostico_info', title: 'Diagnóstico POSIÇÃO', desc: 'Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento.', tag: 'Mapeamento' }
                     ].map((item) => (
@@ -2747,7 +2840,15 @@ ESTRUTURA DA RESPOSTA (Markdown):
               className="animate-screen text-left max-w-2xl mx-auto"
             >
               <div className="back" onClick={() => showPage('home')}>← Voltar</div>
-              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01]">
+              {!isAdmin ? (
+                <div className="glass-card p-12 text-center">
+                  <Clock className="mx-auto text-gold-main/20 mb-6" size={48} />
+                  <h2 className="serif text-3xl text-gold-light mb-4">Em Construção</h2>
+                  <p className="text-white/40 mb-8">Estamos preparando as melhores práticas para você. O Clube Clarear estará disponível em breve!</p>
+                  <button onClick={() => showPage('home')} className="button-outline">Voltar ao Início</button>
+                </div>
+              ) : (
+                <div className="glass-card border-gold-main/20 bg-gold-main/[0.01]">
                 <div className="flex justify-between items-center mb-8">
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold">Manutenção Diária</span>
                 </div>
@@ -2793,6 +2894,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                   )}
                 </div>
               </div>
+              )}
             </motion.div>
           )}
 
@@ -2886,14 +2988,23 @@ ESTRUTURA DA RESPOSTA (Markdown):
             >
               <div className="back" onClick={() => showPage('home')}>← Voltar</div>
               
-              <header className="mb-10 md:mb-16 flex justify-between items-end">
-                <div>
-                  <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-4 block font-bold">Área de Membros</span>
-                  <h2 className="serif text-4xl md:text-5xl text-gold-light mb-6">Clube Clarear</h2>
+              {!isAdmin ? (
+                <div className="glass-card p-12 text-center">
+                  <Clock className="mx-auto text-gold-main/20 mb-6" size={48} />
+                  <h2 className="serif text-3xl text-gold-light mb-4">Em Construção</h2>
+                  <p className="text-white/40 mb-8">Estamos preparando as melhores práticas para você. O Clube Clarear estará disponível em breve!</p>
+                  <button onClick={() => showPage('home')} className="button-outline">Voltar ao Início</button>
                 </div>
-              </header>
+              ) : (
+                <>
+                  <header className="mb-10 md:mb-16 flex justify-between items-end">
+                    <div>
+                      <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-4 block font-bold">Área de Membros</span>
+                      <h2 className="serif text-4xl md:text-5xl text-gold-light mb-6">Clube Clarear</h2>
+                    </div>
+                  </header>
 
-              <div className="grid gap-8">
+                  <div className="grid gap-8">
                 {meditationList.map((meditation) => (
                   <div 
                     key={meditation.id}
@@ -2942,6 +3053,8 @@ ESTRUTURA DA RESPOSTA (Markdown):
                   Novas práticas todas as segundas-feiras
                 </p>
               </footer>
+              </>
+              )}
             </motion.div>
           )}
 
@@ -3236,6 +3349,90 @@ ESTRUTURA DA RESPOSTA (Markdown):
                     )}
                   </button>
                 </form>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'reprogramacao_scheduling' && (
+            <motion.div 
+              key="reprogramacao_scheduling"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-left max-w-2xl mx-auto"
+            >
+              <div className="back" onClick={() => showPage('reprogramacao_form')}>← Voltar</div>
+              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12">
+                <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold mb-4">Agendamento</span>
+                <h2 className="serif text-4xl text-gold-light mb-8">Escolha sua Sessão</h2>
+                
+                <p className="text-white/40 mb-10 font-light leading-relaxed">
+                  Selecione uma data e horário para sua sessão individual de 1h (Segunda a Sexta, das 09h às 17h).
+                </p>
+
+                <div className="space-y-8">
+                  <div className="space-y-3">
+                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Data da Sessão</label>
+                    <input 
+                      type="date" 
+                      min={new Date().toISOString().split('T')[0]}
+                      value={selectedDate}
+                      onChange={(e) => {
+                        const date = new Date(e.target.value);
+                        const day = date.getUTCDay();
+                        if (day === 0 || day === 6) {
+                          setNotification({ message: 'Sessões disponíveis apenas de segunda a sexta.', type: 'info' });
+                          return;
+                        }
+                        setSelectedDate(e.target.value);
+                      }}
+                      className="input w-full"
+                    />
+                  </div>
+
+                  {selectedDate && (
+                    <div className="space-y-4">
+                      <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Horários Disponíveis</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'].map((time) => {
+                          const taken = allAppointments.some(app => app.date === selectedDate && app.time === time && app.status === 'scheduled');
+                          return (
+                            <button
+                              key={time}
+                              disabled={taken}
+                              onClick={() => setSelectedTime(time)}
+                              className={`py-3 px-4 rounded-xl text-xs font-bold transition-all border ${
+                                selectedTime === time 
+                                  ? 'bg-gold-main text-black border-gold-main' 
+                                  : taken 
+                                    ? 'bg-white/5 text-white/10 border-white/5 cursor-not-allowed'
+                                    : 'bg-white/5 text-white/60 border-white/10 hover:border-gold-main/30'
+                              }`}
+                            >
+                              {time}
+                              {taken && <span className="block text-[8px] opacity-50 mt-1">Ocupado</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleSchedulingSubmit}
+                    disabled={isScheduling || !selectedDate || !selectedTime}
+                    className="button w-full flex items-center justify-center gap-3 mt-8"
+                  >
+                    {isScheduling ? (
+                      <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Confirmar Agendamento
+                        <Check size={18} />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -3558,7 +3755,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                   )}
 
                   {adminTab === 'sessions' && (
-                    <AdminSessionsTab />
+                    <AdminSessionsTab appointments={adminAppointments} users={adminUsers} onRefresh={refreshAdminData} />
                   )}
 
                   {adminTab === 'reports' && (

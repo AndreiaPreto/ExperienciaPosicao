@@ -55,6 +55,15 @@ service cloud.firestore {
              (!('createdAt' in data) || data.createdAt is string);
     }
 
+    function isValidAppointment(data) {
+      return (!('userId' in data) || data.userId is string) &&
+             (!('date' in data) || data.date is string) &&
+             (!('time' in data) || data.time is string) &&
+             (!('productName' in data) || data.productName is string) &&
+             (!('status' in data) || data.status in ['scheduled', 'completed', 'cancelled']) &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -75,7 +84,7 @@ service cloud.firestore {
 
     match /diagnosticos/{diagId} {
       allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isAuthenticated() && (isAdmin() || (request.query.limit <= 100 && request.query.filters.userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && isValidDiagnostico(request.resource.data) && 
                     (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin();
@@ -83,7 +92,7 @@ service cloud.firestore {
 
     match /mappings/{mappingId} {
       allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isAuthenticated() && (isAdmin() || (request.query.limit <= 100 && request.query.filters.userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && isValidMapping(request.resource.data) && 
                     (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin();
@@ -91,7 +100,7 @@ service cloud.firestore {
 
     match /reprogramacao_requests/{requestId} {
       allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isAuthenticated() && (isAdmin() || (request.query.limit <= 100 && request.query.filters.userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && isValidReprogramacaoRequest(request.resource.data) && 
                     (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin();
@@ -100,6 +109,18 @@ service cloud.firestore {
     match /coupons/{couponId} {
       allow read: if true; // Allow anyone to check coupon validity
       allow write: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || 
+                    (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+                    (resource.data.status == 'scheduled');
+      allow create: if isAuthenticated() && isValidAppointment(request.resource.data) && 
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && 
+                    isValidAppointment(request.resource.data);
+      allow delete: if isAdmin();
     }
   }
 }
