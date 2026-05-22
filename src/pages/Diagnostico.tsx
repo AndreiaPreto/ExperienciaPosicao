@@ -2109,6 +2109,7 @@ const Diagnostico = () => {
                       { id: 'mapeamento_intro', title: 'Mapeamento Emocional Floral', desc: 'Descubra sua emoção dominante, seu arquétipo ativo e sua fórmula floral personalizada.', tag: 'Mapeamento' },
                       { id: 'rituais_mes_info', title: 'Rituais do Mês', desc: 'Rituais coletivos realizados off-line e enviados por mensagem vídeo e áudio.', tag: 'Agenda' },
                       { id: 'clube_taro_info', title: 'Clube do Tarô', desc: 'Orientação semanal e leitura energética mensal para manter o fluxo constante.', tag: 'Comunidade' },
+                      { id: 'biblioteca', title: 'Biblioteca de E-books', desc: 'Sua estante virtual premium de materiais, guias e e-books exclusivos organizados com elegância.', tag: 'Conteúdo Premium' },
                       { id: 'clube_clarear_info', title: 'Clube Clarear', desc: isAdmin ? 'Práticas semanais focadas em clareza mental e estabilidade emocional profunda.' : 'Em construção. Práticas semanais focadas em clareza mental e estabilidade emocional profunda.', tag: isAdmin ? 'Prática' : 'Em Construção' },
                       { id: 'reprogramacao_pessoal_info', title: 'Reprogramação Pessoal', desc: 'Áudio de frequência personalizada para alinhar sua base interna através de uma sessão individual.', tag: 'Atendimento Único' },
                       { id: 'diagnostico_info', title: 'Diagnóstico POSIÇÃO', desc: 'Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento.', tag: 'Mapeamento' }
@@ -2117,7 +2118,13 @@ const Diagnostico = () => {
                         key={item.id}
                         variants={itemVariants}
                         className="glass-card flex flex-col justify-between group cursor-pointer"
-                        onClick={() => showPage(item.id as Page)}
+                        onClick={() => {
+                          if (item.id === 'biblioteca') {
+                            navigate('/biblioteca');
+                          } else {
+                            showPage(item.id as Page);
+                          }
+                        }}
                       >
                         <div>
                           <span className="text-gold-main/20 text-[9px] uppercase tracking-[0.3em] mb-6 block font-bold">{item.tag}</span>

@@ -1,0 +1,558 @@
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Search, BookOpen, Download, X, HelpCircle, ArrowRight, Sparkles, AlertCircle, Settings, Check } from 'lucide-react';
+
+interface EBook {
+  id: number;
+  icon: string;
+  cat: string;
+  title: string;
+  sub: string;
+  desc: string;
+  pages: string;
+  badge: 'new' | 'hot' | 'free' | 'exc' | null;
+  tags: string[];
+  featured: boolean;
+  bg: string;
+  link: string;
+}
+
+const EBOOKS_DATA: EBook[] = [
+  {
+    id: 1, icon: '🌸', cat: 'Florais',
+    title: 'Descomplicando os Florais de Bach',
+    sub: 'O guia prático para harmonia emocional com a terapia de Bach',
+    desc: 'Domine as 38 essências florais descobertas pelo Dr. Edward Bach. Aprenda a ler seus próprios estados emocionais de desequilíbrio e a formular fórmulas florais sob medida para restabelecer paz, autoconfiança e foco na sua base profunda.',
+    pages: '72 págs', badge: 'hot',
+    tags: ['Terapia Floral', 'Equilíbrio', 'Bach'],
+    featured: true,
+    bg: 'linear-gradient(135deg,#0e1511,#1a2e22)',
+    link: '#'
+  },
+  {
+    id: 2, icon: '🔮', cat: 'Oráculos',
+    title: 'Descomplicando o Baralho Cigano',
+    sub: 'Compreenda a simbologia antiga e desperte sua leitura intuitiva',
+    desc: 'Um guia objetivo e prático para desvendar as 36 lâminas da sabedoria cigana. Ideal para quem quer clareza em consultas rápidas no cotidiano ou deseja aprofundar sua conexão de autoanálise.',
+    pages: '84 págs', badge: 'new',
+    tags: ['Simbologia', 'Espiritualidade', 'Intuição'],
+    featured: false,
+    bg: 'linear-gradient(135deg,#160b1b,#2b1236)',
+    link: '#'
+  },
+  {
+    id: 3, icon: '🧠', cat: 'Temperamentos',
+    title: 'Descomplicando os temperamentos',
+    sub: 'Reconheça seu elemento ativo e masterize suas relações',
+    desc: 'Descubra a antiga e poderosa psicologia dos quatro temperamentos (Bilioso, Sanguíneo, Fleumático e Melancólico). Compreenda suas reações automáticas, impulsos e dons naturais para conquistar inteligência emocional inabalável.',
+    pages: '65 págs', badge: 'exc',
+    tags: ['Temperamentos', 'Autoconhecimento', 'Psicologia'],
+    featured: true,
+    bg: 'linear-gradient(135deg,#1d130a,#3d2211)',
+    link: '#'
+  },
+  {
+    id: 4, icon: '📜', cat: 'Leis Universais',
+    title: 'Descomplicando as leis herméticas',
+    sub: 'Manifeste o fluxo do Universo compreendendo as 7 Leis Herméticas',
+    desc: 'Compreenda com simplicidade absoluta as leis descritas no Caibalion: Mentalismo, Correspondência, Vibração, Polaridade, Ritmo, Causa e Efeito, e Gênero. Alinhe sua frequência interna ao fluxo universal e cocrie sua realidade com maestria.',
+    pages: '90 págs', badge: 'new',
+    tags: ['Hermetismo', 'Leis Cósmicas', 'Filosofia'],
+    featured: false,
+    bg: 'linear-gradient(135deg,#0a151b,#122835)',
+    link: '/descomplicando_leis_hermeticas.pdf'
+  }
+];
+
+const CATEGORIES = ['Todos', 'Florais', 'Oráculos', 'Temperamentos', 'Leis Universais'];
+
+export default function Biblioteca() {
+  const [activeNav, setActiveNav] = useState<'todos' | 'destaques' | 'novidades'>('todos');
+  const [activeCategory, setActiveCategory] = useState<string>('Todos');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedBook, setSelectedBook] = useState<EBook | null>(null);
+
+  // Overrides mapping for live user upload links
+  const [linksMap, setLinksMap] = useState<Record<number, string>>(() => {
+    const saved: Record<number, string> = {};
+    const ids = [1, 2, 3, 4]; // Ebooks ids
+    ids.forEach(id => {
+      const stored = localStorage.getItem(`pdf_link_${id}`);
+      if (stored) {
+        saved[id] = stored;
+      }
+    });
+    return saved;
+  });
+
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [editingUrl, setEditingUrl] = useState('');
+
+  const handleSelectBook = (book: EBook | null) => {
+    setSelectedBook(book);
+    setIsEditingLink(false);
+    setEditingUrl('');
+  };
+
+  // Filter ebooks
+  const filteredEBooks = useMemo(() => {
+    return EBOOKS_DATA.filter((e) => {
+      // Nav Tabs Filter
+      if (activeNav === 'destaques' && !e.featured) return false;
+      if (activeNav === 'novidades' && e.badge !== 'new') return false;
+
+      // Category filter
+      if (activeCategory !== 'Todos' && e.cat !== activeCategory) return false;
+
+      // Search filter
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase().trim();
+        const matchesTitle = e.title.toLowerCase().includes(query);
+        const matchesCat = e.cat.toLowerCase().includes(query);
+        const matchesSub = e.sub.toLowerCase().includes(query);
+        const matchesTags = e.tags.some((t) => t.toLowerCase().includes(query));
+        return matchesTitle || matchesCat || matchesSub || matchesTags;
+      }
+
+      return true;
+    });
+  }, [activeNav, activeCategory, searchQuery]);
+
+  const getBadgeLabel = (badge: EBook['badge']) => {
+    switch (badge) {
+      case 'new': return 'Novo';
+      case 'hot': return '🔥 Hot';
+      case 'free': return 'Grátis';
+      case 'exc': return 'Exclusivo';
+      default: return '';
+    }
+  };
+
+  const getBadgeClass = (badge: EBook['badge']) => {
+    switch (badge) {
+      case 'new': return 'bg-gold-main text-deep-black';
+      case 'hot': return 'bg-rose-600 text-white';
+      case 'free': return 'bg-emerald-600 text-white';
+      case 'exc': return 'bg-purple-600 text-white';
+      default: return '';
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen bg-deep-black text-text-main font-sans overflow-x-hidden pb-12">
+      <div className="atmosphere"></div>
+
+      {/* STICKY NAV */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 md:px-10 bg-deep-black/90 border-b border-gold-main/12 backdrop-blur-md gap-4">
+        <Link to="/" className="logo text-xl md:text-2xl font-serif font-bold tracking-wide">
+          POSIÇÃO · <span className="italic font-light">Biblioteca</span>
+        </Link>
+
+        {/* Navigation Pills */}
+        <div className="flex bg-white/[0.03] border border-white/[0.05] p-1 rounded-full text-xs">
+          {(['todos', 'destaques', 'novidades'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveNav(tab)}
+              className={`px-4 py-2 rounded-full transition-all uppercase tracking-wider text-[10px] md:text-xs ${
+                activeNav === tab
+                  ? 'bg-gold-main text-deep-black font-semibold shadow-md shadow-gold-main/10'
+                  : 'text-white/50 hover:text-white'
+              }`}
+            >
+              {tab === 'todos' ? 'Todos' : tab === 'destaques' ? 'Destaques' : 'Novidades'}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-xs w-36 sm:w-48 md:w-64">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-xs">
+            <Search size={14} />
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar e-book..."
+            className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-gold-main/50 focus:bg-white/[0.07] text-white rounded-full pl-9 pr-4 py-1.5 text-xs outline-none transition-all placeholder:text-white/20"
+          />
+        </div>
+      </nav>
+
+      {/* HERO SECTION */}
+      <header className="relative px-6 py-20 md:px-12 text-left border-b border-white/[0.03] overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_85%_50%,rgba(201,160,74,0.06)_0%,transparent_60%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_10%_80%,rgba(201,160,74,0.04)_0%,transparent_50%)]"></div>
+          <div className="absolute inset-0 opacity-[0.015] bg-[repeating-linear-gradient(0deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px),repeating-linear-gradient(90deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px)]"></div>
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 mb-6 text-gold-main uppercase tracking-[0.2em] text-[10px] md:text-xs">
+              <span className="w-6 h-[1px] bg-gold-main/50"></span>
+              Biblioteca Digital
+              <span className="w-6 h-[1px] bg-gold-main/50"></span>
+            </div>
+            <h1 className="font-serif text-5xl md:text-6xl text-white font-bold leading-none mb-6">
+              Seus e-books,<br />organizados com<br /><span className="italic text-gold-light">elegância</span>
+            </h1>
+            <p className="text-white/50 text-sm md:text-base font-light leading-relaxed max-w-xl mb-8">
+              Acesse todos os seus materiais digitais de alinhamento, desenvolvimento pessoal e negócios em um só lugar. Conteúdo premium com a curadoria POSIÇÃO.
+            </p>
+            <a href="#biblioteca" className="button inline-flex items-center gap-2">
+              Explorar Biblioteca <ArrowRight size={14} />
+            </a>
+          </div>
+
+          <div className="hidden lg:block text-right">
+            <span className="font-serif text-[10rem] font-bold text-gold-main/5 select-none leading-none tracking-tight">
+              {String(EBOOKS_DATA.length).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* CATEGORY FILTERS */}
+      <section className="relative border-b border-white/[0.03] px-6 py-6 md:px-12">
+        <div className="max-w-5xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
+          <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold whitespace-nowrap mr-2">
+            Categoria:
+          </span>
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-4 py-2 rounded-full text-xs transition-all whitespace-nowrap ${
+                activeCategory === cat
+                  ? 'border border-gold-main/40 text-gold-main bg-gold-main/8'
+                  : 'border border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* MAIN LIB GRID */}
+      <main id="biblioteca" className="max-w-5xl mx-auto px-6 py-12 md:px-10">
+        <div className="flex items-center justify-between mb-8 border-b border-white/[0.04] pb-6">
+          <h2 className="font-serif text-2xl font-semibold text-white">
+            E-books <b className="text-gold-main">Disponíveis</b>
+          </h2>
+          <span className="text-xs text-white/40 bg-white/[0.02] border border-white/[0.06] px-3 py-1.5 rounded-full">
+            {filteredEBooks.length} {filteredEBooks.length === 1 ? 'título' : 'títulos'}
+          </span>
+        </div>
+
+        {filteredEBooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <span className="text-5xl mb-4 opacity-40">📚</span>
+            <h3 className="text-lg font-medium text-white/70 mb-1">Nenhum e-book encontrado</h3>
+            <p className="text-xs text-white/40 max-w-xs">
+              Tente redefinir a busca ou selecione outra categoria ou aba de destaques.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEBooks.map((book) => {
+              if (book.featured) {
+                return (
+                  <div
+                    key={book.id}
+                    onClick={() => handleSelectBook(book)}
+                    className="md:col-span-2 bg-white/[0.01] border border-gold-main/20 rounded-xl overflow-hidden cursor-pointer hover:border-gold-main/40 hover:-translate-y-1 transition-all duration-300 shadow-xl flex flex-col sm:flex-row group"
+                  >
+                    {/* Cover Area */}
+                    <div className="sm:w-52 h-44 sm:h-auto relative overflow-hidden flex items-center justify-center bg-black/40 shrink-0">
+                      <div
+                        className="absolute inset-0 opacity-60 group-hover:scale-105 transition-transform duration-500"
+                        style={{ background: book.bg }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                      <span className="relative z-10 text-5xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+                        {book.icon}
+                      </span>
+                      {book.badge && (
+                        <div className={`absolute top-4 right-4 z-20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBadgeClass(book.badge)}`}>
+                          {getBadgeLabel(book.badge)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content Info */}
+                    <div className="p-6 md:p-8 flex flex-col justify-between flex-1 gap-4">
+                      <div>
+                        <span className="text-[9px] uppercase tracking-widest text-gold-main bg-gold-main/8 border border-gold-main/15 px-2 py-1 rounded">
+                          {book.cat} · Destaque
+                        </span>
+                        <h3 className="font-serif text-2xl font-bold text-white mt-4 group-hover:text-gold-main transition-colors">
+                          {book.title}
+                        </h3>
+                        <p className="text-xs text-white/40 font-light mt-2 line-clamp-3">
+                          {book.desc}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/[0.04]">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {book.tags.map((t) => (
+                            <span key={t} className="bg-white/[0.04] border border-white/[0.07] px-2 py-1 rounded text-[10px] text-white/50">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-gold-main uppercase tracking-widest text-[10px] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          Acessar <ArrowRight size={12} />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={book.id}
+                  onClick={() => handleSelectBook(book)}
+                  className="bg-white/[0.01] border border-white/[0.04] rounded-xl overflow-hidden cursor-pointer hover:border-gold-main/20 hover:-translate-y-1.5 transition-all duration-300 shadow-lg flex flex-col justify-between group"
+                >
+                  {/* Standard Card Cover */}
+                  <div className="h-44 relative overflow-hidden flex items-center justify-center bg-black/40">
+                    <div
+                      className="absolute inset-0 opacity-40 group-hover:scale-105 transition-transform duration-500"
+                      style={{ background: book.bg }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <span className="relative z-10 text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+                      {book.icon}
+                    </span>
+                    {book.badge && (
+                      <div className={`absolute top-4 right-4 z-20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBadgeClass(book.badge)}`}>
+                        {getBadgeLabel(book.badge)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Body Info */}
+                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                    <div>
+                      <span className="text-[9px] uppercase tracking-widest text-gold-main">
+                        {book.cat}
+                      </span>
+                      <h3 className="font-serif text-lg font-bold text-white mt-2 group-hover:text-gold-main transition-colors">
+                        {book.title}
+                      </h3>
+                      <p className="text-xs text-white/40 mt-1 font-light line-clamp-2">
+                        {book.sub}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
+                      <span className="text-[10px] text-white/30">{book.pages}</span>
+                      <div className="w-7 h-7 bg-gold-main/8 border border-gold-main/15 rounded-full flex items-center justify-center text-gold-main group-hover:bg-gold-main group-hover:text-deep-black group-hover:translate-x-1 transition-all duration-300">
+                        <ArrowRight size={14} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      {/* FOOTER */}
+      <footer className="max-w-5xl mx-auto px-6 pt-12 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30">
+        <div>© 2026 Biblioteca Digital POSIÇÃO · Todos os direitos reservados</div>
+        <div className="text-gold-main flex items-center gap-1.5 font-medium">
+          <Sparkles size={12} fill="currentColor" /> Conteúdo Premium
+        </div>
+      </footer>
+
+      {/* OVERLAY DETAIL MODAL */}
+      <AnimatePresence>
+        {selectedBook && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => handleSelectBook(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 30, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#121212] border border-gold-main/20 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl text-left"
+            >
+              {/* Cover Header */}
+              <div className="h-52 relative flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 opacity-50" style={{ background: selectedBook.bg }}></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
+                <span className="relative z-10 text-6xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]">
+                  {selectedBook.icon}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectBook(null)}
+                  className="absolute top-4 right-4 w-9 h-9 bg-black/50 border border-white/10 hover:border-white/20 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-all scale-100 hover:scale-105"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Detail Contents */}
+              <div className="p-6 md:p-8">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gold-main block mb-2 font-bold">
+                  {selectedBook.cat}
+                </span>
+                <h3 className="font-serif text-3xl font-bold text-white mb-4 leading-none">
+                  {selectedBook.title}
+                </h3>
+                <p className="text-white/60 text-sm font-light leading-relaxed mb-6">
+                  {selectedBook.desc}
+                </p>
+
+                {/* Sub-tags list */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {selectedBook.tags.map((t) => (
+                    <span key={t} className="bg-gold-main/8 border border-gold-main/15 text-gold-main px-3 py-1 rounded-full text-xs">
+                      {t}
+                    </span>
+                  ))}
+                  <span className="bg-white/[0.03] border border-white/[0.06] text-white/40 px-3 py-1 rounded-full text-xs">
+                    {selectedBook.pages}
+                  </span>
+                </div>
+
+                {/* Modal actions */}
+                {(() => {
+                  const currentLink = linksMap[selectedBook.id] || selectedBook.link;
+                  const isConfigured = currentLink && currentLink !== '#';
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex gap-4">
+                        {isConfigured ? (
+                          <a
+                            href={currentLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="button flex-1 inline-flex items-center justify-center gap-2 text-center"
+                          >
+                            ▶ Ler E-book PDF
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEditingLink(true);
+                              setEditingUrl('');
+                            }}
+                            className="button flex-1 inline-flex items-center justify-center gap-2 text-center bg-white/10 hover:bg-white/15 text-gold-main border border-gold-main/20 cursor-pointer"
+                          >
+                            ⚙️ Vincular Arquivo PDF
+                          </button>
+                        )}
+
+                        {isConfigured && (
+                          <a
+                            href={currentLink}
+                            download={`${selectedBook.title.replace(/\s+/g, '_')}.pdf`}
+                            className="border border-white/15 hover:bg-white/5 text-white/80 hover:text-white rounded-lg px-6 py-4 uppercase tracking-wider text-[11px] font-semibold transition-colors flex items-center gap-2 shrink-0 justify-center"
+                          >
+                            <Download size={14} /> PDF
+                          </a>
+                        )}
+                      </div>
+
+                      {/* PDF Upload/Linking dynamic guide */}
+                      <div className="mt-6 border-t border-white/[0.05] pt-4">
+                        {!isEditingLink ? (
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-[10px] text-white/40 truncate max-w-[280px]">
+                              Link atual: <span className="text-gold-main/80 font-mono">{isConfigured ? currentLink : 'Nenhum arquivo vinculado'}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditingLink(true);
+                                setEditingUrl(isConfigured ? currentLink : '');
+                              }}
+                              className="text-[10px] text-gold-main hover:text-gold-light uppercase tracking-wider font-semibold underline flex items-center gap-1 shrink-0"
+                            >
+                              <Settings size={10} /> {isConfigured ? 'Alterar PDF' : 'Subir / Configurar'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 space-y-3">
+                            <h4 className="text-xs font-semibold text-white/85 flex items-center gap-1.5 font-serif">
+                              <Sparkles size={12} className="text-gold-main" /> Como disponibilizar seu PDF?
+                            </h4>
+                            <p className="text-[11px] text-white/55 leading-relaxed font-light">
+                              <b>Opção 1 (Definitiva):</b> Adicione o seu arquivo <code className="text-gold-main font-mono text-[10px]">PDF</code> na pasta pública do servidor (<code className="text-white">/public/</code>) e use o caminho correspondente (ex: <code className="text-white font-mono">/descomplicando_leis_hermeticas.pdf</code>).<br />
+                              <b>Opção 2 (Imediata):</b> Cole aqui o link direto do documento (Google Drive, Dropbox, ou site externo) para liberar acesso para teste agora mesmo:
+                            </p>
+                            
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={editingUrl}
+                                onChange={(e) => setEditingUrl(e.target.value)}
+                                placeholder="exemplo: https://meusite.com/meu-ebook.pdf"
+                                className="flex-1 bg-black/40 border border-white/[0.1] focus:border-gold-main/50 text-white rounded px-3 py-2 text-xs outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const trimmed = editingUrl.trim();
+                                  if (trimmed) {
+                                    localStorage.setItem(`pdf_link_${selectedBook.id}`, trimmed);
+                                    setLinksMap(prev => ({ ...prev, [selectedBook.id]: trimmed }));
+                                  } else {
+                                    localStorage.removeItem(`pdf_link_${selectedBook.id}`);
+                                    setLinksMap(prev => {
+                                      const copy = { ...prev };
+                                      delete copy[selectedBook.id];
+                                      return copy;
+                                    });
+                                  }
+                                  setIsEditingLink(false);
+                                }}
+                                className="bg-gold-main hover:bg-gold-light text-deep-black font-semibold rounded px-4 py-2 text-xs flex items-center gap-1.5 transition-all"
+                              >
+                                <Check size={12} /> Salvar
+                              </button>
+                            </div>
+                            
+                            <div className="flex justify-between items-center pt-1 text-[9px] text-white/30">
+                              <span>O link configurado ficará salvo localmente neste navegador.</span>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingLink(false)}
+                                className="text-[10px] text-white/40 hover:text-white underline"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -13,6 +13,7 @@ const Login = lazy(() => import('./pages/Login'));
 const DashboardPosicao = lazy(() => import('./pages/Dashboard'));
 const CompraDiagnostico = lazy(() => import('./pages/CompraDiagnostico'));
 const AssinaturaClube = lazy(() => import('./pages/AssinaturaClube'));
+const Biblioteca = lazy(() => import('./pages/Biblioteca'));
 
 const ProtectedRoute = ({ children, type }: { children: React.ReactNode, type: 'diagnostico' | 'clube' }) => {
   const { access, loading } = useAccess();
@@ -43,6 +44,7 @@ export default function App() {
               
               <Route path="/obrigado" element={<Obrigado />} />
               <Route path="/clube" element={<Clube />} />
+              <Route path="/biblioteca" element={<Biblioteca />} />
               
               <Route 
                 path="/membros" 

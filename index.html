@@ -1,13 +1,100 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+
+    <!-- ✅ AÇÃO 2 — Título corrigido -->
+    <title>POSIÇÃO · Alinhamento Interno</title>
+
+    <!-- ✅ AÇÃO 2 — Favicon apontando para o SVG que já existe no projeto -->
+    <link rel="icon" href="/assets/raizes.svg" type="image/svg+xml" />
+
+    <!-- Meta description para SEO -->
+    <meta name="description" content="POSIÇÃO · Alinhamento Interno — Mapeamento emocional, rituais e terapias para reconectar você com sua base." />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- ✅ AÇÃO 1 — Botão WhatsApp fixo -->
+    <!-- Substitua o número abaixo pelo seu número real (só dígitos, com DDI 55 e DDD) -->
+    <a
+      href="https://wa.me/5548991261832?text=Olá!%20Vim%20pelo%20site%20POSIÇÃO%20e%20gostaria%20de%20saber%20mais."
+      target="_blank"
+      rel="noopener noreferrer"
+      id="whatsapp-btn"
+      aria-label="Fale comigo pelo WhatsApp"
+      title="Fale comigo pelo WhatsApp"
+    >
+      <!-- Ícone WhatsApp oficial SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" fill="#fff" aria-hidden="true">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.738 5.49 2.027 7.8L0 32l8.418-2.004A15.93 15.93 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm0 29.333a13.27 13.27 0 0 1-6.747-1.836l-.484-.287-5.002 1.191 1.214-4.875-.315-.5A13.267 13.267 0 0 1 2.667 16C2.667 8.636 8.636 2.667 16 2.667S29.333 8.636 29.333 16 23.364 29.333 16 29.333zm7.293-9.907c-.4-.2-2.362-1.166-2.729-1.299-.367-.133-.634-.2-.9.2-.267.4-1.033 1.299-1.267 1.566-.233.267-.467.3-.867.1-.4-.2-1.688-.622-3.215-1.983-1.188-1.06-1.99-2.369-2.223-2.769-.233-.4-.025-.616.175-.815.18-.179.4-.467.6-.7.2-.233.267-.4.4-.666.133-.267.067-.5-.033-.7-.1-.2-.9-2.167-1.233-2.967-.325-.78-.655-.673-.9-.686l-.767-.013c-.267 0-.7.1-1.067.5s-1.4 1.367-1.4 3.334 1.433 3.867 1.633 4.133c.2.267 2.82 4.307 6.833 6.035.955.413 1.7.66 2.282.844.958.305 1.831.262 2.52.159.769-.114 2.362-.966 2.696-1.899.333-.933.333-1.733.233-1.9-.1-.167-.367-.267-.767-.467z"/>
+      </svg>
+    </a>
+
+    <style>
+      #whatsapp-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        width: 56px;
+        height: 56px;
+        background: #25D366;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(37, 211, 102, 0.35), 0 2px 8px rgba(0,0,0,0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+      }
+      #whatsapp-btn:hover {
+        transform: scale(1.08) translateY(-2px);
+        box-shadow: 0 8px 28px rgba(37, 211, 102, 0.45), 0 4px 12px rgba(0,0,0,0.3);
+      }
+      #whatsapp-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* Pulso de atenção — aparece após 3s e pisca 3x */
+      #whatsapp-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: rgba(37, 211, 102, 0.4);
+        animation: pulse 2.5s ease-out 3s 3;
+        pointer-events: none;
+      }
+      @keyframes pulse {
+        0%   { transform: scale(1);   opacity: 0.7; }
+        70%  { transform: scale(1.6); opacity: 0;   }
+        100% { transform: scale(1.6); opacity: 0;   }
+      }
+
+      /* Tooltip ao hover — só desktop */
+      @media (hover: hover) {
+        #whatsapp-btn::after {
+          content: 'Fale comigo no WhatsApp';
+          position: absolute;
+          right: 64px;
+          background: rgba(10,10,10,0.88);
+          color: #F2EDE6;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 12px;
+          white-space: nowrap;
+          padding: 6px 12px;
+          border-radius: 6px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+        }
+        #whatsapp-btn:hover::after {
+          opacity: 1;
+        }
+      }
+    </style>
   </body>
 </html>
-
