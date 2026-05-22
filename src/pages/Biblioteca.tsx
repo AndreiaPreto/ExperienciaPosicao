@@ -181,44 +181,40 @@ export default function Biblioteca() {
         </div>
       </nav>
 
-     {/* HERO SECTION */}
-<header className="relative px-6 py-20 md:px-12 text-left border-b border-white/[0.03] overflow-hidden">
-  <div className="absolute inset-0 z-0">
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_85%_50%,rgba(201,160,74,0.06)_0%,transparent_60%)]"></div>
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_10%_80%,rgba(201,160,74,0.04)_0%,transparent_50%)]"></div>
-    <div className="absolute inset-0 opacity-[0.015] bg-[repeating-linear-gradient(0deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px),repeating-linear-gradient(90deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px)]"></div>
-  </div>
+      {/* HERO SECTION */}
+      <header className="relative px-6 py-20 md:px-12 text-left border-b border-white/[0.03] overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_85%_50%,rgba(201,160,74,0.06)_0%,transparent_60%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_10%_80%,rgba(201,160,74,0.04)_0%,transparent_50%)]"></div>
+          <div className="absolute inset-0 opacity-[0.015] bg-[repeating-linear-gradient(0deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px),repeating-linear-gradient(90deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px)]"></div>
+        </div>
 
-  <div className="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
-    <div className="max-w-2xl">
-      <div className="inline-flex items-center gap-2 mb-6 text-gold-main uppercase tracking-[0.2em] text-[10px] md:text-xs">
-        <span className="w-6 h-[1px] bg-gold-main/50"></span>
-        Biblioteca POSIÇÃO
-        <span className="w-6 h-[1px] bg-gold-main/50"></span>
-      </div>
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 mb-6 text-gold-main uppercase tracking-[0.2em] text-[10px] md:text-xs">
+              <span className="w-6 h-[1px] bg-gold-main/50"></span>
+              Biblioteca Digital
+              <span className="w-6 h-[1px] bg-gold-main/50"></span>
+            </div>
+            <h1 className="font-serif text-5xl md:text-6xl text-white font-bold leading-none mb-6">
+              Seus e-books,<br />organizados com<br /><span className="italic text-gold-light">elegância</span>
+            </h1>
+            <p className="text-white/50 text-sm md:text-base font-light leading-relaxed max-w-xl mb-8">
+              Acesse todos os seus materiais digitais de alinhamento, desenvolvimento pessoal e negócios em um só lugar. Conteúdo premium com a curadoria POSIÇÃO.
+            </p>
+            <a href="#biblioteca" className="button inline-flex items-center gap-2">
+              Explorar Biblioteca <ArrowRight size={14} />
+            </a>
+          </div>
 
-      <h1 className="font-serif text-5xl md:text-6xl text-white font-bold leading-none mb-6">
-        Conteúdos para<br />
-        voltar para<br />
-        <span className="italic text-gold-light">a sua base</span>
-      </h1>
+          <div className="hidden lg:block text-right">
+            <span className="font-serif text-[10rem] font-bold text-gold-main/5 select-none leading-none tracking-tight">
+              {String(EBOOKS_DATA.length).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+      </header>
 
-      <p className="text-white/50 text-sm md:text-base font-light leading-relaxed max-w-xl mb-8">
-        Um espaço de estudo, prática e reconexão. Aqui você encontra materiais criados para apoiar seus processos emocionais, ampliar sua percepção e acompanhar seus movimentos de alinhamento interno.
-      </p>
-
-      <a href="#biblioteca" className="button inline-flex items-center gap-2">
-        Acessar conteúdos <ArrowRight size={14} />
-      </a>
-    </div>
-
-    <div className="hidden lg:block text-right">
-      <span className="font-serif text-[10rem] font-bold text-gold-main/5 select-none leading-none tracking-tight">
-        {String(EBOOKS_DATA.length).padStart(2, '0')}
-      </span>
-    </div>
-  </div>
-</header>
       {/* CATEGORY FILTERS */}
       <section className="relative border-b border-white/[0.03] px-6 py-6 md:px-12">
         <div className="max-w-5xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar py-2">

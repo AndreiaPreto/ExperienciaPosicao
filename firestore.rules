@@ -64,6 +64,12 @@ service cloud.firestore {
              (!('createdAt' in data) || data.createdAt is string);
     }
 
+    function isValidWaitlist(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.notificado is bool;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -121,6 +127,11 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && 
                     isValidAppointment(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    match /clube_clarear_waitlist/{waitlistId} {
+      allow create: if isValidWaitlist(request.resource.data);
+      allow read, update, delete: if isAdmin();
     }
   }
 }

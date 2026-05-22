@@ -95,6 +95,18 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "date", "time", "productName", "status", "createdAt"]
+    },
+    "ClubeClarearWaitlist": {
+      "title": "ClubeClarearWaitlist",
+      "description": "Waitlist entries for Clube Clarear",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string", "description": "User's name" },
+        "email": { "type": "string", "description": "User's email" },
+        "inscrito_em": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "notificado": { "type": "boolean", "description": "Whether the user was notified yet" }
+      },
+      "required": ["nome", "email", "inscrito_em", "notificado"]
     }
   },
   "firestore": {
@@ -121,6 +133,10 @@
     "/appointments/{appointmentId}": {
       "schema": "Appointment",
       "description": "User appointments"
+    },
+    "/clube_clarear_waitlist/{waitlistId}": {
+      "schema": "ClubeClarearWaitlist",
+      "description": "Waitlist for Clube Clarear"
     }
   }
 }

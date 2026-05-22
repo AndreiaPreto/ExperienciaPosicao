@@ -22,6 +22,7 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDoc
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
 import { LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard } from 'lucide-react';
+import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 
 interface AppUser {
   id: string;
@@ -152,7 +153,7 @@ const rituais_mes = [
   }
 ];
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -2179,10 +2180,7 @@ const Diagnostico = () => {
                         className="glass-card flex flex-col justify-between group cursor-pointer"
                         onClick={() => {
                           if (item.id === 'clube_clarear_info' && !isAdmin) {
-                            setNotification({
-                              message: '✉️ Lista de espera aberta! Em breve você receberá novidades.',
-                              type: 'info'
-                            });
+                            showPage('lista_espera_clarear');
                             return;
                           }
                           if (item.id === 'biblioteca') {
@@ -2894,6 +2892,17 @@ ESTRUTURA DA RESPOSTA (Markdown):
                   </button>
                 )}
               </div>
+            </motion.div>
+          )}
+
+          {page === 'lista_espera_clarear' && (
+            <motion.div
+              key="lista_espera_clarear"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <ClubeClarearListaEspera onBack={() => showPage('home')} />
             </motion.div>
           )}
 
