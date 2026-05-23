@@ -16,12 +16,13 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc } from 'firebase/firestore';
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
-import { LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard } from 'lucide-react';
+import { LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 
 interface AppUser {
@@ -1048,12 +1049,14 @@ const Diagnostico = () => {
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authData, setAuthData] = useState({ name: '', email: '', password: '', whatsapp: '', birthDate: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | React.ReactNode>(null);
   const [intendedPage, setIntendedPage] = useState<Page | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<{name: string, price: string} | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [reprogramacaoData, setReprogramacaoData] = useState({ estadoEmocional: '', objetivo: '', observacoes: '' });
   const [isSubmittingReprogramacao, setIsSubmittingReprogramacao] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   
   // Scheduling State
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -1258,9 +1261,21 @@ const Diagnostico = () => {
           // Check if user is admin
           try {
             const userDoc = await getDoc(doc(db, 'users', u.uid));
-            const data = userDoc.data();
-            setUserData(data);
-            const isDefaultAdmin = u.email === "andreiapreto@gmail.com";
+            let data = userDoc.data();
+            const isDefaultAdmin = !!(u.email && u.email.toLowerCase() === "andreiapreto@gmail.com");
+            if (isDefaultAdmin && data?.role !== 'admin') {
+              // Self-heal: Force admin role in database for the default admin
+              await setDoc(doc(db, 'users', u.uid), {
+                uid: u.uid,
+                email: u.email,
+                name: data?.name || u.displayName || 'Andréia Preto',
+                role: 'admin',
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+              const updatedDoc = await getDoc(doc(db, 'users', u.uid));
+              data = updatedDoc.data();
+            }
+            setUserData(data || null);
             setIsAdmin(data?.role === 'admin' || isDefaultAdmin);
           } catch (error) {
             handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
@@ -1392,12 +1407,13 @@ const Diagnostico = () => {
             
             if (!currentUser && data.email && data.password) {
               console.log("👤 No user found, attempting login/signup...");
+              const sanitizedDataEmail = data.email.trim().toLowerCase();
               try {
-                const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+                const userCredential = await createUserWithEmailAndPassword(auth, sanitizedDataEmail, data.password);
                 currentUser = userCredential.user;
               } catch (e: any) {
                 if (e.code === 'auth/email-already-in-use') {
-                  const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+                  const userCredential = await signInWithEmailAndPassword(auth, sanitizedDataEmail, data.password);
                   currentUser = userCredential.user;
                 } else {
                   throw e;
@@ -1409,10 +1425,10 @@ const Diagnostico = () => {
               console.log("💾 Updating user doc for", currentUser.uid);
               await setDoc(doc(db, 'users', currentUser.uid), {
                 uid: currentUser.uid,
-                name: data.name || currentUser.displayName || 'Usuário',
-                email: data.email || currentUser.email,
+                name: (data.name || currentUser.displayName || 'Usuário').trim(),
+                email: (data.email || currentUser.email || '').trim().toLowerCase(),
                 birthDate: data.birthDate || '',
-                whatsapp: data.whatsapp || '',
+                whatsapp: (data.whatsapp || '').trim(),
                 role: 'user',
                 paidStatus: true,
                 mappingCredits: increment(product.name === 'Mapeamento Emocional Floral' ? 1 : 0),
@@ -1464,23 +1480,50 @@ const Diagnostico = () => {
     }
   }, [user, loading, isAuthInitialized]);
 
+  const handleForgotPassword = async () => {
+    if (!authData.email) {
+      setAuthError("Por favor, digite o seu e-mail no campo acima antes de solicitar a redefinição de senha.");
+      return;
+    }
+    setAuthError(null);
+    setResetSent(false);
+    try {
+      await sendPasswordResetEmail(auth, authData.email.trim().toLowerCase());
+      setResetSent(true);
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      if (err.code === 'auth/user-not-found') {
+        setAuthError("Não encontramos nenhuma conta cadastrada com este e-mail.");
+      } else if (err.code === 'auth/invalid-email') {
+        setAuthError("O formato do e-mail inserido é inválido.");
+      } else {
+        setAuthError("Erro ao enviar e-mail de redefinição: " + (err.message || err));
+      }
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
     try {
+      const sanitizedEmail = authData.email.trim().toLowerCase();
       if (authMode === 'signup') {
-        if (!authData.name || !authData.email || !authData.password || !authData.birthDate) {
+        if (!authData.name || !sanitizedEmail || !authData.password || !authData.birthDate) {
           setAuthError('Por favor, preencha todos os campos obrigatórios.');
           return;
         }
-        const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
+        if (authData.password.length < 6) {
+          setAuthError('A senha deve ter pelo menos 6 caracteres.');
+          return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, sanitizedEmail, authData.password);
         try {
           await setDoc(doc(db, 'users', userCredential.user.uid), {
             uid: userCredential.user.uid,
-            name: authData.name,
-            email: authData.email,
+            name: authData.name.trim(),
+            email: sanitizedEmail,
             birthDate: authData.birthDate,
-            whatsapp: authData.whatsapp,
+            whatsapp: (authData.whatsapp || '').trim(),
             role: 'user',
             paidStatus: false,
             createdAt: new Date().toISOString()
@@ -1489,14 +1532,27 @@ const Diagnostico = () => {
           handleFirestoreError(error, OperationType.CREATE, `users/${userCredential.user.uid}`);
         }
       } else {
-        await signInWithEmailAndPassword(auth, authData.email, authData.password);
+        if (!sanitizedEmail || !authData.password) {
+          setAuthError('Por favor, preencha o e-mail e a senha.');
+          return;
+        }
+        await signInWithEmailAndPassword(auth, sanitizedEmail, authData.password);
       }
       setPage(intendedPage || 'home');
       setIntendedPage(null);
     } catch (err: any) {
       console.error("Auth error:", err);
+      const errMsg = err.message || '';
       if (err.code === 'auth/operation-not-allowed') {
         setAuthError("Erro: O método de login por E-mail/Senha não está ativado no Console do Firebase.");
+      } else if (err.code === 'auth/email-already-in-use') {
+        setAuthError("Este e-mail já está cadastrado. Por favor, faça login ou use outro e-mail.");
+      } else if (err.code === 'auth/weak-password') {
+        setAuthError("A senha especificada é muito fraca. Escolha uma senha de pelo menos 6 caracteres.");
+      } else if (err.code === 'auth/invalid-email') {
+        setAuthError("O formato do e-mail inserido é inválido.");
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setAuthError("E-mail ou senha incorretos.");
       } else if (err.code === 'auth/network-request-failed') {
         setAuthError(
           <div className="space-y-4">
@@ -1506,6 +1562,8 @@ const Diagnostico = () => {
         );
       } else if (err.code === 'auth/invalid-credential') {
         setAuthError("E-mail ou senha incorretos.");
+      } else if (errMsg.includes('permission-denied') || errMsg.includes('insufficient permissions')) {
+        setAuthError("Os dados inseridos não são válidos para criação de conta. Por favor, certifique-se de que preencheu um e-mail válido.");
       } else {
         setAuthError(err.message || "Ocorreu um erro na autenticação.");
       }
@@ -1760,7 +1818,8 @@ const Diagnostico = () => {
       let currentFirebaseUid = user?.uid;
       
       if (!user) {
-        if (!authData.email || !authData.password || !authData.name || !authData.birthDate) {
+        const sanitizedEmail = authData.email.trim().toLowerCase();
+        if (!sanitizedEmail || !authData.password || !authData.name || !authData.birthDate) {
           setAuthError('Por favor, preencha todos os campos obrigatórios.');
           setIsProcessingPayment(false);
           return;
@@ -1773,17 +1832,17 @@ const Diagnostico = () => {
         
         // Create account BEFORE checkout to have a firebaseUid
         try {
-          const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
+          const userCredential = await createUserWithEmailAndPassword(auth, sanitizedEmail, authData.password);
           currentFirebaseUid = userCredential.user.uid;
           
           // Pre-create user doc
           try {
             await setDoc(doc(db, 'users', currentFirebaseUid), {
               uid: currentFirebaseUid,
-              name: authData.name,
-              email: authData.email,
+              name: authData.name.trim(),
+              email: sanitizedEmail,
               birthDate: authData.birthDate,
-              whatsapp: authData.whatsapp || '',
+              whatsapp: (authData.whatsapp || '').trim(),
               role: 'user',
               paidStatus: false,
               createdAt: new Date().toISOString()
@@ -1793,16 +1852,23 @@ const Diagnostico = () => {
           }
         } catch (e: any) {
           if (e.code === 'auth/email-already-in-use') {
-            const userCredential = await signInWithEmailAndPassword(auth, authData.email, authData.password);
+            const userCredential = await signInWithEmailAndPassword(auth, sanitizedEmail, authData.password);
             currentFirebaseUid = userCredential.user.uid;
           } else if (e.code === 'auth/operation-not-allowed') {
             throw new Error("O cadastro por e-mail/senha não está habilitado no Firebase. Por favor, habilite-o no console do Firebase.");
+          } else if (e.code === 'auth/weak-password') {
+            throw new Error("A senha fornecida é muito fraca. Por favor, use pelo menos 6 caracteres.");
+          } else if (e.code === 'auth/invalid-email') {
+            throw new Error("O formato do e-mail fornecido é inválido.");
           } else {
             throw e;
           }
         }
         
-        localStorage.setItem('pending_auth_data', JSON.stringify(authData));
+        localStorage.setItem('pending_auth_data', JSON.stringify({
+          ...authData,
+          email: sanitizedEmail
+        }));
       } else {
         localStorage.setItem('pending_auth_data', JSON.stringify({ email: user.email, name: user.displayName }));
       }
@@ -2321,15 +2387,43 @@ const Diagnostico = () => {
 
                   <div className="flex flex-col gap-3">
                     <label className="text-[10px] uppercase tracking-[0.3em] text-gold-main/40 font-bold">Senha</label>
-                    <input 
-                      type="password" 
-                      value={authData.password}
-                      onChange={(e) => setAuthData({...authData, password: e.target.value})}
-                      className="input"
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        value={authData.password}
+                        onChange={(e) => setAuthData({...authData, password: e.target.value})}
+                        className="input w-full pr-12"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white transition-colors"
+                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
+
+                  {authMode === 'login' && (
+                    <div className="flex justify-end -mt-5">
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-[10px] uppercase tracking-widest text-gold-main/60 hover:text-gold-main transition-colors font-bold"
+                      >
+                        Esqueci minha senha
+                      </button>
+                    </div>
+                  )}
+
+                  {resetSent && (
+                    <div className="text-emerald-400 text-xs text-center bg-emerald-500/10 border border-emerald-500/25 p-3 rounded-xl font-light">
+                      E-mail de recuperação enviado! Verifique sua caixa de entrada e spam.
+                    </div>
+                  )}
 
                   {authError && (
                     <div className="text-red-400/80 text-xs text-center font-light">
@@ -3945,13 +4039,23 @@ ESTRUTURA DA RESPOSTA (Markdown):
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold">Senha</label>
-                          <input 
-                            type="password" 
-                            placeholder="••••••••" 
-                            className="input"
-                            value={authData.password}
-                            onChange={(e) => setAuthData({...authData, password: e.target.value})}
-                          />
+                          <div className="relative">
+                            <input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="••••••••" 
+                              className="input w-full pr-12"
+                              value={authData.password}
+                              onChange={(e) => setAuthData({...authData, password: e.target.value})}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white transition-colors"
+                              aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
                         <div className="flex justify-end items-center mt-2">
                           <button 

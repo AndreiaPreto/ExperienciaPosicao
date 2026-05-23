@@ -68,7 +68,71 @@ if (isMockKey) {
 }
 const stripe = new Stripe(isMockKey ? "sk_test_mock" : stripeKey!);
 
+async function ensureAdminAccount() {
+  const adminEmail = "andreiapreto@gmail.com";
+  const adminPassword = "And1267$";
+  
+  try {
+    console.log(`[Self-Heal] Ensuring admin account for ${adminEmail}...`);
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(adminEmail);
+      console.log(`[Self-Heal] Admin user already exists. Updating password to requested one...`);
+      await admin.auth().updateUser(userRecord.uid, {
+        password: adminPassword,
+        emailVerified: true
+      });
+      console.log(`[Self-Heal] Password updated successfully for existing user.`);
+    } catch (authError: any) {
+      if (authError.code === 'auth/user-not-found') {
+        console.log(`[Self-Heal] Admin user not found. Creating a new account...`);
+        userRecord = await admin.auth().createUser({
+          email: adminEmail,
+          password: adminPassword,
+          emailVerified: true,
+          displayName: "Andréia Preto"
+        });
+        console.log(`[Self-Heal] Created new admin user.`);
+      } else {
+        throw authError;
+      }
+    }
+
+    if (userRecord && userRecord.uid) {
+      // Also ensure the user document exists in Firestore and has the 'admin' role
+      const userRef = db.collection("users").doc(userRecord.uid);
+      const docSnap = await userRef.get();
+      if (!docSnap.exists) {
+        console.log(`[Self-Heal] Creating Firestore admin user document...`);
+        await userRef.set({
+          uid: userRecord.uid,
+          email: adminEmail,
+          name: "Andréia Preto",
+          role: "admin",
+          paidStatus: true,
+          mappingCredits: 999,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        const data = docSnap.data();
+        if (data?.role !== "admin") {
+          console.log(`[Self-Heal] Updating Firestore user document role to admin...`);
+          await userRef.update({
+            role: "admin"
+          });
+        }
+      }
+      console.log(`[Self-Heal] Admin account is fully verified, updated, and ready!`);
+    }
+  } catch (err) {
+    console.error("[Self-Heal] Error in ensureAdminAccount:", err);
+  }
+}
+
 async function startServer() {
+  // Run the admin sync process on startup
+  await ensureAdminAccount();
+
   const app = express();
   const PORT = 3000;
 
@@ -230,8 +294,11 @@ async function startServer() {
         if (!isAdmin) {
           try {
             const userRecord = await admin.auth().getUser(uid as string);
-            if (userRecord.email === 'andreiapreto@gmail.com') {
+            if (userRecord.email && userRecord.email.toLowerCase() === 'andreiapreto@gmail.com') {
               isAdmin = true;
+              if (userData?.role !== 'admin') {
+                await db.collection("users").doc(uid as string).update({ role: 'admin' });
+              }
             }
           } catch (e) {
             console.error("Error fetching user record:", e);

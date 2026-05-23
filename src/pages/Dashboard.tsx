@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Plus, Trash2, UserPlus, LogOut, MessageCircle } from 'lucide-react';
 import { auth, db } from '../services/firebase';
-import { collection, query, onSnapshot, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const DashboardPosicao = () => {
@@ -21,11 +21,24 @@ const DashboardPosicao = () => {
 
       // Check if user is admin
       const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data();
+      let userData = userDoc.data();
       
-      // Default admin check
-      const isDefaultAdmin = user.email === "andreiapreto@gmail.com";
+      // Default admin check (case-insensitive)
+      const isDefaultAdmin = !!(user.email && user.email.toLowerCase() === "andreiapreto@gmail.com");
       
+      if (isDefaultAdmin && userData?.role !== 'admin') {
+        // Self-heal: Force admin role in database for the default admin
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          name: userData?.name || user.displayName || 'Andréia Preto',
+          role: 'admin',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        const updatedDoc = await getDoc(doc(db, 'users', user.uid));
+        userData = updatedDoc.data();
+      }
+
       if (userData?.role === 'admin' || isDefaultAdmin) {
         setIsAdmin(true);
       } else {
