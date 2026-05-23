@@ -1221,6 +1221,7 @@ const Diagnostico = () => {
   const [triageAnswers, setTriageAnswers] = useState<string[]>([]);
   const [triageResult, setTriageResult] = useState<{title: string, text: string, button: string, target: Page} | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
+  const [arcanoScores, setArcanoScores] = useState<Record<string, number>>({});
   const [analysisText, setAnalysisText] = useState("Observando padrões de posicionamento...");
   const navigate = useNavigate();
 
@@ -1854,14 +1855,26 @@ const Diagnostico = () => {
   const startQuiz = () => {
     showPage('quiz');
     setCurrentIndex(0);
+    setAnswers([]);
+    setArcanoScores({});
   };
 
-  const handleAnswer = (value: string) => {
-    const newAnswers = [...answers, value];
-    setAnswers(newAnswers);
+  const handleAnswer = (optionIndex: number) => {
+    const currentQuestion = questions[currentIndex];
+    const selectedOption = currentQuestion.options[optionIndex];
     
+    // Acumula pontos no score de arcanos
+    const newScores = { ...arcanoScores };
+    selectedOption.arcanos.forEach(({ nome, peso }) => {
+      newScores[nome] = (newScores[nome] || 0) + peso;
+    });
+    setArcanoScores(newScores);
+
+    const newAnswers = [...answers, String(optionIndex)];
+    setAnswers(newAnswers);
+
     if (currentIndex + 1 >= questions.length) {
-      finishQuiz(newAnswers);
+      finishQuiz(newAnswers, newScores);
     } else {
       setCurrentIndex(currentIndex + 1);
     }
@@ -1927,29 +1940,31 @@ const Diagnostico = () => {
     setPage('triage_quiz');
   };
 
-  const finishQuiz = async (finalAnswers: string[]) => {
+  const finishQuiz = async (
+    finalAnswers: string[],
+    scores: Record<string, number> = {}
+  ) => {
     showPage('analysis');
-    
-    // Calculate archetype based on most frequent answer
-    const counts: { [key: string]: number } = {};
-    finalAnswers.forEach(a => counts[a] = (counts[a] || 0) + 1);
-    const mostFrequent = Object.keys(counts).reduce((a, b) => (counts[a] || 0) > (counts[b] || 0) ? a : b);
-    
-    let arcanoName = '';
-    let theme = '';
-    
-    switch(mostFrequent) {
-      case 'A': arcanoName = 'Imperador'; theme = 'Rigidez e Controle'; break;
-      case 'B': arcanoName = 'Justica'; theme = 'Sobrecarga e Dever'; break;
-      case 'C': arcanoName = 'Roda da Fortuna'; theme = 'Evitação e Flexibilidade'; break;
-      case 'D': arcanoName = 'Eremita'; theme = 'Isolamento e Proteção'; break;
-      default: arcanoName = 'Louco'; theme = 'Busca por Sentido';
-    }
 
-    const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano === arcanoName) || ARCANOS_MATRIZ[0];
+    // ── 1. Encontrar arcano com maior pontuação ─────────────────
+    const arcanoVencedor = Object.entries(scores).reduce(
+      (max, [nome, pts]) => pts > max.pts ? { nome, pts } : max,
+      { nome: 'Louco', pts: 0 }
+    ).nome;
+
+    // ── 2. Top 3 arcanos (para exibir na tela de resultado) ─────
+    const top3 = Object.entries(scores)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([nome]) => nome);
+
+    // ── 3. Buscar dados completos do arcano ─────────────────────
+    const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano === arcanoVencedor)
+      || ARCANOS_MATRIZ[0];
+
     setSelectedArcano(arcanoData);
 
-    // Save to Firestore
+    // ── 4. Salvar no Firebase ───────────────────────────────────
     if (user) {
       try {
         const diagRef = doc(collection(db, 'diagnosticos'));
@@ -1957,7 +1972,14 @@ const Diagnostico = () => {
           userId: user.uid,
           userName: userData?.name || user.email || 'Usuário',
           archetype: arcanoData.arcano,
-          theme,
+          numero: arcanoData.numero,
+          simbolo: arcanoData.simbolo,
+          ferida: arcanoData.ferida,
+          direcao: arcanoData.direcao,
+          florais: arcanoData.florais,
+          reprogramacao: arcanoData.reprogramacao,
+          top3Arcanos: top3,
+          scores,                    // pontuação completa salva para histórico
           answers: finalAnswers,
           arcanoData,
           createdAt: new Date().toISOString()
@@ -1966,11 +1988,16 @@ const Diagnostico = () => {
         handleFirestoreError(error, OperationType.WRITE, 'diagnosticos');
       }
     }
-    
-    setMapeamentoResult(`Sua análise revelou o arquétipo **${arcanoData.arcano}**. Sua temática principal é **${theme}**.`);
-    
+
+    // ── 5. Textos de análise progressiva ───────────────────────
+    setMapeamentoResult(
+      `Seu padrão dominante revelou o arquétipo **${arcanoData.arcano}**.\n\n${arcanoData.mensagem}`
+    );
+
     setTimeout(() => {
-      setAnalysisText(`Seu padrão dominante é ${arcanoData.arcano}. Isso revela uma tendência a ${theme.toLowerCase()}.`);
+      setAnalysisText(
+        `${arcanoData.simbolo} ${arcanoData.arcano} — ${arcanoData.ferida}`
+      );
     }, 1500);
 
     setTimeout(() => {
@@ -4248,7 +4275,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                       key={idx}
                       whileHover={{ x: 10, backgroundColor: "rgba(197, 160, 40, 0.05)" }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => handleAnswer(opt.value)}
+                      onClick={() => handleAnswer(idx)}
                       className="p-4 md:p-6 rounded-3xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
                     >
                       {opt.text}
@@ -4296,11 +4323,20 @@ ESTRUTURA DA RESPOSTA (Markdown):
                 {selectedArcano && (
                   <div className="space-y-10 mb-12">
                     <div className="flex flex-col items-center text-center pb-10 border-b border-white/5">
-                      <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-4 block font-bold">🃏 Seu arquétipo atual</span>
-                      <h3 className="serif text-4xl text-gold-main">{selectedArcano.arcano}</h3>
+                      <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-4 block font-bold">🃏 Seu arquétipo dominante</span>
+                      <p className="serif text-4xl md:text-5xl text-gold-light mb-2">
+                        {selectedArcano.simbolo} {selectedArcano.arcano}
+                      </p>
+                      <p className="text-white/30 text-[10px] uppercase tracking-widest mb-4">
+                        Arcano {selectedArcano.numero} · Diagnóstico POSIÇÃO
+                      </p>
+                      <p className="text-white/60 leading-relaxed font-light text-sm max-w-md">
+                        {selectedArcano.mensagem}
+                      </p>
                     </div>
 
                     <div className="grid gap-8">
+                      {/* Sombra section */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
                           <div className="w-1 h-1 rounded-full bg-gold-main" />
@@ -4311,6 +4347,20 @@ ESTRUTURA DA RESPOSTA (Markdown):
                         </p>
                       </div>
 
+                      {/* Dom active */}
+                      {selectedArcano.dom && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
+                            <div className="w-1 h-1 rounded-full bg-gold-main" />
+                            ✨ Seu Dom e Força
+                          </div>
+                          <p className="text-white/60 font-light leading-relaxed">
+                            {selectedArcano.dom}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Caminhos de evolução */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
                           <div className="w-1 h-1 rounded-full bg-gold-main" />
@@ -4325,15 +4375,53 @@ ESTRUTURA DA RESPOSTA (Markdown):
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
-                          <div className="w-1 h-1 rounded-full bg-gold-main" />
-                          🌿 Direção
+                      {/* Direção */}
+                      <div className="glass-card p-6 border-gold-main/15">
+                        <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold mb-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-gold-main" />
+                          🌿 Seu caminho agora
                         </div>
-                        <p className="text-gold-light/90 font-medium leading-relaxed italic">
+                        <p className="text-gold-light/90 font-light leading-relaxed italic text-sm">
                           "{selectedArcano.direcao}"
                         </p>
                       </div>
+
+                      {/* Florais Recomendados */}
+                      {selectedArcano.florais && selectedArcano.florais.length > 0 && (
+                        <div className="glass-card p-6 border-gold-main/15">
+                          <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold mb-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gold-main" />
+                            🌱 Florais Recomendados
+                          </div>
+                          <div className="flex gap-2 flex-wrap pb-1">
+                            {selectedArcano.florais.map(f => (
+                              <span key={f} className="text-xs px-3 py-1 border border-gold-main/20 rounded-full text-gold-main/70 bg-gold-main/[0.02]">
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sugestão de Reprogramação Pessoal */}
+                      {selectedArcano.reprogramacao && (
+                        <div className="glass-card p-6 bg-gold-main/[0.02] border-gold-main/20">
+                          <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold mb-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gold-main" />
+                            🪐 Reprogramação recomendada
+                          </div>
+                          <p className="text-white/50 text-sm font-light leading-relaxed mb-4">
+                            Sua reprogramação sugerida foca em: <strong>{selectedArcano.reprogramacao}</strong>.
+                          </p>
+                          <button 
+                            onClick={() => showPage('reprogramacao_pessoal_info')}
+                            className="button-outline w-full text-[11px] font-semibold tracking-wider uppercase py-3"
+                          >
+                            Criar minha frequência →
+                          </button>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 )}
