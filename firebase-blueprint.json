@@ -107,12 +107,36 @@
         "notificado": { "type": "boolean", "description": "Whether the user was notified yet" }
       },
       "required": ["nome", "email", "inscrito_em", "notificado"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Products available in the system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "type": { "type": "string", "enum": ["one_time", "subscription", "library", "monthly"] },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" },
+        "legacyNames": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "slug", "category", "type", "active", "order"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Products list"
     },
     "/diagnosticos/{diagId}": {
       "schema": "Diagnostico",

@@ -22,7 +22,7 @@ import {
 import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc } from 'firebase/firestore';
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
-import { LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff } from 'lucide-react';
+import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 
 interface AppUser {
@@ -154,7 +154,7 @@ const rituais_mes = [
   }
 ];
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -741,12 +741,13 @@ const AdminProductsTab = () => (
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[
-        { name: 'Diagnóstico POSIÇÃO', price: 'R$ 69', sales: 124, status: 'Ativo' },
-        { name: 'Mapeamento Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
-        { name: 'Clube Clarear', price: 'R$ 47/mês', sales: 89, status: 'Ativo' },
-        { name: 'Clube do Tarô', price: 'R$ 27/mês', sales: 156, status: 'Ativo' },
-        { name: 'Reprogramação Pessoal', price: 'R$ 197', sales: 42, status: 'Ativo' },
-        { name: 'Reprograme-se', price: 'R$ 497', sales: 15, status: 'Ativo' },
+        { name: 'Diagnóstico de Posição', price: 'Gratuito/R$ 21', sales: 1240, status: 'Ativo' },
+        { name: 'Mapa de Posição - Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
+        { name: 'Reset de Posição', price: 'R$ 129', sales: 157, status: 'Ativo' },
+        { name: 'Clube Posição - Núcleo Tarô', price: 'R$ 117/mês', sales: 156, status: 'Ativo' },
+        { name: 'Clube Posição - Núcleo Clarear', price: 'R$ 47/mês', sales: 89, status: 'Ativo' },
+        { name: 'Ciclos de Posição do Mês', price: 'Gratuito', sales: 210, status: 'Ativo' },
+        { name: 'Biblioteca Posição', price: 'Exclusiva', sales: 320, status: 'Ativo' },
       ].map((p, i) => (
         <div key={i} className="p-6 border border-white/5 rounded-2xl bg-white/[0.01] hover:border-gold-main/20 transition-all group">
           <div className="flex justify-between items-start mb-6">
@@ -1043,6 +1044,7 @@ const AdminCouponsTab = ({ coupons, onRefresh, setNotification }: { coupons: any
 const Diagnostico = () => {
   const { access, refreshAccess } = useAccess();
   const [page, setPage] = useState<Page>('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1116,7 +1118,7 @@ const Diagnostico = () => {
         await addDoc(collection(db, 'reprogramacao_requests'), {
           userId: user.uid,
           userEmail: user.email,
-          productName: selectedProduct?.name || 'Reprogramação Pessoal',
+          productName: selectedProduct?.name || 'Reset de Posição',
           estadoEmocional: reprogramacaoData.estadoEmocional,
           objetivo: reprogramacaoData.objetivo,
           observacoes: reprogramacaoData.observacoes || '',
@@ -1131,7 +1133,7 @@ const Diagnostico = () => {
           userId: user.uid,
           date: selectedDate,
           time: selectedTime,
-          productName: selectedProduct?.name || 'Reprogramação Pessoal',
+          productName: selectedProduct?.name || 'Reset de Posição',
           status: 'scheduled',
           createdAt: new Date().toISOString()
         });
@@ -1431,7 +1433,7 @@ const Diagnostico = () => {
                 whatsapp: (data.whatsapp || '').trim(),
                 role: 'user',
                 paidStatus: true,
-                mappingCredits: increment(product.name === 'Mapeamento Emocional Floral' ? 1 : 0),
+                mappingCredits: increment((product.name === 'Mapa de Posição - Floral' || product.name === 'Mapeamento Emocional Floral') ? 1 : 0),
                 clube_ativo: product.name.includes('Clube'),
                 lastPurchase: product.name,
                 updatedAt: new Date().toISOString()
@@ -1445,7 +1447,7 @@ const Diagnostico = () => {
               await refreshAccess(currentUser.uid);
               
               console.log("🚀 Redirecting to correct page...");
-              if (product.name === 'Mapeamento Emocional Floral') {
+              if (product.name === 'Mapa de Posição - Floral' || product.name === 'Mapeamento Emocional Floral') {
                 showPage('mapeamento_form');
               } else {
                 showPage('confirmation');
@@ -1970,22 +1972,22 @@ const Diagnostico = () => {
       result = {
         title: "Clareza emocional",
         text: "Você está em um momento de excesso mental e precisa organizar o que está confuso antes de agir.",
-        button: "Ir para Clube Clarear",
-        target: 'clube_clarear_info'
+        button: "Ir para Clube Posição",
+        target: 'clube_posicao_info'
       };
     } else if (maior === "B") {
       result = {
         title: "Regulação emocional",
         text: "Existe uma carga emocional ativa influenciando suas decisões.",
-        button: "Ir para Reprogramação Pessoal",
+        button: "Ir para Reset de Posição",
         target: 'reprogramacao_pessoal_info'
       };
     } else if (maior === "C") {
       result = {
         title: "Direcionamento",
         text: "Você precisa de respostas externas claras para avançar.",
-        button: "Ir para Clube do Tarô",
-        target: 'clube_taro_info'
+        button: "Ir para Clube Posição",
+        target: 'clube_posicao_info'
       };
     } else {
       result = {
@@ -2103,44 +2105,158 @@ const Diagnostico = () => {
 
       <div className="atmosphere"></div>
       <div className="relative z-10 min-h-screen">
-        {/* User Status Bar */}
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center px-6 py-6 md:py-8 gap-4 sm:gap-0">
-          <h1 className="text-xl md:text-2xl text-gold-main tracking-widest uppercase text-sm font-light">Posição</h1>
-          {user ? (
-            <div className="flex items-center gap-3 md:gap-4 text-gold-main/80 text-[10px] md:text-xs">
-              <div className="flex items-center gap-2">
-                <UserIcon size={12} className="md:w-3.5 md:h-3.5" />
-                <span className="font-light tracking-wide truncate max-w-[100px] sm:max-w-none">{user.email?.split('@')[0]}</span>
-              </div>
-              {isAdmin && (
-                <button 
-                  onClick={() => showPage('admin_dashboard')}
-                  className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors flex items-center gap-2"
+        {/* Global Navigation Header - Experiência Posição */}
+        <header className="border-b border-white/5 bg-black/25 backdrop-blur-md sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            {/* Logo */}
+            <h1 
+              onClick={() => { showPage('home'); setMobileMenuOpen(false); }}
+              className="text-lg md:text-xl text-gold-main tracking-[0.2em] uppercase font-serif cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              Experiência Posição
+            </h1>
+
+            {/* Desktop Menu */}
+            <nav className="hidden lg:flex items-center gap-6">
+              {[
+                { label: 'Início', action: () => showPage('home') },
+                { label: 'Diagnóstico de Posição', action: () => showPage('diagnostico_info') },
+                { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
+                { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
+                { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
+                { label: 'Ciclos do Mês', action: () => showPage('rituais_mes_info') },
+                { label: 'Biblioteca', action: () => navigate('/biblioteca') }
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={item.action}
+                  className="text-[10px] md:text-xs tracking-widest text-white/50 hover:text-gold-main uppercase transition-colors font-medium border-b border-transparent hover:border-gold-main/20 pb-1"
                 >
-                  <Settings size={12} />
-                  Admin
+                  {item.label}
                 </button>
-              )}
-              <button 
-                onClick={() => showPage('jornada_emocional')}
-                className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors flex items-center gap-2"
+              ))}
+            </nav>
+
+            {/* User Session Area & Mobile Menu Trigger */}
+            <div className="flex items-center gap-4">
+              {/* User Session */}
+              <div className="hidden sm:flex items-center gap-3">
+                {user ? (
+                  <div className="flex items-center gap-3 text-[10px] md:text-xs">
+                    <span className="text-white/40 font-light tracking-wide max-w-[100px] truncate">{user.email?.split('@')[0]}</span>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => showPage('admin_dashboard')}
+                        className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
+                      >
+                        Admin
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => showPage('jornada_emocional')}
+                      className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
+                    >
+                      Jornada
+                    </button>
+                    <button onClick={handleLogout} className="text-white/30 hover:text-white transition-colors p-1" title="Sair">
+                      <LogOut size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setPage('auth')} 
+                    className="text-gold-main/60 hover:text-gold-main text-xs flex items-center gap-2 uppercase tracking-widest font-light"
+                  >
+                    <LogIn size={14} /> Entrar
+                  </button>
+                )}
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 text-white/65 hover:text-white transition-colors"
               >
-                <History size={12} />
-                Minha Jornada
-              </button>
-              <button onClick={handleLogout} className="text-gold-main/40 hover:text-gold-main transition-colors">
-                <LogOut size={14} />
+                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
-          ) : (
-            <button 
-              onClick={() => setPage('auth')} 
-              className="text-gold-main/60 hover:text-gold-main text-xs flex items-center gap-2 uppercase tracking-widest font-light"
-            >
-              <LogIn size={14} /> Entrar
-            </button>
-          )}
-        </div>
+          </div>
+
+          {/* Mobile Overlay Menu */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="lg:hidden border-t border-white/5 bg-black/95 overflow-hidden"
+              >
+                <div className="px-6 py-6 flex flex-col gap-4">
+                  {[
+                    { label: 'Início', action: () => showPage('home') },
+                    { label: 'Diagnóstico de Posição', action: () => showPage('diagnostico_info') },
+                    { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
+                    { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
+                    { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
+                    { label: 'Ciclos do Mês', action: () => showPage('rituais_mes_info') },
+                    { label: 'Biblioteca', action: () => navigate('/biblioteca') }
+                  ].map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        item.action();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-left py-2 text-sm tracking-widest text-white/60 hover:text-gold-main uppercase transition-colors border-b border-white/5 font-medium"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+
+                  {/* Mobile Mobile User Controls */}
+                  <div className="pt-4 flex flex-col gap-4 sm:hidden">
+                    {user ? (
+                      <div className="flex flex-col gap-3">
+                        <div className="text-xs text-white/40 tracking-wide font-light flex items-center gap-1">
+                          <UserIcon size={12} /> {user.email}
+                        </div>
+                        <div className="flex gap-2">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => { showPage('admin_dashboard'); setMobileMenuOpen(false); }}
+                              className="bg-gold-main/10 text-gold-main px-4 py-2 rounded text-[10px] uppercase tracking-widest font-medium text-center flex-1"
+                            >
+                              Admin
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => { showPage('jornada_emocional'); setMobileMenuOpen(false); }}
+                            className="bg-gold-main/10 text-gold-main px-4 py-2 rounded text-[10px] uppercase tracking-widest font-medium text-center flex-1"
+                          >
+                            Jornada
+                          </button>
+                        </div>
+                        <button 
+                          onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                          className="text-left text-xs text-white/30 uppercase tracking-widest py-2 font-light flex items-center gap-2"
+                        >
+                          <LogOut size={14} /> Sair da Conta
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => { setPage('auth'); setMobileMenuOpen(false); }} 
+                        className="text-gold-main/60 hover:text-gold-main text-xs flex items-center gap-2 uppercase tracking-widest font-light py-2"
+                      >
+                        <LogIn size={14} /> Entrar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </header>
 
         <AnimatePresence mode="wait">
           {page === 'home' && (
@@ -2152,28 +2268,30 @@ const Diagnostico = () => {
               exit={{ opacity: 0, transition: { duration: 0.3 } }}
               className="animate-screen max-w-5xl mx-auto"
             >
-              <motion.header variants={itemVariants} className="mb-16 md:mb-32 flex flex-col sm:flex-row justify-between items-center sm:items-end text-center sm:text-left gap-8">
-                <div>
-                  <h1 className="serif text-5xl md:text-6xl text-gold-light mb-4">Posição</h1>
-                  <p className="text-gold-main/30 uppercase tracking-[0.4em] md:tracking-[0.6em] text-[9px] md:text-[10px] font-bold">Alinhamento Interno</p>
-                </div>
-                <div className="flex flex-col gap-6 items-center sm:items-end">
-                  {isAdmin && (
-                    <button 
-                      onClick={() => showPage('admin_dashboard')}
-                      className="text-emerald-400 hover:text-emerald-300 transition-all duration-500 text-[10px] uppercase tracking-[0.3em] font-bold pb-2 border-b border-emerald-500/10 hover:border-emerald-500 flex items-center gap-2"
-                    >
-                      <ShieldCheck size={14} /> Admin
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => user ? setPage('jornada_emocional') : showPage('auth')}
-                    className="text-gold-main/40 hover:text-gold-main transition-all duration-500 text-[10px] uppercase tracking-[0.3em] font-bold pb-2 border-b border-gold-main/10 hover:border-gold-main"
-                  >
-                    {user ? 'Painel' : 'Acessar'}
-                  </button>
-                </div>
-              </motion.header>
+               <motion.header variants={itemVariants} className="mb-16 md:mb-24 flex flex-col md:flex-row justify-between items-center md:items-start text-center md:text-left gap-8">
+                 <div className="max-w-xl">
+                   <h1 className="serif text-4xl md:text-5xl lg:text-6xl text-gold-light mb-4 font-serif">Experiência Posição</h1>
+                   <p className="text-white/60 font-light text-sm md:text-base leading-relaxed tracking-wide">
+                     Um ecossistema de clareza, reorganização interna e direção consciente para você ocupar seu lugar com mais presença, estratégia e verdade.
+                   </p>
+                 </div>
+                 <div className="flex flex-row md:flex-col gap-4 md:gap-6 items-center md:items-end self-center md:self-start">
+                   {isAdmin && (
+                     <button 
+                       onClick={() => showPage('admin_dashboard')}
+                       className="text-emerald-400 hover:text-emerald-300 transition-all duration-500 text-[10px] uppercase tracking-[0.3em] font-bold pb-2 border-b border-emerald-500/10 hover:border-emerald-500 flex items-center gap-2"
+                     >
+                       <ShieldCheck size={14} /> Admin
+                     </button>
+                   )}
+                   <button 
+                     onClick={() => user ? setPage('jornada_emocional') : showPage('auth')}
+                     className="text-gold-main/40 hover:text-gold-main transition-all duration-500 text-[10px] uppercase tracking-[0.3em] font-bold pb-2 border-b border-gold-main/10 hover:border-gold-main"
+                   >
+                     {user ? 'Painel de Membro' : 'Acessar Conta'}
+                   </button>
+                 </div>
+               </motion.header>
 
               <motion.div variants={itemVariants} className="space-y-12 md:space-y-24">
                 {/* Triage Quiz Section */}
@@ -2210,72 +2328,59 @@ const Diagnostico = () => {
                 <div className="space-y-12">
                   <div className="flex items-center gap-6">
                     <div className="h-[1px] flex-1 bg-gold-main/10" />
-                    <h3 className="serif text-3xl text-gold-light/60">Caminhos POSIÇÃO</h3>
+                    <h3 className="serif text-3xl text-gold-light/60">Experiência Posição</h3>
                     <div className="h-[1px] flex-1 bg-gold-main/10" />
                   </div>
-                  <div className="grid md:grid-cols-2 gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
                     {[
                       {
+                        id: 'diagnostico_info',
+                        title: 'Diagnóstico de Posição',
+                        desc: 'Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento.',
+                        tag: 'Diagnóstico',
+                        cta: 'Iniciar diagnóstico',
+                      },
+                      {
                         id: 'mapeamento_intro',
-                        title: 'Mapeamento Emocional Floral',
+                        title: 'Mapa de Posição - Floral',
                         desc: 'Descubra sua emoção dominante, seu arquétipo ativo e sua fórmula floral personalizada.',
                         tag: 'Mapeamento',
                         cta: 'Descobrir meu padrão',
                       },
                       {
+                        id: 'reprogramacao_pessoal_info',
+                        title: 'Reset de Posição',
+                        desc: 'Reorganize padrões, solte crenças e sintonize seu áudio de frequência personalizada.',
+                        tag: 'Reprogramação',
+                        cta: 'Saber Mais',
+                      },
+                      {
+                        id: 'clube_posicao_info',
+                        title: 'Clube Posição',
+                        desc: 'Acompanhamento contínuo através de nossos dois núcleos de clareza e reorganização.',
+                        tag: 'Clube',
+                        cta: 'Acessar Clube',
+                      },
+                      {
                         id: 'rituais_mes_info',
-                        title: 'Rituais do Mês',
-                        desc: 'Reconecte-se com os ciclos da vida. Rituais lunares guiados, entregues direto para você praticar no seu ritmo.',
-                        tag: 'Agenda',
+                        title: 'Ciclos de Posição do Mês',
+                        desc: 'Reconecte-se com os ciclos da vida. Acompanhamento energético com rituais entregues mensalmente.',
+                        tag: 'Ciclos',
                         cta: 'Ver rituais do mês',
                       },
                       {
-                        id: 'clube_taro_info',
-                        title: 'Clube do Tarô',
-                        desc: 'Orientação semanal e leitura energética mensal para manter o fluxo constante.',
-                        tag: 'Comunidade',
-                        cta: 'Entrar para o Clube',
-                      },
-                      {
                         id: 'biblioteca',
-                        title: 'Biblioteca de E-books',
-                        desc: 'Sua estante virtual premium de materiais, guias e e-books exclusivos.',
-                        tag: 'Conteúdo Premium',
+                        title: 'Biblioteca Posição',
+                        desc: 'Sua estante virtual premium de materiais, guias e e-books oficiais da Experiência Posição.',
+                        tag: 'Biblioteca',
                         cta: 'Explorar biblioteca',
-                      },
-                      {
-                        id: 'clube_clarear_info',
-                        title: 'Clube Clarear',
-                        desc: isAdmin
-                          ? 'Práticas semanais focadas em clareza mental e estabilidade emocional profunda.'
-                          : 'Em breve: práticas semanais focadas em clareza mental e estabilidade emocional.',
-                        tag: isAdmin ? 'Prática' : 'Em Breve',
-                        cta: isAdmin ? 'Acessar o Clube' : 'Entrar na lista de espera',
-                      },
-                      {
-                        id: 'reprogramacao_pessoal_info',
-                        title: 'Reprogramação Pessoal',
-                        desc: 'Áudio de frequência personalizada para alinhar sua base interna através de uma sessão individual.',
-                        tag: 'Atendimento Único',
-                        cta: 'Criar minha frequência',
-                      },
-                      {
-                        id: 'diagnostico_info',
-                        title: 'Diagnóstico POSIÇÃO',
-                        desc: 'Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento.',
-                        tag: 'Mapeamento',
-                        cta: 'Iniciar diagnóstico',
                       },
                     ].map((item) => (
                       <motion.div 
                         key={item.id}
                         variants={itemVariants}
-                        className="glass-card flex flex-col justify-between group cursor-pointer"
+                        className="glass-card flex flex-col justify-between group cursor-pointer h-full"
                         onClick={() => {
-                          if (item.id === 'clube_clarear_info' && !isAdmin) {
-                            showPage('lista_espera_clarear');
-                            return;
-                          }
                           if (item.id === 'biblioteca') {
                             navigate('/biblioteca');
                           } else {
@@ -2285,38 +2390,10 @@ const Diagnostico = () => {
                       >
                         <div>
                           <span className="text-gold-main/20 text-[9px] uppercase tracking-[0.3em] mb-6 block font-bold">{item.tag}</span>
-                          <h2 className="serif text-4xl text-gold-light mb-6 group-hover:text-gold-main transition-colors duration-500">{item.title}</h2>
+                          <h2 className="serif text-3xl text-gold-light mb-6 group-hover:text-gold-main transition-colors duration-500 leading-tight">{item.title}</h2>
                           <p className="text-white/40 text-sm leading-relaxed mb-10 font-light">{item.desc}</p>
                         </div>
-                        <button className="button-outline w-full">{item.cta}</button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Secondary Section: Sessões Individuais */}
-                <div className="space-y-12">
-                  <div className="flex items-center gap-6">
-                    <div className="h-[1px] flex-1 bg-gold-main/10" />
-                    <h3 className="serif text-3xl text-gold-light/60">Sessões Individuais</h3>
-                    <div className="h-[1px] flex-1 bg-gold-main/10" />
-                  </div>
-                  <div className="grid md:grid-cols-1 max-w-2xl mx-auto">
-                    {[
-                      { id: 'reprogramar_eu_info', title: 'Reprograme-se', desc: 'Processo guiado completo para reorganizar padrões e crenças limitantes.', tag: 'Transformação' }
-                    ].map((item) => (
-                      <motion.div 
-                        key={item.id}
-                        variants={itemVariants}
-                        className="glass-card flex flex-col md:flex-row items-center justify-between group cursor-pointer gap-8"
-                        onClick={() => showPage(item.id as Page)}
-                      >
-                        <div className="flex-1">
-                          <span className="text-gold-main/20 text-[9px] uppercase tracking-[0.3em] mb-4 block font-bold">Atendimento Único</span>
-                          <h2 className="serif text-3xl text-gold-light mb-4 group-hover:text-gold-main transition-colors duration-500">{item.title}</h2>
-                          <p className="text-white/40 text-sm font-light leading-relaxed">{item.desc}</p>
-                        </div>
-                        <button className="button-outline whitespace-nowrap px-8">Saber Mais</button>
+                        <button className="button-outline w-full py-3 text-sm">{item.cta}</button>
                       </motion.div>
                     ))}
                   </div>
@@ -2326,7 +2403,7 @@ const Diagnostico = () => {
               <motion.footer variants={itemVariants} className="mt-40 text-center pb-20">
                 <div className="w-12 h-[1px] bg-gold-main/20 mx-auto mb-10" />
                 <p className="text-gold-main/20 text-[9px] uppercase tracking-[0.5em] font-medium">
-                  © 2026 Posição • Alinhamento de Frequência
+                  © 2026 Experiência Posição • Alinhamento de Frequência
                 </p>
               </motion.footer>
             </motion.div>
@@ -2479,9 +2556,9 @@ const Diagnostico = () => {
             >
               <div className="back" onClick={() => setPage('home')}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
-                Início → Mapeamento Emocional Floral
+                Início → Mapa de Posição - Floral
               </p>
-              <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-6 block font-bold">🌿 Mapeamento Emocional Floral</span>
+              <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-6 block font-bold">🌿 Mapa de Posição - Floral</span>
               <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Você não sente o que sente por acaso.</h2>
               
               <div className="glass-card p-6 md:p-10 text-left mb-12">
@@ -2489,7 +2566,7 @@ const Diagnostico = () => {
                   Existe um padrão emocional ativo influenciando suas decisões, seu comportamento e até sua energia.
                 </p>
                 <p className="text-white/60 mb-10 leading-relaxed text-lg font-light">
-                  Neste mapeamento, você vai acessar:
+                  Neste mapa, você vai acessar:
                 </p>
                 <div className="space-y-4 mb-12">
                   {[
@@ -2530,19 +2607,19 @@ const Diagnostico = () => {
                         onClick={() => showPage('mapeamento_form')}
                         className="button w-full bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
                       >
-                        ✨ Iniciar meu Mapeamento
+                        ✨ Iniciar meu Mapa Floral
                       </button>
                     </div>
                   ) : (
                     <button 
                       type="button"
                       onClick={() => {
-                        setSelectedProduct({ name: 'Mapeamento Emocional Floral', price: 'R$ 9' });
+                        setSelectedProduct({ name: 'Mapa de Posição - Floral', price: 'R$ 9' });
                         showPage('checkout');
                       }}
                       className="button w-full"
                     >
-                      👉 Quero acessar meu mapeamento
+                      👉 Quero acessar meu mapa floral
                     </button>
                   )}
 
@@ -2578,7 +2655,7 @@ const Diagnostico = () => {
               
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-2 block font-bold">Mapeamento Emocional Floral</span>
+                  <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-2 block font-bold">Mapa de Posição - Floral</span>
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentMapeamentoStep + 1} de {mapeamentoQuestions.length}</h2>
                 </div>
                 <div className="text-right">
@@ -2967,13 +3044,13 @@ ESTRUTURA DA RESPOSTA (Markdown):
             >
               <div className="back" onClick={() => showPage('home')}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
-                Início → Reprogramação Pessoal
+                Início → Reset de Posição
               </p>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01]">
                 <div className="flex justify-between items-center mb-8">
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold">Frequência Personalizada</span>
                 </div>
-                <h2 className="serif text-5xl text-gold-light mb-6">Reprogramação Pessoal</h2>
+                <h2 className="serif text-5xl text-gold-light mb-6">Reset de Posição</h2>
                 <div className="price mb-10">R$ 129</div>
                 
                 <p className="text-white/40 mb-12 leading-relaxed text-lg font-light">
@@ -3004,7 +3081,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                 ) : (
                   <button 
                     onClick={() => {
-                      setSelectedProduct({ name: 'Reprogramação Pessoal', price: 'R$ 129' });
+                      setSelectedProduct({ name: 'Reset de Posição', price: 'R$ 129' });
                       showPage('checkout');
                     }}
                     className="button w-full"
@@ -3024,6 +3101,125 @@ ESTRUTURA DA RESPOSTA (Markdown):
               exit={{ opacity: 0, y: -20 }}
             >
               <ClubeClarearListaEspera onBack={() => showPage('home')} />
+            </motion.div>
+          )}
+
+          {page === 'clube_posicao_info' && (
+            <motion.div 
+              key="clube_posicao_info"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-left max-w-5xl mx-auto space-y-12"
+            >
+              <div className="back" onClick={() => showPage('home')}>← Voltar</div>
+              <p className="text-[10px] text-white/15 uppercase tracking-widest mb-2 font-bold">
+                Início → Clube Posição
+              </p>
+              
+              <div className="text-center max-w-2xl mx-auto space-y-4 py-6">
+                <span className="text-gold-main/40 text-[10px] uppercase tracking-[0.5em] font-bold">Acompanhamento de Frequência</span>
+                <h2 className="serif text-4xl md:text-5xl text-gold-light leading-tight font-serif text-center">Clube Posição</h2>
+                <p className="text-white/45 font-light leading-relaxed max-w-lg mx-auto text-sm text-center">
+                  Escolha um de nossos núcleos de alinhamento contínuo para manter sua presença e verdade ou participe de ambos para uma experiência integrada.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                {/* Nuvem Taro */}
+                <div className="glass-card flex flex-col justify-between group p-8 md:p-10 border border-gold-main/10 bg-gold-main/[0.01]">
+                  <div>
+                    <span className="text-gold-main/20 text-[9px] uppercase tracking-[0.3em] mb-6 block font-bold">Núcleo Orientação</span>
+                    <h3 className="serif text-3xl text-gold-light mb-4 group-hover:text-gold-main transition-colors duration-500">Núcleo Tarô</h3>
+                    <div className="price mb-6 text-2xl text-gold-main font-semibold">R$ 117 <span className="text-xs uppercase tracking-widest text-white/20">/ mês</span></div>
+                    <p className="text-white/40 text-sm leading-relaxed mb-8 font-light min-h-[60px]">
+                      Leituras, direcionamentos e acompanhamento simbólico para clareza, decisão e posicionamento.
+                    </p>
+                    
+                    <div className="space-y-3 mb-10 text-xs text-white/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Uma pergunta direcionada por semana
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Leitura mensal de alinhamento pessoal
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Acesso exclusivo aos materiais de estudo
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => {
+                        setSelectedProduct({ name: 'Clube Posição - Núcleo Tarô', price: 'R$ 117 /mês' });
+                        showPage('checkout');
+                      }}
+                      className="button w-full"
+                    >
+                      Assinar Núcleo Tarô
+                    </button>
+                    {user && (
+                      <button 
+                        onClick={() => showPage('clube_taro_content')}
+                        className="button-outline w-full text-xs py-2"
+                      >
+                        Acessar Área de Membros
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Nuvem Clarear */}
+                <div className="glass-card flex flex-col justify-between group p-8 md:p-10 border border-gold-main/10 bg-gold-main/[0.01]">
+                  <div>
+                    <span className="text-gold-main/20 text-[9px] uppercase tracking-[0.3em] mb-6 block font-bold">Núcleo Harmonização</span>
+                    <h3 className="serif text-3xl text-gold-light mb-4 group-hover:text-gold-main transition-colors duration-500">Núcleo Clarear</h3>
+                    <div className="price mb-6 text-2xl text-gold-main font-semibold">R$ 47 <span className="text-xs uppercase tracking-widest text-white/20">/ mês</span></div>
+                    <p className="text-white/40 text-sm leading-relaxed mb-8 font-light min-h-[60px]">
+                      Meditações, práticas guiadas e conteúdos para reorganização emocional e energética.
+                    </p>
+                    
+                    <div className="space-y-3 mb-10 text-xs text-white/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Práticas semanais de clareza mental
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Meditações inéditas e áudios de frequência
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
+                        Lista de espera preferencial e mentorias
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => {
+                        setSelectedProduct({ name: 'Clube Posição - Núcleo Clarear', price: 'R$ 47 /mês' });
+                        showPage('checkout');
+                      }}
+                      className="button w-full"
+                    >
+                      Assinar Núcleo Clarear
+                    </button>
+                    {user && (
+                      <button 
+                        onClick={() => showPage('clube_clarear_content')}
+                        className="button-outline w-full text-xs py-2"
+                      >
+                        Acessar Área de Membros
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -3463,7 +3659,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
               </div>
               <h2 className="serif text-5xl text-gold-light mb-6">Pagamento Confirmado</h2>
               <p className="text-white/40 text-lg mb-12 font-light leading-relaxed">
-                {selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? (
+                {selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? (
                   `Sua solicitação de frequência pessoal foi recebida com sucesso. Nossa equipe iniciará o desenvolvimento do seu áudio exclusivo e o prazo de entrega é de até 7 dias úteis.`
                 ) : (
                   `Sua assinatura foi ativada com sucesso. Você já pode acessar todos os conteúdos exclusivos do ${selectedProduct?.name || 'seu plano'}.`
@@ -3485,7 +3681,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
               </div>
               <button 
                 onClick={() => {
-                  if (selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se') {
+                  if (selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se') {
                     showPage('reprogramacao_form');
                   } else {
                     setPage('home');
@@ -3493,7 +3689,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                 }}
                 className="button w-full"
               >
-                {selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? 'Preencher Questionário' : 'Começar a Explorar'}
+                {selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? 'Preencher Questionário' : 'Começar a Explorar'}
               </button>
             </motion.div>
           )}
@@ -4507,12 +4703,12 @@ ESTRUTURA DA RESPOSTA (Markdown):
                         </div>
                       )}
 
-                      {/* Sugestão de Reprogramação Pessoal */}
+                      {/* Sugestão de Reset de Posição */}
                       {selectedArcano.reprogramacao && (
                         <div className="glass-card p-6 bg-gold-main/[0.02] border-gold-main/20">
                           <div className="flex items-center gap-3 text-gold-main/60 text-[10px] uppercase tracking-widest font-bold mb-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-gold-main" />
-                            🪐 Reprogramação recomendada
+                            🪐 Reset de Posição sugerido
                           </div>
                           <p className="text-white/50 text-sm font-light leading-relaxed mb-4">
                             Sua reprogramação sugerida foca em: <strong>{selectedArcano.reprogramacao}</strong>.

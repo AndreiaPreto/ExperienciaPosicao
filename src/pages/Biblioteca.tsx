@@ -145,8 +145,8 @@ export default function Biblioteca() {
 
       {/* STICKY NAV */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 md:px-10 bg-deep-black/90 border-b border-gold-main/12 backdrop-blur-md gap-4">
-        <Link to="/" className="logo text-xl md:text-2xl font-serif font-bold tracking-wide">
-          POSIÇÃO · <span className="italic font-light">Biblioteca</span>
+        <Link to="/" className="logo text-lg md:text-xl font-serif font-bold tracking-[0.2em] uppercase text-gold-main">
+          Experiência Posição · <span className="italic font-light text-white/70">Biblioteca</span>
         </Link>
 
         {/* Navigation Pills */}
@@ -367,7 +367,7 @@ export default function Biblioteca() {
 
       {/* FOOTER */}
       <footer className="max-w-5xl mx-auto px-6 pt-12 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30">
-        <div>© 2026 Biblioteca Digital POSIÇÃO · Todos os direitos reservados</div>
+        <div>© 2026 Biblioteca Posição · Experiência Posição. Todos os direitos reservados</div>
         <div className="text-gold-main flex items-center gap-1.5 font-medium">
           <Sparkles size={12} fill="currentColor" /> Conteúdo Premium
         </div>

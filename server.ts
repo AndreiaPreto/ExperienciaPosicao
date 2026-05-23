@@ -129,9 +129,145 @@ async function ensureAdminAccount() {
   }
 }
 
+const OFFICIAL_PRODUCTS = [
+  {
+    id: "diagnostico-de-posicao",
+    name: "Diagnóstico de Posição",
+    slug: "diagnostico-de-posicao",
+    category: "Diagnóstico",
+    type: "one_time",
+    price: 69,
+    description: "Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento.",
+    active: true,
+    order: 1,
+    legacyNames: ["Diagnóstico Posição", "Diagnóstico POSIÇÃO", "diagnostico-posicao"]
+  },
+  {
+    id: "mapa-de-posicao-floral",
+    name: "Mapa de Posição - Floral",
+    slug: "mapa-de-posicao-floral",
+    category: "Mapeamento",
+    type: "one_time",
+    price: 9,
+    description: "Descubra sua emoção dominante, seu arquétipo ativo e sua fórmula floral personalizada.",
+    active: true,
+    order: 2,
+    legacyNames: ["Mapeamento Floral", "Mapeamento Emocional Floral", "mapeamento-floral"]
+  },
+  {
+    id: "reset-de-posicao",
+    name: "Reset de Posição",
+    slug: "reset-de-posicao",
+    category: "Reprogramação",
+    type: "one_time",
+    price: 197,
+    description: "Processo guiado completo para reorganizar padrões e crenças limitantes. Áudio de frequência personalizada para alinhar sua base interna.",
+    active: true,
+    order: 3,
+    legacyNames: ["Reprograme-se", "Reprogramação Pessoal", "reprograme-se", "reprogramacao-pessoal"]
+  },
+  {
+    id: "clube-posicao-nucleo-taro",
+    name: "Clube Posição - Núcleo Tarô",
+    slug: "clube-posicao-nucleo-taro",
+    category: "Clube",
+    type: "subscription",
+    price: 117,
+    description: "Leituras, direcionamentos e acompanhamento simbólico para clareza, decisão e posicionamento.",
+    active: true,
+    order: 4,
+    legacyNames: ["Clube do Tarô", "Clube do Tarot", "clube-do-taro"]
+  },
+  {
+    id: "clube-posicao-nucleo-clarear",
+    name: "Clube Posição - Núcleo Clarear",
+    slug: "clube-posicao-nucleo-clarear",
+    category: "Clube",
+    type: "subscription",
+    price: 47,
+    description: "Meditações, práticas guiadas e conteúdos para reorganização emocional e energética.",
+    active: true,
+    order: 5,
+    legacyNames: ["Clube Clarear", "clube-clarear"]
+  },
+  {
+    id: "ciclos-de-posicao-do-mes",
+    name: "Ciclos de Posição do Mês",
+    slug: "ciclos-de-posicao-do-mes",
+    category: "Ciclos",
+    type: "monthly",
+    price: 39,
+    description: "Ciclos de posicionamento e acompanhamento energético de rituais mensais.",
+    active: true,
+    order: 6,
+    legacyNames: ["Rituais Mensais", "rituais-mensais", "Rituais do Mês"]
+  },
+  {
+    id: "biblioteca-posicao",
+    name: "Biblioteca Posição",
+    slug: "biblioteca-posicao",
+    category: "Biblioteca",
+    type: "library",
+    price: 29,
+    description: "Acesso à biblioteca com ebooks e materiais especiais.",
+    active: true,
+    order: 7,
+    legacyNames: ["Biblioteca de Ebooks", "Biblioteca", "biblioteca-ebooks"]
+  }
+];
+
+async function ensureProductsExist() {
+  try {
+    console.log("[Self-Heal] Syncing products in Firestore...");
+    for (const prod of OFFICIAL_PRODUCTS) {
+      const docRef = db.collection("products").doc(prod.id);
+      const docSnap = await docRef.get();
+      
+      const payload = {
+        ...prod,
+        createdAt: docSnap.exists ? (docSnap.data()?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await docRef.set(payload, { merge: true });
+      console.log(`[Self-Heal] Synced product: ${prod.name}`);
+    }
+    
+    const allProdDocs = await db.collection("products").get();
+    for (const doc of allProdDocs.docs) {
+      const data = doc.data();
+      const docId = doc.id;
+      
+      if (!OFFICIAL_PRODUCTS.some(p => p.id === docId)) {
+        const foundOfficial = OFFICIAL_PRODUCTS.find(p => 
+          p.legacyNames.includes(data.name || "") ||
+          p.legacyNames.includes(docId) ||
+          p.legacyNames.includes(data.slug || "")
+        );
+        
+        if (foundOfficial) {
+          console.log(`[Self-Heal] Found legacy product document "${docId}". Migrating to "${foundOfficial.id}"...`);
+          const newDocRef = db.collection("products").doc(foundOfficial.id);
+          await newDocRef.set({
+            ...foundOfficial,
+            createdAt: data.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          
+          await doc.ref.delete();
+          console.log(`[Self-Heal] Legacy product "${docId}" successfully migrated.`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[Self-Heal] Error syncing products:", err);
+  }
+}
+
 async function startServer() {
   // Run the admin sync process on startup
   await ensureAdminAccount();
+  await ensureProductsExist();
 
   const app = express();
   const PORT = 3000;
