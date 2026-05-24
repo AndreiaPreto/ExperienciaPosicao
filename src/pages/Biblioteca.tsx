@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Search, BookOpen, Download, X, HelpCircle, ArrowRight, Sparkles, AlertCircle, Settings, Check } from 'lucide-react';
+import { Search, Download, X, ArrowRight, Sparkles, Settings, Check } from 'lucide-react';
 
 interface EBook {
   id: number;
@@ -20,52 +20,82 @@ interface EBook {
 
 const EBOOKS_DATA: EBook[] = [
   {
-    id: 1, icon: '🌸', cat: 'Florais',
-    title: 'Descomplicando os Florais de Bach',
-    sub: 'O guia prático para harmonia emocional com a terapia de Bach',
-    desc: 'Domine as 38 essências florais descobertas pelo Dr. Edward Bach. Aprenda a ler seus próprios estados emocionais de desequilíbrio e a formular fórmulas florais sob medida para restabelecer paz, autoconfiança e foco na sua base profunda.',
-    pages: '72 págs', badge: 'hot',
-    tags: ['Terapia Floral', 'Equilíbrio', 'Bach'],
+    id: 1, icon: '🌿', cat: 'Florais',
+    title: 'Guia dos Florais de Bach',
+    sub: 'Entenda cada floral e para que ele serve na prática',
+    desc: 'Um guia direto e sem complicação sobre os 38 florais de Bach. Para cada floral: o que é, quando usar, como sentir o efeito e como combinar na sua fórmula pessoal.',
+    pages: '80 págs', badge: 'new',
+    tags: ['Florais de Bach', 'Cura Vibracional', 'Prático'],
     featured: true,
-    bg: 'linear-gradient(135deg,#0e1511,#1a2e22)',
+    bg: 'linear-gradient(135deg,#0f1a0a,#1a2e10)',
     link: '#'
   },
   {
-    id: 2, icon: '🔮', cat: 'Oráculos',
-    title: 'Descomplicando o Baralho Cigano',
-    sub: 'Compreenda a simbologia antiga e desperte sua leitura intuitiva',
-    desc: 'Um guia objetivo e prático para desvendar as 36 lâminas da sabedoria cigana. Ideal para quem quer clareza em consultas rápidas no cotidiano ou deseja aprofundar sua conexão de autoanálise.',
-    pages: '84 págs', badge: 'new',
-    tags: ['Simbologia', 'Espiritualidade', 'Intuição'],
+    id: 2, icon: '💛', cat: 'Emoções',
+    title: 'Mapa das Emoções',
+    sub: 'Decodifique o que seu corpo está tentando dizer',
+    desc: 'Cada emoção tem uma mensagem. Aprenda a identificar o que ansiedade, raiva, tristeza e medo estão comunicando — e como trabalhar cada uma delas de forma consciente.',
+    pages: '65 págs', badge: 'hot',
+    tags: ['Emoções', 'Autoconhecimento', 'Corpo'],
     featured: false,
-    bg: 'linear-gradient(135deg,#160b1b,#2b1236)',
+    bg: 'linear-gradient(135deg,#1a1208,#2e1c06)',
     link: '#'
   },
   {
-    id: 3, icon: '🧠', cat: 'Temperamentos',
-    title: 'Descomplicando os temperamentos',
-    sub: 'Reconheça seu elemento ativo e masterize suas relações',
-    desc: 'Descubra a antiga e poderosa psicologia dos quatro temperamentos (Bilioso, Sanguíneo, Fleumático e Melancólico). Compreenda suas reações automáticas, impulsos e dons naturais para conquistar inteligência emocional inabalável.',
-    pages: '65 págs', badge: 'exc',
-    tags: ['Temperamentos', 'Autoconhecimento', 'Psicologia'],
-    featured: true,
-    bg: 'linear-gradient(135deg,#1d130a,#3d2211)',
-    link: '#'
-  },
-  {
-    id: 4, icon: '📜', cat: 'Leis Universais',
-    title: 'Descomplicando as leis herméticas',
-    sub: 'Manifeste o fluxo do Universo compreendendo as 7 Leis Herméticas',
-    desc: 'Compreenda com simplicidade absoluta as leis descritas no Caibalion: Mentalismo, Correspondência, Vibração, Polaridade, Ritmo, Causa e Efeito, e Gênero. Alinhe sua frequência interna ao fluxo universal e cocrie sua realidade com maestria.',
-    pages: '90 págs', badge: 'new',
-    tags: ['Hermetismo', 'Leis Cósmicas', 'Filosofia'],
+    id: 3, icon: '🌙', cat: 'Rituais',
+    title: 'Rituais Lunares na Prática',
+    sub: 'Como usar os ciclos da lua no seu processo pessoal',
+    desc: 'Lua nova, crescente, cheia e minguante: entenda o que cada fase pede e como criar rituais simples e poderosos para cada momento do ciclo.',
+    pages: '55 págs', badge: null,
+    tags: ['Lua', 'Rituais', 'Ciclos'],
     featured: false,
-    bg: 'linear-gradient(135deg,#0a151b,#122835)',
-    link: '/descomplicando_leis_hermeticas.pdf'
+    bg: 'linear-gradient(135deg,#0d0d1a,#0a0a2a)',
+    link: '#'
+  },
+  {
+    id: 4, icon: '🃏', cat: 'Tarô',
+    title: 'Tarô para Autoconhecimento',
+    sub: 'Use as cartas como espelho, não como previsão',
+    desc: 'Um olhar diferente sobre o tarô: não para prever o futuro, mas para entender padrões, decisões e o que está em movimento dentro de você agora.',
+    pages: '90 págs', badge: 'exc',
+    tags: ['Tarô', 'Reflexão', 'Padrões'],
+    featured: false,
+    bg: 'linear-gradient(135deg,#140a1a,#200a30)',
+    link: '#'
+  },
+  {
+    id: 5, icon: '🤝', cat: 'Relacionamentos',
+    title: 'Vínculos que Drenam, Vínculos que Nutrem',
+    sub: 'Como identificar e transformar seus padrões afetivos',
+    desc: 'Por que você atrai sempre os mesmos tipos de relacionamento? Este e-book explica os padrões emocionais por trás dos vínculos e como começar a mudá-los.',
+    pages: '72 págs', badge: 'new',
+    tags: ['Vínculos', 'Padrões', 'Afeto'],
+    featured: false,
+    bg: 'linear-gradient(135deg,#1a0a0a,#2a0a10)',
+    link: '#'
+  },
+  {
+    id: 6, icon: '🧘', cat: 'Autoconhecimento',
+    title: 'O Corpo Guarda Tudo',
+    sub: 'A conexão entre emoção, corpo e adoecimento',
+    desc: 'Como emoções não processadas se manifestam no corpo físico. Um guia acessível sobre o que a medicina integrativa e a psicossomática têm a dizer sobre isso.',
+    pages: '68 págs', badge: null,
+    tags: ['Corpo', 'Psicossomática', 'Saúde'],
+    featured: false,
+    bg: 'linear-gradient(135deg,#0a1a1a,#082828)',
+    link: '#'
   }
 ];
 
-const CATEGORIES = ['Todos', 'Florais', 'Oráculos', 'Temperamentos', 'Leis Universais'];
+const CATEGORIES = [
+  { id: 'all', label: 'Todos' },
+  { id: 'Emoções', label: 'Emoções' },
+  { id: 'Florais', label: 'Florais de Bach' },
+  { id: 'Rituais', label: 'Rituais' },
+  { id: 'Tarô', label: 'Tarô' },
+  { id: 'Autoconhecimento', label: 'Autoconhecimento' },
+  { id: 'Relacionamentos', label: 'Relacionamentos' }
+];
 
 export default function Biblioteca() {
   React.useEffect(() => {
@@ -77,14 +107,14 @@ export default function Biblioteca() {
   }, []);
 
   const [activeNav, setActiveNav] = useState<'todos' | 'destaques' | 'novidades'>('todos');
-  const [activeCategory, setActiveCategory] = useState<string>('Todos');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBook, setSelectedBook] = useState<EBook | null>(null);
 
   // Overrides mapping for live user upload links
   const [linksMap, setLinksMap] = useState<Record<number, string>>(() => {
     const saved: Record<number, string> = {};
-    const ids = [1, 2, 3, 4]; // Ebooks ids
+    const ids = [1, 2, 3, 4, 5, 6];
     ids.forEach(id => {
       const stored = localStorage.getItem(`pdf_link_${id}`);
       if (stored) {
@@ -111,7 +141,7 @@ export default function Biblioteca() {
       if (activeNav === 'novidades' && e.badge !== 'new') return false;
 
       // Category filter
-      if (activeCategory !== 'Todos' && e.cat !== activeCategory) return false;
+      if (activeCategory !== 'all' && e.cat !== activeCategory) return false;
 
       // Search filter
       if (searchQuery.trim() !== '') {
@@ -152,9 +182,9 @@ export default function Biblioteca() {
       <div className="atmosphere"></div>
 
       {/* STICKY NAV */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 md:px-10 bg-deep-black/90 border-b border-gold-main/12 backdrop-blur-md gap-4">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 md:px-10 bg-deep-black/92 border-b border-gold-main/10 backdrop-blur-md gap-4">
         <Link to="/" className="logo text-lg md:text-xl font-serif font-bold tracking-[0.2em] uppercase text-gold-main">
-          Experiência Posição · <span className="italic font-light text-white/70">Biblioteca</span>
+          Minha <span className="italic font-light text-white/70">Biblioteca</span>
         </Link>
 
         {/* Navigation Pills */}
@@ -163,10 +193,10 @@ export default function Biblioteca() {
             <button
               key={tab}
               onClick={() => setActiveNav(tab)}
-              className={`px-4 py-2 rounded-full transition-all uppercase tracking-wider text-[10px] md:text-xs ${
+              className={`px-4 py-1.5 rounded-full transition-all uppercase tracking-wider text-[10px] md:text-xs font-sans ${
                 activeNav === tab
                   ? 'bg-gold-main text-deep-black font-semibold shadow-md shadow-gold-main/10'
-                  : 'text-white/50 hover:text-white'
+                  : 'text-white/55 hover:text-white'
               }`}
             >
               {tab === 'todos' ? 'Todos' : tab === 'destaques' ? 'Destaques' : 'Novidades'}
@@ -184,7 +214,7 @@ export default function Biblioteca() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar e-book..."
-            className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-gold-main/50 focus:bg-white/[0.07] text-white rounded-full pl-9 pr-4 py-1.5 text-xs outline-none transition-all placeholder:text-white/20"
+            className="w-full bg-[#181818] border border-white/[0.06] focus:border-gold-main/40 text-white rounded-full pl-9 pr-4 py-1.5 text-xs outline-none transition-all placeholder:text-white/20"
           />
         </div>
       </nav>
@@ -192,7 +222,7 @@ export default function Biblioteca() {
       {/* HERO SECTION */}
       <header className="relative px-6 py-20 md:px-12 text-left border-b border-white/[0.03] overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_85%_50%,rgba(201,160,74,0.06)_0%,transparent_60%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_85%_50%,rgba(201,160,74,0.07)_0%,transparent_60%)]"></div>
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_10%_80%,rgba(201,160,74,0.04)_0%,transparent_50%)]"></div>
           <div className="absolute inset-0 opacity-[0.015] bg-[repeating-linear-gradient(0deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px),repeating-linear-gradient(90deg,#C9A04A_0,#C9A04A_1px,transparent_0,transparent_60px)]"></div>
         </div>
@@ -201,17 +231,20 @@ export default function Biblioteca() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 mb-6 text-gold-main uppercase tracking-[0.2em] text-[10px] md:text-xs">
               <span className="w-6 h-[1px] bg-gold-main/50"></span>
-              Biblioteca Digital
+              Conteúdo Exclusivo
               <span className="w-6 h-[1px] bg-gold-main/50"></span>
             </div>
             <h1 className="font-serif text-5xl md:text-6xl text-white font-bold leading-none mb-6">
-              Seus e-books,<br />organizados com<br /><span className="italic text-gold-light">elegância</span>
+              Conhecimento que<br /><span className="italic text-gold-light">descomplicam</span> o que<br />você sente.
             </h1>
-            <p className="text-white/50 text-sm md:text-base font-light leading-relaxed max-w-xl mb-8">
-              Acesse todos os seus materiais digitais de alinhamento, desenvolvimento pessoal e negócios em um só lugar. Conteúdo premium com a curadoria POSIÇÃO.
+            <p className="text-white/50 text-sm md:text-base font-light leading-relaxed max-w-xl mb-4">
+              Cada e-book aqui foi criado por mim para <strong className="font-medium text-white/80">transformar assuntos complexos do universo emocional e terapêutico</strong> em algo prático, acessível e aplicável no seu dia a dia.
             </p>
-            <a href="#biblioteca" className="button inline-flex items-center gap-2">
-              Explorar Biblioteca <ArrowRight size={14} />
+            <p className="text-white/30 text-xs leading-relaxed max-w-md mb-8 pl-3 border-l border-gold-main/25">
+              Não é uma livraria. É a minha biblioteca — materiais que uso, ensino e acredito, reunidos num só lugar para facilitar o seu caminho de autoconhecimento.
+            </p>
+            <a href="#biblioteca_anchor" className="button inline-flex items-center gap-2 w-auto">
+              Explorar materiais →
             </a>
           </div>
 
@@ -227,32 +260,32 @@ export default function Biblioteca() {
       <section className="relative border-b border-white/[0.03] px-6 py-6 md:px-12">
         <div className="max-w-5xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
           <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold whitespace-nowrap mr-2">
-            Categoria:
+            Tema:
           </span>
           {CATEGORIES.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs transition-all whitespace-nowrap ${
-                activeCategory === cat
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`px-4 py-2 rounded-full text-xs transition-all whitespace-nowrap font-sans font-medium ${
+                activeCategory === cat.id
                   ? 'border border-gold-main/40 text-gold-main bg-gold-main/8'
                   : 'border border-white/5 text-white/50 hover:text-white hover:border-white/10'
               }`}
             >
-              {cat}
+              {cat.label}
             </button>
           ))}
         </div>
       </section>
 
       {/* MAIN LIB GRID */}
-      <main id="biblioteca" className="max-w-5xl mx-auto px-6 py-12 md:px-10">
+      <main id="biblioteca_anchor" className="max-w-5xl mx-auto px-6 py-12 md:px-10">
         <div className="flex items-center justify-between mb-8 border-b border-white/[0.04] pb-6">
           <h2 className="font-serif text-2xl font-semibold text-white">
-            E-books <b className="text-gold-main">Disponíveis</b>
+            Meus <b className="text-gold-main">E-books</b>
           </h2>
           <span className="text-xs text-white/40 bg-white/[0.02] border border-white/[0.06] px-3 py-1.5 rounded-full">
-            {filteredEBooks.length} {filteredEBooks.length === 1 ? 'título' : 'títulos'}
+            {filteredEBooks.length} {filteredEBooks.length === 1 ? 'material' : 'materiais'}
           </span>
         </div>
 
@@ -272,7 +305,7 @@ export default function Biblioteca() {
                   <div
                     key={book.id}
                     onClick={() => handleSelectBook(book)}
-                    className="md:col-span-2 bg-white/[0.01] border border-gold-main/20 rounded-xl overflow-hidden cursor-pointer hover:border-gold-main/40 hover:-translate-y-1 transition-all duration-300 shadow-xl flex flex-col sm:flex-row group"
+                    className="md:col-span-2 bg-[#101010] border border-gold-main/15 rounded-lg overflow-hidden cursor-pointer hover:border-gold-main/40 hover:-translate-y-1 transition-all duration-500 shadow-2xl flex flex-col sm:flex-row group"
                   >
                     {/* Cover Area */}
                     <div className="sm:w-52 h-44 sm:h-auto relative overflow-hidden flex items-center justify-center bg-black/40 shrink-0">
@@ -300,7 +333,7 @@ export default function Biblioteca() {
                         <h3 className="font-serif text-2xl font-bold text-white mt-4 group-hover:text-gold-main transition-colors">
                           {book.title}
                         </h3>
-                        <p className="text-xs text-white/40 font-light mt-2 line-clamp-3">
+                        <p className="text-xs text-white/40 font-light mt-2 line-clamp-3 leading-relaxed">
                           {book.desc}
                         </p>
                       </div>
@@ -313,7 +346,7 @@ export default function Biblioteca() {
                             </span>
                           ))}
                         </div>
-                        <span className="text-gold-main uppercase tracking-widest text-[10px] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <span className="text-gold-main uppercase tracking-widest text-[10px] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-all">
                           Acessar <ArrowRight size={12} />
                         </span>
                       </div>
@@ -326,7 +359,7 @@ export default function Biblioteca() {
                 <div
                   key={book.id}
                   onClick={() => handleSelectBook(book)}
-                  className="bg-white/[0.01] border border-white/[0.04] rounded-xl overflow-hidden cursor-pointer hover:border-gold-main/20 hover:-translate-y-1.5 transition-all duration-300 shadow-lg flex flex-col justify-between group"
+                  className="bg-[#101010] border border-white/[0.04] rounded-lg overflow-hidden cursor-pointer hover:border-gold-main/20 hover:-translate-y-1.5 transition-all duration-500 shadow-lg flex flex-col justify-between group"
                 >
                   {/* Standard Card Cover */}
                   <div className="h-44 relative overflow-hidden flex items-center justify-center bg-black/40">
@@ -354,7 +387,7 @@ export default function Biblioteca() {
                       <h3 className="font-serif text-lg font-bold text-white mt-2 group-hover:text-gold-main transition-colors">
                         {book.title}
                       </h3>
-                      <p className="text-xs text-white/40 mt-1 font-light line-clamp-2">
+                      <p className="text-xs text-white/40 mt-1 font-light line-clamp-2 leading-relaxed">
                         {book.sub}
                       </p>
                     </div>
@@ -374,10 +407,10 @@ export default function Biblioteca() {
       </main>
 
       {/* FOOTER */}
-      <footer className="max-w-5xl mx-auto px-6 pt-12 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30">
-        <div>© 2026 Biblioteca Posição · Experiência Posição. Todos os direitos reservados</div>
-        <div className="text-gold-main flex items-center gap-1.5 font-medium">
-          <Sparkles size={12} fill="currentColor" /> Conteúdo Premium
+      <footer className="max-w-5xl mx-auto px-6 pt-12 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30 mt-16">
+        <div>© 2026 POSIÇÃO · Alinhamento Interno. Todos os direitos reservados</div>
+        <div className="text-gold-main flex items-center gap-1.5 font-medium uppercase tracking-widest text-[9px]">
+          <Sparkles size={12} fill="currentColor" /> Conteúdo Autoral
         </div>
       </footer>
 
@@ -397,12 +430,12 @@ export default function Biblioteca() {
               exit={{ scale: 0.95, y: 30, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#121212] border border-gold-main/20 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl text-left"
+              className="bg-[#101010] border border-gold-main/20 rounded-lg max-w-lg w-full overflow-hidden shadow-2xl text-left"
             >
               {/* Cover Header */}
               <div className="h-52 relative flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 opacity-50" style={{ background: selectedBook.bg }}></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#101010] via-transparent to-transparent"></div>
                 <span className="relative z-10 text-6xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]">
                   {selectedBook.icon}
                 </span>
@@ -447,7 +480,7 @@ export default function Biblioteca() {
 
                   return (
                     <div className="space-y-4">
-                      <div className="flex gap-4">
+                      <div className="flex flex-col sm:flex-row gap-4">
                         {isConfigured ? (
                           <a
                             href={currentLink}
@@ -455,7 +488,7 @@ export default function Biblioteca() {
                             rel="noopener noreferrer"
                             className="button flex-1 inline-flex items-center justify-center gap-2 text-center"
                           >
-                            ▶ Ler E-book PDF
+                            ▶ Acessar E-book
                           </a>
                         ) : (
                           <button
@@ -474,9 +507,9 @@ export default function Biblioteca() {
                           <a
                             href={currentLink}
                             download={`${selectedBook.title.replace(/\s+/g, '_')}.pdf`}
-                            className="border border-white/15 hover:bg-white/5 text-white/80 hover:text-white rounded-lg px-6 py-4 uppercase tracking-wider text-[11px] font-semibold transition-colors flex items-center gap-2 shrink-0 justify-center"
+                            className="button-outline flex items-center gap-2 shrink-0 justify-center py-4"
                           >
-                            <Download size={14} /> PDF
+                            <Download size={14} /> Download PDF
                           </a>
                         )}
                       </div>
@@ -486,7 +519,7 @@ export default function Biblioteca() {
                         {!isEditingLink ? (
                           <div className="flex justify-between items-center text-xs">
                             <span className="text-[10px] text-white/40 truncate max-w-[280px]">
-                              Link atual: <span className="text-gold-main/80 font-mono">{isConfigured ? currentLink : 'Nenhum arquivo vinculado'}</span>
+                              Link atual: <span className="text-gold-main/80 font-mono">{isConfigured ? currentLink : 'Nenhum arquivo de teste vinculado'}</span>
                             </span>
                             <button
                               type="button"
@@ -500,13 +533,13 @@ export default function Biblioteca() {
                             </button>
                           </div>
                         ) : (
-                          <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 space-y-3">
+                          <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-4 space-y-3">
                             <h4 className="text-xs font-semibold text-white/85 flex items-center gap-1.5 font-serif">
                               <Sparkles size={12} className="text-gold-main" /> Como disponibilizar seu PDF?
                             </h4>
                             <p className="text-[11px] text-white/55 leading-relaxed font-light">
-                              <b>Opção 1 (Definitiva):</b> Adicione o seu arquivo <code className="text-gold-main font-mono text-[10px]">PDF</code> na pasta pública do servidor (<code className="text-white">/public/</code>) e use o caminho correspondente (ex: <code className="text-white font-mono">/descomplicando_leis_hermeticas.pdf</code>).<br />
-                              <b>Opção 2 (Imediata):</b> Cole aqui o link direto do documento (Google Drive, Dropbox, ou site externo) para liberar acesso para teste agora mesmo:
+                              <b className="font-semibold text-gold-light">Opção 1 (Definitiva):</b> Adicione o seu arquivo <code className="text-gold-main font-mono text-[10px]">PDF</code> na pasta pública do servidor (<code className="text-white">/public/</code>) e use o caminho correspondente (ex: <code className="text-white font-mono">/descomplicando_leis_hermeticas.pdf</code>).<br />
+                              <b className="font-semibold text-gold-light">Opção 2 (Imediata):</b> Cole aqui o link direto do documento (Google Drive, Dropbox, ou site externo) para liberar acesso para teste agora mesmo:
                             </p>
                             
                             <div className="flex gap-2">

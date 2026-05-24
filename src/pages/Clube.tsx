@@ -94,7 +94,7 @@ const Clube = () => {
         </p>
         <button
           onClick={() => navigate('/')}
-          className="button-outline"
+          className="button-outline w-full"
         >
           Saber mais
         </button>

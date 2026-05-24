@@ -1,3 +1,5 @@
+// src/pages/CompraDiagnostico.tsx
+// ✅ CORRIGIDO: btn-primary → button | card → glass-card | tipografia unificada
 import React from 'react';
 import { motion } from 'motion/react';
 import { useAccess } from '../context/AccessContext';
@@ -9,52 +11,71 @@ const CompraDiagnostico = () => {
   const navigate = useNavigate();
 
   const handlePurchase = () => {
-    // Redirect to main page with buy parameter to trigger checkout
     navigate('/diagnostico?buy=diagnostico');
   };
 
   return (
-    <div className="container min-h-screen flex flex-col gap-8 py-12">
-      <header className="text-center space-y-4">
-        <h2 className="serif text-3xl text-gold-light">Liberar Diagnóstico</h2>
-        <p className="text-text-main/80">
-          Este diagnóstico revela o arquétipo que está influenciando sua base hoje.
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: .8, ease: [0.16,1,0.3,1] }}
+      className="min-h-screen bg-deep-black px-6 py-12 flex flex-col max-w-lg mx-auto"
+    >
+      {/* Logo */}
+      <div className="text-center mb-14">
+        <p className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-1">
+          Experiência Posição
         </p>
-      </header>
+        <h1 className="font-serif text-3xl text-gold-light tracking-tight">
+          Diagnóstico de Posição
+        </h1>
+      </div>
 
-      <div className="card space-y-6">
-        <div className="flex items-center justify-between border-b border-gold-main/20 pb-4">
-          <span className="text-gold-light font-medium">Diagnóstico POSIÇÃO</span>
-          <span className="text-2xl font-bold text-gold-main">R$ 69,00</span>
+      <p className="text-white/35 text-sm font-light leading-relaxed text-center mb-10 max-w-xs mx-auto">
+        Este diagnóstico revela o arquétipo que está influenciando sua base interna hoje.
+      </p>
+
+      {/* Card produto — ✅ glass-card, border-radius 16px */}
+      <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 mb-6">
+
+        <div className="flex items-center justify-between border-b border-gold-main/10 pb-6 mb-8">
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.3em] text-gold-main/40 font-sans mb-1">
+              Diagnóstico completo
+            </p>
+            <p className="font-serif text-gold-light text-lg leading-tight">
+              Diagnóstico de Posição
+            </p>
+          </div>
+          <span className="font-serif text-gold-light text-3xl tracking-tight">R$ 69</span>
         </div>
 
-        <ul className="space-y-3 text-sm text-text-main/70">
-          <li className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-gold-main" />
-            Acesso vitalício ao questionário
-          </li>
-          <li className="flex items-center gap-2">
-            <Sparkles size={16} className="text-gold-main" />
-            Análise personalizada via áudio
-          </li>
-          <li className="flex items-center gap-2">
-            <CreditCard size={16} className="text-gold-main" />
-            Pagamento seguro via Stripe
-          </li>
+        <ul className="space-y-4 mb-10">
+          {[
+            { icon: ShieldCheck, text: "Acesso vitalício ao questionário" },
+            { icon: Sparkles,    text: "Análise personalizada via áudio" },
+            { icon: CreditCard,  text: "Pagamento seguro via Stripe" },
+          ].map(({ icon: Icon, text }, i) => (
+            <li key={i} className="flex items-start gap-4">
+              <div className="w-7 h-7 rounded-full bg-gold-main/8 border border-gold-main/15
+                              flex items-center justify-center text-gold-main flex-shrink-0 mt-0.5">
+                <Icon size={13} strokeWidth={1.5} />
+              </div>
+              <span className="text-white/50 text-sm font-light leading-relaxed">{text}</span>
+            </li>
+          ))}
         </ul>
 
-        <button 
-          onClick={handlePurchase}
-          className="btn-primary"
-        >
+        {/* ✅ usa .button (rounded-lg) */}
+        <button onClick={handlePurchase} className="button">
           Liberar acesso agora
         </button>
       </div>
 
-      <p className="text-center text-xs text-text-main/40 px-8">
+      <p className="text-center text-[10px] text-white/20 font-sans leading-relaxed px-4">
         Ao clicar em liberar, você será redirecionado para o checkout seguro.
       </p>
-    </div>
+    </motion.div>
   );
 };
 

@@ -186,7 +186,7 @@ const AdminDashboardTab = ({ stats, users, onTestMapeamento, onSimulatePurchase 
         <div className="grid grid-cols-1 gap-4">
           <button 
             onClick={onTestMapeamento}
-            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group"
+            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all group"
           >
             <div className="text-left">
               <p className="text-gold-light text-sm font-medium">Testar Mapeamento</p>
@@ -197,7 +197,7 @@ const AdminDashboardTab = ({ stats, users, onTestMapeamento, onSimulatePurchase 
 
           <button 
             onClick={onSimulatePurchase}
-            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group"
+            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all group"
           >
             <div className="text-left">
               <p className="text-gold-light text-sm font-medium">Simular Compra de Diagnóstico</p>
@@ -1132,7 +1132,7 @@ const AdminCiclosTab = () => {
             </button>
             <button 
               type="submit" 
-              className="py-2 px-6 text-xs bg-gold-main hover:bg-gold-light text-black font-semibold rounded-full shadow-md transition-all duration-300"
+              className="py-2 px-6 text-xs bg-gold-main hover:bg-gold-light text-black font-semibold rounded-lg shadow-md transition-all duration-300"
             >
               Salvar Ritual
             </button>
@@ -2609,14 +2609,14 @@ const Diagnostico = () => {
                     {isAdmin && (
                       <button 
                         onClick={() => showPage('admin_dashboard')}
-                        className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
+                        className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-md text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
                       >
                         Admin
                       </button>
                     )}
                     <button 
                       onClick={() => showPage('jornada_emocional')}
-                      className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-full text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
+                      className="bg-gold-main/10 text-gold-main px-3 py-1 rounded-md text-[9px] uppercase tracking-widest font-medium hover:bg-gold-main/20 transition-colors"
                     >
                       Jornada
                     </button>
@@ -3089,7 +3089,7 @@ const Diagnostico = () => {
                     <button 
                       type="button"
                       onClick={() => showPage('mapeamento_form')}
-                      className="text-emerald-400 hover:text-emerald-300 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 py-4 border border-emerald-500/20 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 transition-all w-full"
+                      className="text-emerald-400 hover:text-emerald-300 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 py-4 border border-emerald-500/20 rounded-lg bg-emerald-500/5 hover:bg-emerald-500/10 transition-all w-full"
                     >
                       <ShieldCheck size={14} /> Testar Mapeamento (Admin)
                     </button>
@@ -3271,7 +3271,7 @@ const Diagnostico = () => {
                           }
                         }
                       }}
-                      className="w-full p-6 bg-white/5 border border-white/5 rounded-2xl text-left hover:bg-gold-main/10 hover:border-gold-main/30 transition-all group flex justify-between items-center"
+                      className="w-full p-6 bg-white/5 border border-white/5 rounded-lg text-left hover:bg-gold-main/10 hover:border-gold-main/30 transition-all group flex justify-between items-center"
                     >
                       <span className="text-white/60 group-hover:text-gold-light transition-colors">{opcao.texto}</span>
                       <ArrowRight size={18} className="text-gold-main/20 group-hover:text-gold-main group-hover:translate-x-1 transition-all" />
@@ -3381,13 +3381,13 @@ const Diagnostico = () => {
                     </button>
                     <button 
                       onClick={() => showPage('jornada_emocional')}
-                      className="button bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                      className="button-outline"
                     >
                       Ver meu histórico completo
                     </button>
                     <button 
                       onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', currentFlorais)}
-                      className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center"
+                      className="button-outline flex items-center gap-2 justify-center"
                     >
                       <FileText size={18} /> Baixar Receita (PDF)
                     </button>
@@ -3822,7 +3822,7 @@ const Diagnostico = () => {
                         {isPast ? (
                           <button 
                             disabled 
-                            className="w-full py-4 text-xs tracking-[0.2em] border border-white/10 rounded-2xl text-white/20 bg-white/[0.01] uppercase font-mono cursor-not-allowed"
+                            className="w-full py-4 text-xs tracking-[0.2em] border border-white/10 rounded-lg text-white/20 bg-white/[0.01] uppercase font-mono cursor-not-allowed"
                           >
                             Ciclo encerrado
                           </button>
@@ -4906,7 +4906,7 @@ const Diagnostico = () => {
                       whileHover={{ x: 10, backgroundColor: "rgba(197, 160, 40, 0.05)" }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleTriageAnswer(idx)}
-                      className="p-4 md:p-6 rounded-3xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
+                      className="p-4 md:p-6 rounded-xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
                     >
                       {texto}
                     </motion.div>
@@ -5050,7 +5050,7 @@ const Diagnostico = () => {
                       whileHover={{ x: 10, backgroundColor: "rgba(197, 160, 40, 0.05)" }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleAnswer(idx)}
-                      className="p-4 md:p-6 rounded-3xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
+                      className="p-4 md:p-6 rounded-xl border border-white/5 bg-white/[0.02] transition-colors cursor-pointer text-white/60 font-light text-sm"
                     >
                       {opt.text}
                     </motion.div>

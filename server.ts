@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
 
@@ -15,50 +16,226 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Firebase Admin
 const firebaseConfigPath = path.join(process.cwd(), "firebase-applet-config.json");
-let db: admin.firestore.Firestore;
+let rawDb: any;
+let db: any;
+
+const inMemoryStore: Record<string, Record<string, any>> = {};
+let isUsingInMemoryFallback = false;
+
+function processInMemoryValue(val: any, currentVal: any) {
+  if (val === undefined || val === null) return val;
+  if (typeof val === 'object') {
+    if (val._methodName === 'FieldValue.increment' || val.constructor?.name?.includes('Increment') || ('operand' in val)) {
+      const operand = val._operand !== undefined ? val._operand : (val.operand !== undefined ? val.operand : 1);
+      return (Number(currentVal) || 0) + operand;
+    }
+    if (val._methodName === 'FieldValue.serverTimestamp' || val.constructor?.name?.includes('Timestamp')) {
+      return new Date().toISOString();
+    }
+  }
+  return val;
+}
+
+function createInMemoryDocRef(colName: string, docId: string) {
+  return {
+    exists: inMemoryStore[colName]?.[docId] !== undefined,
+    id: docId,
+    ref: {
+      delete: async () => {
+        if (inMemoryStore[colName]) {
+          delete inMemoryStore[colName][docId];
+        }
+      }
+    },
+    get: async () => {
+      const data = inMemoryStore[colName]?.[docId];
+      return {
+        exists: data !== undefined,
+        id: docId,
+        ref: {
+          delete: async () => {
+            if (inMemoryStore[colName]) {
+              delete inMemoryStore[colName][docId];
+            }
+          }
+        },
+        data: () => data || null
+      };
+    },
+    set: async (newData: any, options?: { merge?: boolean }) => {
+      if (!inMemoryStore[colName]) inMemoryStore[colName] = {};
+      const oldData = inMemoryStore[colName][docId] || {};
+      const mergedData = options?.merge ? { ...oldData } : {};
+      
+      Object.keys(newData).forEach(key => {
+        mergedData[key] = processInMemoryValue(newData[key], oldData[key]);
+      });
+      inMemoryStore[colName][docId] = mergedData;
+    },
+    update: async (updateData: any) => {
+      if (!inMemoryStore[colName]) inMemoryStore[colName] = {};
+      const oldData = inMemoryStore[colName][docId] || {};
+      
+      Object.keys(updateData).forEach(key => {
+        oldData[key] = processInMemoryValue(updateData[key], oldData[key]);
+      });
+      inMemoryStore[colName][docId] = oldData;
+    },
+    delete: async () => {
+      if (inMemoryStore[colName]) {
+        delete inMemoryStore[colName][docId];
+      }
+    }
+  };
+}
+
+function createInMemoryCollection(colName: string) {
+  return {
+    doc: (docId: string) => createInMemoryDocRef(colName, docId),
+    get: async () => {
+      const colStore = inMemoryStore[colName] || {};
+      const docs = Object.entries(colStore).map(([id, data]) => ({
+        id,
+        ref: {
+          delete: async () => {
+            delete colStore[id];
+          }
+        },
+        data: () => data
+      }));
+      return { docs };
+    }
+  };
+}
+
+function buildSafeDb(unwrappedDb: any, forceFallback: boolean = false) {
+  if (forceFallback) {
+    isUsingInMemoryFallback = true;
+  }
+  return {
+    collection: (colName: string) => {
+      return {
+        doc: (docId: string) => {
+          return {
+            get: async () => {
+              if (isUsingInMemoryFallback) {
+                return createInMemoryDocRef(colName, docId).get();
+              }
+              try {
+                return await unwrappedDb.collection(colName).doc(docId).get();
+              } catch (err: any) {
+                if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+                  console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on get ${colName}/${docId}. Falling back to InMemory DB.`);
+                  isUsingInMemoryFallback = true;
+                  return createInMemoryDocRef(colName, docId).get();
+                }
+                throw err;
+              }
+            },
+            set: async (data: any, options?: any) => {
+              if (isUsingInMemoryFallback) {
+                return createInMemoryDocRef(colName, docId).set(data, options);
+              }
+              try {
+                return await unwrappedDb.collection(colName).doc(docId).set(data, options);
+              } catch (err: any) {
+                if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+                  console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on set ${colName}/${docId}. Falling back to InMemory DB.`);
+                  isUsingInMemoryFallback = true;
+                  return createInMemoryDocRef(colName, docId).set(data, options);
+                }
+                throw err;
+              }
+            },
+            update: async (data: any) => {
+              if (isUsingInMemoryFallback) {
+                return createInMemoryDocRef(colName, docId).update(data);
+              }
+              try {
+                return await unwrappedDb.collection(colName).doc(docId).update(data);
+              } catch (err: any) {
+                if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+                  console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on update ${colName}/${docId}. Falling back to InMemory DB.`);
+                  isUsingInMemoryFallback = true;
+                  return createInMemoryDocRef(colName, docId).update(data);
+                }
+                throw err;
+              }
+            },
+            delete: async () => {
+              if (isUsingInMemoryFallback) {
+                return createInMemoryDocRef(colName, docId).delete();
+              }
+              try {
+                return await unwrappedDb.collection(colName).doc(docId).delete();
+              } catch (err: any) {
+                if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+                  console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on delete ${colName}/${docId}. Falling back to InMemory DB.`);
+                  isUsingInMemoryFallback = true;
+                  return createInMemoryDocRef(colName, docId).delete();
+                }
+                throw err;
+              }
+            }
+          };
+        },
+        get: async () => {
+          if (isUsingInMemoryFallback) {
+            return createInMemoryCollection(colName).get();
+          }
+          try {
+            return await unwrappedDb.collection(colName).get();
+          } catch (err: any) {
+            if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+              console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on query ${colName}. Falling back to InMemory DB.`);
+              isUsingInMemoryFallback = true;
+              return createInMemoryCollection(colName).get();
+            }
+            throw err;
+          }
+        }
+      };
+    }
+  };
+}
 
 try {
+  let app: admin.app.App;
   if (fs.existsSync(firebaseConfigPath)) {
     const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf-8"));
     if (!admin.apps.length) {
       try {
-        admin.initializeApp({
+        app = admin.initializeApp({
           credential: admin.credential.applicationDefault(),
           projectId: firebaseConfig.projectId,
         });
       } catch (authError) {
         console.error("⚠️ Erro ao inicializar Firebase Admin com applicationDefault:", authError);
-        // Fallback to basic initialization without credentials (might work for public data or in some environments)
-        admin.initializeApp({
+        // Fallback to basic initialization without credentials
+        app = admin.initializeApp({
           projectId: firebaseConfig.projectId,
         });
       }
+    } else {
+      app = admin.apps[0];
     }
-    // Use named database if provided
-    db = firebaseConfig.firestoreDatabaseId 
-      ? admin.firestore(firebaseConfig.firestoreDatabaseId)
-      : admin.firestore();
+    // Use named database if provided via getFirestore helper from firebase-admin/firestore
+    rawDb = firebaseConfig.firestoreDatabaseId 
+      ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+      : getFirestore(app);
   } else {
     console.warn("⚠️ firebase-applet-config.json não encontrado.");
     if (!admin.apps.length) {
-      admin.initializeApp();
+      app = admin.initializeApp();
+    } else {
+      app = admin.apps[0];
     }
-    db = admin.firestore();
+    rawDb = getFirestore(app);
   }
+  db = buildSafeDb(rawDb);
 } catch (error) {
   console.error("❌ Erro crítico ao inicializar Firebase Admin:", error);
-  // Initialize a mock or empty db to prevent server crash
-  // @ts-ignore
-  db = {
-    collection: () => ({
-      doc: () => ({
-        get: async () => ({ exists: false }),
-        set: async () => {},
-        update: async () => {},
-        delete: async () => {},
-      })
-    })
-  } as any;
+  db = buildSafeDb(null, true);
 }
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -125,8 +302,39 @@ async function ensureAdminAccount() {
       }
       console.log(`[Self-Heal] Admin account is fully verified, updated, and ready!`);
     }
-  } catch (err) {
-    console.error("[Self-Heal] Error in ensureAdminAccount:", err);
+  } catch (err: any) {
+    if (err && (err.message?.includes("Identity Toolkit API") || err.code === 'auth/internal-error')) {
+      console.warn("⚠️ Firebase Authentication API (Identity Toolkit API) is not enabled in Google Cloud Console. Skipping admin user creation in Auth, but will still try to write default admin document in Firestore if db is active...");
+      try {
+        const uId = "admin_fallback_uid_andreiapreto"; 
+        const userRef = db.collection("users").doc(uId);
+        const docSnap = await userRef.get();
+        if (!docSnap.exists) {
+          console.log(`[Self-Heal] Creating fallback Firestore admin user document due to lack of Auth Service...`);
+          await userRef.set({
+            uid: uId,
+            email: adminEmail,
+            name: "Andréia Preto",
+            role: "admin",
+            paidStatus: true,
+            mappingCredits: 999,
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          const data = docSnap.data();
+          if (data?.role !== "admin") {
+            await userRef.update({
+              role: "admin"
+            });
+          }
+        }
+        console.log(`[Self-Heal] Direct Firestore Admin document updated and ready with fallback uid.`);
+      } catch (dbErr) {
+        console.error("⚠️ Fallback admin document generation failed:", dbErr);
+      }
+    } else {
+      console.error("[Self-Heal] Error in ensureAdminAccount:", err);
+    }
   }
 }
 

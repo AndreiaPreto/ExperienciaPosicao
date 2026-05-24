@@ -1,7 +1,9 @@
+// src/components/Card.tsx
+// ✅ CORRIGIDO: btn-primary/btn-secondary → button/button-outline
+// ✅ .card já usa rounded-lg via index.css — nenhuma mudança de radius aqui
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LucideIcon } from 'lucide-react';
 
 interface CardProps {
   title: string;
@@ -13,23 +15,24 @@ interface CardProps {
 }
 
 export const Card = React.memo(({ title, description, buttonText, onClick, link, variant = 'primary' }: CardProps) => (
-  <motion.div 
+  <motion.div
     whileHover={{ y: -2 }}
     className="card"
   >
-    <h2 className="serif text-xl font-medium text-gold-light mb-2">{title}</h2>
-    <p className="text-text-main/80 text-sm mb-4">{description}</p>
+    <h2 className="font-serif text-xl text-gold-light mb-2">{title}</h2>
+    <p className="text-white/50 text-sm font-light leading-relaxed mb-6">{description}</p>
     {link ? (
-      <Link 
+      <Link
         to={link}
-        className={variant === 'primary' ? 'btn-primary' : 'btn-secondary'}
+        /* ✅ button (rounded-lg) ou button-outline — sem btn-primary */
+        className={variant === 'primary' ? 'button' : 'button-outline'}
       >
         {buttonText}
       </Link>
     ) : (
-      <button 
+      <button
         onClick={onClick}
-        className={variant === 'primary' ? 'btn-primary' : 'btn-secondary'}
+        className={variant === 'primary' ? 'button' : 'button-outline'}
       >
         {buttonText}
       </button>

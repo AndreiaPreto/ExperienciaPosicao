@@ -2,35 +2,30 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────
-   POSIÇÃO × Biblioteca — Design Token Update
-   Paleta: fundo quase-preto #080808, dourado
-   refinado #C9A04A / #E6C97A / #8B6812,
-   tipografia DM Sans + Cormorant Garamond
+   EXPERIÊNCIA POSIÇÃO — Sistema de Design Unificado
+   Fonte da verdade para TODOS os botões, cards e tipografia.
+   Nenhuma página deve usar rounded-full, rounded-3xl,
+   rounded-2xl em botões, btn-primary com rounded-full, 
+   ou card com rounded-2xl — use as classes abaixo.
 ───────────────────────────────────────── */
 
 @theme {
-  /* Tipografia */
   --font-sans:  "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", serif;
   --font-mono:  "JetBrains Mono", monospace;
 
-  /* Paleta dourada (biblioteca) */
-  --color-gold-main:  #C9A04A;   /* ouro principal   */
-  --color-gold-light: #E6C97A;   /* ouro claro       */
-  --color-gold-deep:  #8B6812;   /* ouro escuro      */
+  --color-gold-main:  #C9A04A;
+  --color-gold-light: #E6C97A;
+  --color-gold-deep:  #8B6812;
 
-  /* Fundos */
-  --color-deep-black: #080808;   /* fundo base       */
-  --color-bg2:        #101010;   /* superfícies      */
-  --color-bg3:        #181818;   /* cards            */
-  --color-bg4:        #222222;   /* hover/active     */
+  --color-deep-black: #080808;
+  --color-bg2:        #101010;
+  --color-bg3:        #181818;
+  --color-bg4:        #222222;
 
-  /* Glass */
   --color-glass:        rgba(255, 255, 255, 0.02);
   --color-glass-border: rgba(255, 255, 255, 0.05);
-
-  /* Texto utilitário */
-  --color-text-main: #F2EDE6;
+  --color-text-main:    #F2EDE6;
 }
 
 /* ── Base ────────────────────────────────── */
@@ -41,8 +36,7 @@
       radial-gradient(ellipse 70% 90% at 85% 50%, rgba(201,160,74,.05) 0%, transparent 60%),
       radial-gradient(ellipse 50% 60% at 10% 80%, rgba(201,160,74,.03) 0%, transparent 50%),
       #080808;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
   }
 
   h1, h2, h3, .serif {
@@ -50,21 +44,18 @@
     line-height: 1.1;
   }
 
-  /* Scrollbar refinada */
   ::-webkit-scrollbar        { width: 4px; }
   ::-webkit-scrollbar-track  { background: transparent; }
   ::-webkit-scrollbar-thumb  { background: #8B6812; border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: #C9A04A; }
 }
 
-/* ── Atmosphere (partículas de fundo) ──── */
+/* ── Atmosphere ──────────────────────────── */
 @layer components {
   .atmosphere {
     @apply fixed inset-0 pointer-events-none z-0 overflow-hidden;
   }
-
-  .atmosphere::before,
-  .atmosphere::after {
+  .atmosphere::before, .atmosphere::after {
     content: '';
     @apply absolute inset-0;
     background:
@@ -73,92 +64,112 @@
     filter: blur(100px);
     animation: float 20s ease-in-out infinite alternate;
   }
-
   .atmosphere::after {
     background: radial-gradient(circle at 50% 50%, rgba(201,160,74,.025) 0%, transparent 60%);
     animation-delay: -10s;
     animation-duration: 25s;
   }
-
   @keyframes float {
     0%   { transform: translate(0, 0) scale(1); }
     100% { transform: translate(2%, 2%) scale(1.08); }
   }
 
-  /* ── Glass card ─────────────────────── */
+  /* ────────────────────────────────────────
+     GLASS CARD — padrão único de card
+     border-radius: 16px (não 40px, não 2xl, não 3xl)
+  ─────────────────────────────────────────*/
   .glass-card {
     background-color: var(--color-glass);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid var(--color-glass-border);
-    border-radius: 16px;          /* era 40px — mais conteúdo e premium */
+    border-radius: 16px;
     padding: 1.5rem;
     @apply md:p-10;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
   }
-
   .glass-card:hover {
     border-color: rgba(201,160,74,.18);
     background-color: rgba(255,255,255,.035);
     transform: translateY(-3px);
-    box-shadow:
-      0 16px 40px rgba(0,0,0,.3),
-      0 0 0 1px rgba(201,160,74,.1);
+    box-shadow: 0 16px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(201,160,74,.1);
   }
 
-  /* ── Botões ─────────────────────────── */
-  .button {
-    @apply bg-gold-main text-deep-black font-semibold px-8 py-4
-           md:px-12 md:py-5 rounded-lg
+  /* ── Legacy .card (Card.tsx, AssinaturaClube) ── */
+  .card {
+    background-color: var(--color-glass);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: 16px;      /* era rounded-3xl/40px — padronizado */
+    padding: 1.5rem;
+    @apply md:p-10;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-bottom: 1.5rem;
+  }
+  .card.primary { @apply border-gold-main/28 bg-gold-main/[0.012]; }
+  .card h2 { @apply font-serif text-2xl text-gold-light mb-2; }
+  .card p  { @apply text-white/50 text-sm leading-relaxed mb-6; }
+
+  /* ────────────────────────────────────────
+     BOTÕES — padrão retangular com rounded-lg
+     REGRA: NENHUM botão usa rounded-full.
+     Apenas o botão Google Sign-In usa rounded-full
+     pois é padrão da marca Google.
+  ─────────────────────────────────────────*/
+
+  /* Primário — fundo dourado, texto preto */
+  .button,
+  .btn-primary {
+    @apply bg-gold-main text-deep-black font-semibold
+           px-8 py-4 md:px-12 md:py-5
+           rounded-lg                /* ← retangular, padrão biblioteca */
            transition-all duration-500
            hover:bg-gold-light hover:scale-[1.01]
            active:scale-[0.99]
-           shadow-lg
-           text-center uppercase tracking-[0.16em] text-[13px] md:text-[11px]
-           relative overflow-hidden;
+           text-center uppercase tracking-[0.16em]
+           text-[13px] md:text-[11px]
+           relative overflow-hidden w-full;
     box-shadow: 0 4px 20px rgba(201,160,74,.15);
   }
-
-  .button::after {
+  .button::after,
+  .btn-primary::after {
     content: '';
     @apply absolute inset-0 bg-white/15 opacity-0 transition-opacity duration-500;
   }
+  .button:hover::after,
+  .btn-primary:hover::after { @apply opacity-100; }
 
-  .button:hover::after { @apply opacity-100; }
-
-  .btn-primary {
-    @apply bg-gold-main text-deep-black font-semibold px-8 py-4
-           md:px-12 md:py-5 rounded-lg
-           transition-all duration-500
-           hover:bg-gold-light hover:scale-[1.01]
-           active:scale-[0.99]
-           text-center uppercase tracking-[0.16em] text-[13px] md:text-[11px]
-           relative overflow-hidden w-full;
-    box-shadow: 0 4px 20px rgba(201,160,74,.15);
-  }
-
+  /* Secundário — borda branca, texto claro */
   .btn-secondary {
-    @apply border border-white/10 text-text-main/70 font-medium px-8 py-4
-           md:px-12 md:py-5 rounded-lg
+    @apply border border-white/10 text-text-main/70 font-medium
+           px-8 py-4 md:px-12 md:py-5
+           rounded-lg
            transition-all duration-500
            hover:bg-white/5 hover:text-text-main
-           text-center uppercase tracking-[0.12em] text-[13px] md:text-[11px]
+           text-center uppercase tracking-[0.12em]
+           text-[13px] md:text-[11px]
            relative overflow-hidden w-full;
   }
 
+  /* Outline dourado */
   .button-outline {
-    @apply border border-gold-main/25 text-gold-main font-medium px-8 py-4
-           md:px-12 md:py-5 rounded-lg
+    @apply border border-gold-main/25 text-gold-main font-medium
+           px-8 py-4 md:px-12 md:py-5
+           rounded-lg
            transition-all duration-500
            hover:bg-gold-main/6 hover:border-gold-main/50
-           text-center uppercase tracking-[0.14em] text-[13px] md:text-[11px]
+           text-center uppercase tracking-[0.14em]
+           text-[13px] md:text-[11px]
            backdrop-blur-sm;
   }
 
   /* ── Input ──────────────────────────── */
-  .input {
-    @apply w-full bg-white/[0.025] border border-white/[0.06] rounded-xl
+  .input,
+  .input-field {
+    @apply w-full bg-white/[0.025] border border-white/[0.06]
+           rounded-xl                /* inputs mantêm rounded-xl — distingue de botões */
            px-4 py-3 md:px-6 md:py-4
            text-text-main placeholder:text-white/20
            focus:outline-none focus:border-gold-main/30 focus:bg-white/[0.04]
@@ -175,32 +186,15 @@
            transition-all duration-300
            text-[10px] md:text-[11px] uppercase tracking-[0.28em] font-semibold;
   }
-
-  /* ── Legacy card (Clube.tsx, Membros.tsx) */
-  .card {
-    background-color: var(--color-glass);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
-    border: 1px solid var(--color-glass-border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    @apply md:p-10;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    margin-bottom: 1.5rem;
-    @apply md:mb-8;
-  }
-
-  .card.primary {
-    @apply border-gold-main/28 bg-gold-main/[0.012];
-  }
-
-  .card h2  { @apply text-2xl text-gold-light mb-2; }
-  .card p   { @apply text-white/50 text-sm leading-relaxed mb-6; }
 }
 
 /* ── Layout helpers ───────────────────── */
 .animate-screen {
   @apply relative z-10 max-w-3xl mx-auto px-5 py-8 md:px-8 md:py-16;
+}
+
+.container {
+  @apply relative z-10 max-w-lg mx-auto px-6 py-12;
 }
 
 .price {
@@ -212,28 +206,18 @@
 }
 
 /* ── Markdown body ────────────────────── */
-.markdown-body h1 {
-  @apply font-serif text-4xl text-gold-light mb-8 mt-12;
-}
-
-.markdown-body h2 {
-  @apply font-serif text-3xl text-gold-light mb-6 mt-10;
-}
-
-.markdown-body h3 {
-  @apply text-gold-main uppercase tracking-widest text-xs font-semibold mb-4 mt-8;
-}
-
-.markdown-body p {
-  @apply text-white/65 leading-relaxed mb-4 font-light;
-}
-
-.markdown-body ul {
-  @apply list-disc list-inside mb-6 space-y-2 text-white/55 font-light;
-}
-
-.markdown-body li  { @apply leading-relaxed; }
-
+.markdown-body h1 { @apply font-serif text-4xl text-gold-light mb-8 mt-12; }
+.markdown-body h2 { @apply font-serif text-3xl text-gold-light mb-6 mt-10; }
+.markdown-body h3 { @apply text-gold-main uppercase tracking-widest text-xs font-semibold mb-4 mt-8; }
+.markdown-body p  { @apply text-white/65 leading-relaxed mb-4 font-light; }
+.markdown-body ul { @apply list-disc list-inside mb-6 space-y-2 text-white/55 font-light; }
+.markdown-body li { @apply leading-relaxed; }
 .markdown-body strong { @apply text-gold-main font-medium; }
-
 .markdown-body hr { @apply border-gold-main/10 my-12; }
+
+/* ── Root pattern (Login.tsx) ─────────── */
+.root-pattern {
+  background-image:
+    radial-gradient(ellipse 70% 90% at 85% 50%, rgba(201,160,74,.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 10% 80%, rgba(201,160,74,.03) 0%, transparent 50%);
+}
