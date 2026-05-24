@@ -6,7 +6,6 @@ import { questions } from '../data/questions';
 import { triageQuestions } from '../data/triageQuestions';
 import { mapeamentoQuestions } from '../data/mapeamentoQuestions';
 import { auth, db } from '../services/firebase';
-import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { 
@@ -59,100 +58,7 @@ const meditations = [
   }
 ];
 
-const rituais_mes = [
-  {
-    id: 1,
-    date: "01 de Abril",
-    title: "Ritual de Transbordo",
-    phase: "Lua Cheia",
-    description: "Ritual para reconhecer conquistas, liberar excessos e equilibrar emoções intensas.",
-    benefits: [
-      "Clareza emocional",
-      "Liberação energética",
-      "Expansão espiritual"
-    ],
-    importance: "A lua cheia amplifica energias — este ritual ajuda a canalizar essa força com consciência.",
-    price: "R$ 21"
-  },
-  {
-    id: 2,
-    date: "05 de Abril",
-    title: "Ritual de Renascimento",
-    phase: "Páscoa",
-    description: "Ritual simbólico de transformação e ativação de uma nova identidade.",
-    benefits: [
-      "Reprogramação emocional",
-      "Abertura de novos ciclos",
-      "Fortalecimento de propósito"
-    ],
-    importance: "A Páscoa é um portal energético ideal para renascer de forma consciente.",
-    price: "R$ 21"
-  },
-  {
-    id: 3,
-    date: "09 de Abril",
-    title: "Ritual de Desapego",
-    phase: "Lua Minguante",
-    description: "Limpeza energética e desapego de padrões, objetos e vínculos.",
-    benefits: [
-      "Leveza emocional",
-      "Redução de bloqueios",
-      "Clareza mental"
-    ],
-    importance: "Desapegar é essencial para permitir a entrada do novo.",
-    price: "R$ 21"
-  },
-  {
-    id: 4,
-    date: "17 de Abril",
-    title: "Ritual de Semeadura",
-    phase: "Lua Nova",
-    description: "Plantio de intenções e alinhamento energético com novos objetivos.",
-    benefits: [
-      "Foco e direção",
-      "Ativação da manifestação",
-      "Clareza de metas"
-    ],
-    importance: "Toda realidade começa com uma intenção bem definida.",
-    price: "R$ 21"
-  },
-  {
-    id: 5,
-    date: "23 de Abril",
-    title: "Ritual de Abertura de Caminhos",
-    phase: "Energia Espiritual",
-    spiritual: "São Jorge / Ogum",
-    description: "Ritual de força, proteção e desbloqueio de caminhos.",
-    benefits: ["Coragem", "Proteção", "Abertura de oportunidades"],
-    importance: "Conecta intenção com ação e avanço.",
-    price: "R$ 21"
-  },
-  {
-    id: 6,
-    date: "24 de Abril",
-    title: "Ritual de Expansão",
-    phase: "Lua Crescente",
-    description: "Ação prática para sustentar e expandir intenções.",
-    benefits: [
-      "Disciplina",
-      "Execução de objetivos",
-      "Autoconfiança"
-    ],
-    importance: "A ação é o elo entre intenção e manifestação.",
-    price: "R$ 21"
-  },
-  {
-    id: 7,
-    date: "29 de Abril",
-    title: "Ritual de Clareza e Propósito",
-    phase: "Energia Espiritual",
-    spiritual: "Santa Catarina de Sena",
-    description: "Alinhamento com propósito e tomada de decisões.",
-    benefits: ["Clareza mental", "Direcionamento", "Conexão espiritual"],
-    importance: "Fecha o ciclo com consciência e alinhamento.",
-    price: "R$ 21"
-  }
-];
+import { useCiclos, formatarMesAno, diasParaRitual } from '../hooks/useCiclos';
 
 type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
 
@@ -770,6 +676,559 @@ const AdminProductsTab = () => (
   </div>
 );
 
+const AdminCiclosTab = () => {
+  const [ciclos, setCiclos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingCiclo, setEditingCiclo] = useState<any | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  
+  // Form fields state
+  const [form, setForm] = useState({
+    titulo: '',
+    fase: '',
+    emoji: '🔮',
+    spiritual: '',
+    data_iso: '',
+    data_exibir: '',
+    mes_ano: '2026-06',
+    descricao: '',
+    importancia: '',
+    beneficios: '',
+    preco: 'R$ 21',
+    ativo: true,
+    ordem: 1,
+  });
+
+  const buscar = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'ciclos_posicao'),
+        orderBy('mes_ano', 'desc'),
+        orderBy('ordem', 'asc')
+      );
+      const snap = await getDocs(q);
+      setCiclos(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (err) {
+      console.error('Erro ao buscar ciclos admin:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    buscar();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.titulo || !form.fase || !form.data_iso || !form.mes_ano || !form.preco) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    try {
+      const parsedBeneficios = form.beneficios
+        ? form.beneficios.split(',').map(b => b.trim()).filter(Boolean)
+        : [];
+
+      const cicloDoc = {
+        titulo: form.titulo,
+        fase: form.fase,
+        emoji: form.emoji,
+        spiritual: form.spiritual || null,
+        data_iso: form.data_iso,
+        data_exibir: form.data_exibir || form.data_iso.split('-').reverse().slice(0, 2).join(' de '), // fallback calculation
+        mes_ano: form.mes_ano,
+        descricao: form.descricao,
+        importancia: form.importancia,
+        beneficios: parsedBeneficios,
+        preco: form.preco,
+        ativo: form.ativo,
+        ordem: Number(form.ordem) || 1,
+        atualizadoEm: new Date().toISOString()
+      };
+
+      if (editingCiclo) {
+        await updateDoc(doc(db, 'ciclos_posicao', editingCiclo.id), cicloDoc);
+        alert('Ciclo atualizado com sucesso!');
+      } else {
+        await addDoc(collection(db, 'ciclos_posicao'), {
+          ...cicloDoc,
+          criadoEm: new Date().toISOString()
+        });
+        alert('Ciclo criado com sucesso!');
+      }
+
+      setIsFormOpen(false);
+      setEditingCiclo(null);
+      buscar();
+    } catch (err) {
+      console.error('Erro ao salvar ciclo:', err);
+      alert('Erro ao salvar ciclo.');
+    }
+  };
+
+  const handleEdit = (ciclo: any) => {
+    setEditingCiclo(ciclo);
+    setForm({
+      titulo: ciclo.titulo || '',
+      fase: ciclo.fase || '',
+      emoji: ciclo.emoji || '🔮',
+      spiritual: ciclo.spiritual || '',
+      data_iso: ciclo.data_iso || '',
+      data_exibir: ciclo.data_exibir || '',
+      mes_ano: ciclo.mes_ano || '2026-06',
+      descricao: ciclo.descricao || '',
+      importancia: ciclo.importancia || '',
+      beneficios: ciclo.beneficios ? ciclo.beneficios.join(', ') : '',
+      preco: ciclo.preco || 'R$ 21',
+      ativo: ciclo.ativo !== undefined ? ciclo.ativo : true,
+      ordem: ciclo.ordem !== undefined ? ciclo.ordem : 1,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja remover este ritual?')) return;
+    try {
+      await deleteDoc(doc(db, 'ciclos_posicao', id));
+      alert('Ritual removido com sucesso!');
+      buscar();
+    } catch (err) {
+      console.error('Erro ao remover:', err);
+      alert('Erro ao remover ritual.');
+    }
+  };
+
+  const handleToggleAtivo = async (ciclo: any) => {
+    try {
+      await updateDoc(doc(db, 'ciclos_posicao', ciclo.id), { ativo: !ciclo.ativo });
+      buscar();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const rodarSeed = async () => {
+    if (!window.confirm('Deseja popular a coleção ciclos_posicao com os 6 rituais de Junho 2026?')) return;
+    setLoading(true);
+    try {
+      const seedJunho2026 = [
+        {
+          titulo:      "Ritual de Transbordo",
+          fase:        "Lua Cheia",
+          emoji:       "🌕",
+          spiritual:   null,
+          data_iso:    "2026-06-03",
+          data_exibir: "03 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Ritual de reconhecimento e liberação na lua cheia de junho. Honre tudo que floresceu neste ciclo, libere o que já cumpriu seu papel e equilibre as emoções intensas que a lua amplifica.",
+          importancia: "A lua cheia amplifica tudo que está ativo em você — intenções, emoções e padrões. Este ritual transforma essa amplitude em consciência.",
+          beneficios:  ["Clareza emocional", "Liberação energética", "Expansão espiritual"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       1,
+        },
+        {
+          titulo:      "Ritual de Desapego",
+          fase:        "Lua Minguante",
+          emoji:       "🌗",
+          spiritual:   null,
+          data_iso:    "2026-06-10",
+          data_exibir: "10 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Limpeza energética profunda: solte padrões, vínculos e crenças que já não cabem em quem você está se tornando.",
+          importancia: "Desapegar não é perder — é criar espaço para o que está vindo.",
+          beneficios:  ["Leveza emocional", "Dissolução de bloqueios", "Clareza mental"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       2,
+        },
+        {
+          titulo:      "Ritual de Amor Próprio e Vínculos",
+          fase:        "Energia Relacional",
+          emoji:       "💛",
+          spiritual:   null,
+          data_iso:    "2026-06-12",
+          data_exibir: "12 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Ritual para ressignificar seus vínculos afetivos a partir do amor próprio. Quando você se posiciona com mais presença, seus relacionamentos mudam junto.",
+          importancia: "A forma como você se relaciona com os outros é um espelho de como você se relaciona consigo mesma.",
+          beneficios:  ["Amor próprio consolidado", "Vínculos mais conscientes", "Libertação de padrões afetivos"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       3,
+        },
+        {
+          titulo:      "Ritual de Santo Antônio",
+          fase:        "Energia Espiritual",
+          emoji:       "🌿",
+          spiritual:   "Santo Antônio",
+          data_iso:    "2026-06-13",
+          data_exibir: "13 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Ritual de conexão, atração e realinhamento afetivo com a energia de Santo Antônio. Trabalha o campo dos vínculos, das buscas do coração e da abertura para o amor genuíno.",
+          importancia: "Santo Antônio não é apenas o santo dos namorados — é o patrono dos que buscam com o coração aberto e sincero.",
+          beneficios:  ["Atração de vínculos verdadeiros", "Proteção nos relacionamentos", "Abertura do campo afetivo"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       4,
+        },
+        {
+          titulo:      "Ritual de Expansão",
+          fase:        "Lua Crescente",
+          emoji:       "🌒",
+          spiritual:   null,
+          data_iso:    "2026-06-18",
+          data_exibir: "18 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Ação prática para sustentar e expandir as intenções plantadas na lua nova. A crescente pede movimento — é hora de dar os primeiros passos concretos.",
+          importancia: "Intenção sem ação é apenas desejo. A lua crescente é o convite para encarnar o que você quer criar.",
+          beneficios:  ["Disciplina consciente", "Execução de objetivos", "Autoconfiança"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       5,
+        },
+        {
+          titulo:      "Ritual de Semeadura",
+          fase:        "Lua Nova",
+          emoji:       "🌑",
+          spiritual:   null,
+          data_iso:    "2026-06-25",
+          data_exibir: "25 de Junho",
+          mes_ano:     "2026-06",
+          descricao:   "Plantio de intenções para o próximo ciclo lunar. A lua nova de junho carrega a energia do solstício de inverno — um momento de recolhimento, escuta interna e criação de novas bases.",
+          importancia: "Na escuridão da lua nova há potência pura. Toda realidade começa com uma intenção bem plantada no silêncio.",
+          beneficios:  ["Clareza de intenção", "Conexão com ciclos naturais", "Ativação da manifestação consciente"],
+          preco:       "R$ 21",
+          ativo:       true,
+          ordem:       6,
+        },
+      ];
+
+      for (const r of seedJunho2026) {
+        await addDoc(collection(db, 'ciclos_posicao'), {
+          ...r,
+          criadoEm: new Date().toISOString()
+        });
+      }
+      alert('Rituais de Junho 2026 populados com sucesso no Firestore!');
+      buscar();
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao rodar seed: ' + String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="glass-card p-6 md:p-10">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
+        <div>
+          <h3 className="serif text-2xl text-gold-light">Ciclos Posição (Rituais)</h3>
+          <p className="text-white/30 text-xs font-light mt-1">Gerencie a agenda de rituais e datas energéticas mensais</p>
+        </div>
+        <div className="flex gap-2">
+          <button 
+            type="button"
+            onClick={rodarSeed}
+            className="button-outline py-2 px-4 text-xs flex items-center gap-1 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/5"
+          >
+            🌱 Seed Junho 2026
+          </button>
+          <button 
+            type="button"
+            onClick={() => {
+              setEditingCiclo(null);
+              setForm({
+                titulo: '',
+                fase: '',
+                emoji: '🔮',
+                spiritual: '',
+                data_iso: '',
+                data_exibir: '',
+                mes_ano: '2026-06',
+                descricao: '',
+                importancia: '',
+                beneficios: '',
+                preco: 'R$ 21',
+                ativo: true,
+                ordem: ciclos.length + 1,
+              });
+              setIsFormOpen(true);
+            }}
+            className="button-outline py-2 px-4 text-xs flex items-center gap-1"
+          >
+            <Plus size={14} /> Novo Ritual
+          </button>
+        </div>
+      </div>
+
+      {isFormOpen && (
+        <form onSubmit={handleSubmit} className="border border-white/5 bg-white/[0.01] p-6 rounded-2xl mb-10 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-white/5">
+            <h4 className="serif text-white/80 font-medium text-base">
+              {editingCiclo ? 'Editar Ritual' : 'Novo Ritual'}
+            </h4>
+            <button 
+              type="button" 
+              onClick={() => setIsFormOpen(false)}
+              className="text-white/40 hover:text-white"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Título do Ritual *</label>
+              <input 
+                type="text" 
+                value={form.titulo}
+                onChange={e => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ex. Ritual de Transbordo"
+                className="input-field text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Fase / Linha Energética *</label>
+              <input 
+                type="text" 
+                value={form.fase}
+                onChange={e => setForm({ ...form, fase: e.target.value })}
+                placeholder="Ex. Lua Cheia ou Energia Relacional"
+                className="input-field text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Emoji</label>
+                <input 
+                  type="text" 
+                  value={form.emoji}
+                  onChange={e => setForm({ ...form, emoji: e.target.value })}
+                  placeholder="🌕"
+                  className="input-field text-sm text-center"
+                />
+              </div>
+              <div>
+                <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Conexão Espiritual</label>
+                <input 
+                  type="text" 
+                  value={form.spiritual}
+                  onChange={e => setForm({ ...form, spiritual: e.target.value })}
+                  placeholder="Ex. Santo Antônio, Orixás"
+                  className="input-field text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Data Real (ISO) *</label>
+              <input 
+                type="date" 
+                value={form.data_iso}
+                onChange={e => setForm({ ...form, data_iso: e.target.value })}
+                className="input-field text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Data Exibição (Ex. 03 de Junho) *</label>
+              <input 
+                type="text" 
+                value={form.data_exibir}
+                onChange={e => setForm({ ...form, data_exibir: e.target.value })}
+                placeholder="Ex. 03 de Junho"
+                className="input-field text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Mês/Ano Filtro (YYYY-MM) *</label>
+              <input 
+                type="text" 
+                value={form.mes_ano}
+                onChange={e => setForm({ ...form, mes_ano: e.target.value })}
+                placeholder="Ex. 2026-06"
+                className="input-field text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Preço *</label>
+                <input 
+                  type="text" 
+                  value={form.preco}
+                  onChange={e => setForm({ ...form, preco: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Ordem *</label>
+                <input 
+                  type="number" 
+                  value={form.ordem}
+                  onChange={e => setForm({ ...form, ordem: Number(e.target.value) })}
+                  className="input-field text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Descrição do Ritual</label>
+            <textarea 
+              value={form.descricao}
+              onChange={e => setForm({ ...form, descricao: e.target.value })}
+              placeholder="Descreva o propósito e a dinâmica offline do ritual..."
+              className="input-field text-sm h-20"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Importância do Ritual (Citação)</label>
+              <input 
+                type="text" 
+                value={form.importancia}
+                onChange={e => setForm({ ...form, importancia: e.target.value })}
+                placeholder="Ex. A lua cheia amplifica tudo..."
+                className="input-field text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-white/40 text-[10px] uppercase font-bold tracking-wider block mb-1">Benefícios (Separados por vírgula)</label>
+              <input 
+                type="text" 
+                value={form.beneficios}
+                onChange={e => setForm({ ...form, beneficios: e.target.value })}
+                placeholder="Ex. Clareza emocional, Expansão espiritual"
+                className="input-field text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 py-2">
+            <input 
+              type="checkbox" 
+              id="ativoCheckbox"
+              checked={form.ativo}
+              onChange={e => setForm({ ...form, ativo: e.target.checked })}
+              className="rounded border-white/10 bg-black text-gold-main focus:ring-0"
+            />
+            <label htmlFor="ativoCheckbox" className="text-white/80 text-xs select-none">Ritual Ativo para Clientes</label>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button 
+              type="button" 
+              onClick={() => setIsFormOpen(false)}
+              className="button-outline py-2 px-4 text-xs"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="py-2 px-6 text-xs bg-gold-main hover:bg-gold-light text-black font-semibold rounded-full shadow-md transition-all duration-300"
+            >
+              Salvar Ritual
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gold-main" />
+        </div>
+      ) : ciclos.length === 0 ? (
+        <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl">
+          <Calendar className="mx-auto text-white/10 mb-4" size={42} />
+          <p className="text-white/30 text-sm font-light">Nenhum ritual cadastrado no Firestore.</p>
+          <button 
+            type="button"
+            onClick={rodarSeed}
+            className="button-outline text-xs mt-4"
+          >
+            Popular Rituais de Junho 2026
+          </button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 text-[10px] uppercase tracking-wider text-white/40">
+                <th className="py-4">Ordem / Mês</th>
+                <th className="py-4">Ritual</th>
+                <th className="py-4">Data Real</th>
+                <th className="py-4">Fase</th>
+                <th className="py-4">Preço</th>
+                <th className="py-4">Filtro</th>
+                <th className="py-4">Status</th>
+                <th className="py-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ciclos.map((c) => (
+                <tr key={c.id} className="border-b border-white/5 text-sm hover:bg-white/[0.01] transition-colors">
+                  <td className="py-4 text-white/50 font-mono">
+                    #{c.ordem || 1}
+                  </td>
+                  <td className="py-4 font-medium text-white/90">
+                    <span className="mr-2 text-lg">{c.emoji || '🔮'}</span>
+                    {c.titulo}
+                    {c.spiritual && <span className="block text-[10px] text-gold-main/60 italic mt-0.5">Espiritual: {c.spiritual}</span>}
+                  </td>
+                  <td className="py-4 text-white/50">{c.data_iso} ({c.data_exibir})</td>
+                  <td className="py-4 text-white/75">{c.fase}</td>
+                  <td className="py-4 text-gold-light">{c.preco}</td>
+                  <td className="py-4 text-white/40 font-mono text-[11px]">{c.mes_ano}</td>
+                  <td className="py-4">
+                    <button 
+                      type="button"
+                      onClick={() => handleToggleAtivo(c)}
+                      className={`text-[9px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full border transition-all ${
+                        c.ativo 
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20' 
+                          : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      {c.ativo ? 'Ativo' : 'Inativo'}
+                    </button>
+                  </td>
+                  <td className="py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => handleEdit(c)}
+                        className="p-2 border border-white/5 text-white/40 hover:text-gold-main hover:border-gold-main/20 rounded-full transition-all"
+                        title="Editar"
+                      >
+                        <Settings size={14} />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => handleDelete(c.id)}
+                        className="p-2 border border-white/5 text-white/40 hover:text-red-400 hover:border-red-400/20 rounded-full transition-all"
+                        title="Remover"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminSessionsTab = ({ appointments, users, onRefresh }: { appointments: any[], users: any[], onRefresh: () => void }) => {
   const handleStatusChange = async (id: string, status: string) => {
     try {
@@ -1060,6 +1519,9 @@ const Diagnostico = () => {
   const [isSubmittingReprogramacao, setIsSubmittingReprogramacao] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   
+  // Hook de ciclos do mês
+  const { ciclos, mesAno, loading: ciclosLoading } = useCiclos();
+  
   // Scheduling State
   const [appointments, setAppointments] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -1172,7 +1634,7 @@ const Diagnostico = () => {
   const [currentAudio, setCurrentAudio] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [adminMeditationData, setAdminMeditationData] = useState({ title: '', description: '', duration: '', url: '' });
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons'>('dashboard');
+  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons' | 'ciclos'>('dashboard');
   const [adminStats, setAdminStats] = useState({
     usersCount: 0,
     mappingsCount: 0,
@@ -2124,7 +2586,7 @@ const Diagnostico = () => {
                 { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
                 { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
                 { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
-                { label: 'Ciclos do Mês', action: () => showPage('rituais_mes_info') },
+                { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
                 { label: 'Biblioteca', action: () => navigate('/biblioteca') }
               ].map((item, idx) => (
                 <button
@@ -2198,7 +2660,7 @@ const Diagnostico = () => {
                     { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
                     { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
                     { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
-                    { label: 'Ciclos do Mês', action: () => showPage('rituais_mes_info') },
+                    { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
                     { label: 'Biblioteca', action: () => navigate('/biblioteca') }
                   ].map((item, idx) => (
                     <button
@@ -2555,10 +3017,10 @@ const Diagnostico = () => {
               className="animate-screen text-center max-w-2xl mx-auto"
             >
               <div className="back" onClick={() => setPage('home')}>← Voltar</div>
-              <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
+              <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium">
                 Início → Mapa de Posição - Floral
               </p>
-              <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-6 block font-bold">🌿 Mapa de Posição - Floral</span>
+              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">🌿 Mapa de Posição - Floral</span>
               <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Você não sente o que sente por acaso.</h2>
               
               <div className="glass-card p-6 md:p-10 text-left mb-12">
@@ -2655,7 +3117,7 @@ const Diagnostico = () => {
               
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] mb-2 block font-bold">Mapa de Posição - Floral</span>
+                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapa de Posição - Floral</span>
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentMapeamentoStep + 1} de {mapeamentoQuestions.length}</h2>
                 </div>
                 <div className="text-right">
@@ -2698,13 +3160,6 @@ const Diagnostico = () => {
                           // Finalize and Analyze
                           setPage('mapeamento_analysis');
                           try {
-                            const apiKey = process.env.GEMINI_API_KEY;
-                            if (!apiKey || apiKey === 'undefined') {
-                              throw new Error("API Key do Gemini não configurada.");
-                            }
-
-                            const ai = new GoogleGenAI({ apiKey });
-                            
                             // Prepare context for AI
                             const quizContext = newAnswers.map(a => `- ${a.tipo}: ${a.texto} (Emoção: ${a.emocao})`).join('\n');
                             const suggestedFlorais = Array.from(new Set(newAnswers.flatMap(a => a.florais))).join(', ');
@@ -2720,69 +3175,27 @@ const Diagnostico = () => {
                             };
                             setMapeamentoData(derivedData);
 
-                            // Step 1: Select Florais (Refined by AI)
-                            let floraisList = suggestedFlorais;
-                            try {
-                              const selectResponse = await ai.models.generateContent({
-                                model: "gemini-1.5-flash",
-                                contents: `Você é um especialista em Florais de Bach.
-Com base nas respostas do quiz abaixo, selecione a fórmula ideal (4 a 6 florais).
+                            // Fetch response from server-side secure Gemini API endpoint
+                            const response = await fetch("/api/gemini/mapeamento", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json"
+                              },
+                              body: JSON.stringify({
+                                quizContext,
+                                suggestedFlorais,
+                                arcanosList: ARCANOS_MATRIZ.map(a => a.arcano)
+                              })
+                            });
 
-RESPOSTAS DO QUIZ:
-${quizContext}
-
-FLORAIS SUGERIDOS PELO MAPEAMENTO:
-${suggestedFlorais}
-
-REGRAS:
-- Selecione entre 4 e 6 florais.
-- Priorize os florais que aparecem mais vezes ou que tratam a ferida/emoção central.
-- Retorne apenas os nomes dos florais separados por vírgula.`,
-                              });
-                              floraisList = selectResponse.text || suggestedFlorais;
-                            } catch (e) {
-                              console.error("Error selecting florais with AI:", e);
+                            if (!response.ok) {
+                              const errData = await response.json().catch(() => ({}));
+                              throw new Error(errData.error || `Servidor retornou erro ${response.status}`);
                             }
 
-                            // Step 2: Generate Full Report
-                            let resultText = "";
-                            try {
-                              const reportResponse = await ai.models.generateContent({
-                                model: "gemini-1.5-pro",
-                                contents: `Você é um especialista em análise emocional e Florais de Bach.
-Gere um relatório terapêutico personalizado (Mapeamento Emocional Floral).
-
-DADOS DO QUIZ:
-${quizContext}
-
-FLORAIS SELECIONADOS:
-${floraisList}
-
-LISTA DE ARCANOS POSSÍVEIS (Escolha o que melhor representa o padrão do usuário):
-${ARCANOS_MATRIZ.map(a => a.arcano).join(', ')}
-
-ESTRUTURA DA RESPOSTA (Markdown):
-1. TÍTULO: "Seu Mapeamento Emocional"
-2. ARCANO DETECTADO: Retorne apenas o nome do Arcano escolhido da lista acima. Ex: "ARCANO: Imperador"
-3. LEITURA EMOCIONAL: Analise os padrões identificados no quiz (2-3 parágrafos).
-4. ARQUÉTIPO ATIVO: Identifique o arquétipo que mais se manifesta nessas respostas e explique por quê.
-5. FÓRMULA FLORAL: Liste os florais (${floraisList}) e explique brevemente a função de cada um para este caso.
-6. MODO DE USO: 4 gotas, 4 vezes ao dia.
-7. TEMPO DE AÇÃO: Percepções em 3-7 dias, ajustes profundos em 21 dias.
-8. FRASE DE CONSCIÊNCIA: Uma frase curta e poderosa para o momento do usuário.
-9. PRÓXIMO PASSO: Orientação final de evolução.
-10. SCORE: Gere um número de 0 a 100 de alinhamento emocional. Retorne como "SCORE: [numero]".`,
-                              });
-                              resultText = reportResponse.text || "";
-                            } catch (e) {
-                              console.error("Error generating report with Pro:", e);
-                              // Fallback to Flash if Pro fails
-                              const fallbackResponse = await ai.models.generateContent({
-                                model: "gemini-1.5-flash",
-                                contents: `Gere um relatório simplificado de mapeamento emocional floral com base nestes dados: ${quizContext}. Florais: ${floraisList}. Escolha um Arcano de: ${ARCANOS_MATRIZ.map(a => a.arcano).join(', ')}. Retorne no formato: ARCANO: [Nome], seguido da análise.`,
-                              });
-                              resultText = fallbackResponse.text || "Não foi possível gerar o relatório completo no momento.";
-                            }
+                            const data = await response.json();
+                            const floraisList = data.floraisList || suggestedFlorais;
+                            const resultText = data.resultText || "";
 
                             const scoreMatch = resultText.match(/SCORE:\s*(\d+)/);
                             const score = scoreMatch ? parseInt(scoreMatch[1]) : 75;
@@ -3303,76 +3716,132 @@ ESTRUTURA DA RESPOSTA (Markdown):
             >
               <div className="back" onClick={() => showPage('home')}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
-                Início → Rituais do Mês
+                Início → Ciclos de Posição · {formatarMesAno(mesAno)}
               </p>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] mb-12">
                 <div className="flex justify-between items-center mb-8">
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold">Agenda Mensal</span>
                 </div>
-                <h2 className="serif text-5xl text-gold-light mb-6">Rituais do Mês</h2>
+                <h2 className="serif text-5xl text-gold-light mb-3 leading-tight">
+                  Ciclos Posição
+                </h2>
+                <p className="font-serif text-2xl text-gold-main/50 italic font-light mb-6">
+                  {formatarMesAno(mesAno)}
+                </p>
                 <p className="text-white/40 mb-8 leading-relaxed text-lg font-light">
                   Rituais coletivos, realizados off-line e enviados por mensagem vídeo e áudio para sua prática individual. Escolha abaixo o ritual que deseja participar:
                 </p>
               </div>
 
-              <div className="grid gap-6">
-                {rituais_mes.map((ritual) => (
-                  <motion.div 
-                    key={ritual.id}
-                    whileHover={{ y: -5 }}
-                    className="glass-card p-8 border-gold-main/10 bg-white/[0.02] group"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-gold-main/40 text-[10px] uppercase tracking-widest block">{ritual.date}</span>
-                          <span className="text-gold-main/20 text-[10px] uppercase tracking-widest block">•</span>
-                          <span className="text-gold-main/60 text-[10px] uppercase tracking-widest block font-bold">{ritual.phase}</span>
-                          {ritual.spiritual && (
-                            <>
+              {ciclosLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="relative w-8 h-8">
+                    <div className="absolute inset-0 border-2 border-gold-main/15 rounded-full" />
+                    <div className="absolute inset-0 border-2 border-gold-main rounded-full border-t-transparent animate-spin" />
+                  </div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest font-mono">Buscando rituais do mês...</p>
+                </div>
+              ) : ciclos.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl">
+                  <span className="text-4xl mb-4 block">🔮</span>
+                  <p className="text-white/30 text-sm font-light">Nenhum ritual ativo cadastrado para este mês.</p>
+                </div>
+              ) : (
+                <div className="grid gap-6">
+                  {ciclos.map((ritual) => {
+                    const dias = diasParaRitual(ritual.data_iso);
+                    const isPast = dias < 0;
+
+                    return (
+                      <motion.div 
+                        key={ritual.id}
+                        whileHover={!isPast ? { y: -5 } : undefined}
+                        className={`glass-card p-8 border-gold-main/10 bg-white/[0.02] group ${isPast ? 'opacity-60 hover:cursor-not-allowed' : ''}`}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="text-gold-main/40 text-[10px] uppercase tracking-widest block">{ritual.data_exibir}</span>
                               <span className="text-gold-main/20 text-[10px] uppercase tracking-widest block">•</span>
-                              <span className="text-gold-main/80 text-[10px] uppercase tracking-widest block font-bold italic">{ritual.spiritual}</span>
-                            </>
-                          )}
+                              <span className="text-gold-main/60 text-[10px] uppercase tracking-widest block font-bold">
+                                {ritual.emoji} {ritual.fase}
+                              </span>
+                              {ritual.spiritual && (
+                                <>
+                                  <span className="text-gold-main/20 text-[10px] uppercase tracking-widest block">•</span>
+                                  <span className="text-gold-main/80 text-[10px] uppercase tracking-widest block font-bold italic">{ritual.spiritual}</span>
+                                </>
+                              )}
+                              {dias >= 0 && (
+                                <>
+                                  <span className="text-gold-main/20 text-[10px] uppercase tracking-widest block">•</span>
+                                  <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full font-bold border ${
+                                    dias === 0
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                      : dias === 1
+                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                        : 'bg-gold-main/10 text-gold-main border-gold-main/20'
+                                  }`}>
+                                    {dias === 0 && 'Hoje'}
+                                    {dias === 1 && 'Amanhã'}
+                                    {dias > 1 && `Em ${dias} dias`}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <h3 className="serif text-2xl text-gold-light group-hover:text-gold-main transition-colors">{ritual.titulo}</h3>
+                          </div>
+                          <div className="text-gold-main font-medium">{ritual.preco}</div>
                         </div>
-                        <h3 className="serif text-2xl text-gold-light group-hover:text-gold-main transition-colors">{ritual.title}</h3>
-                      </div>
-                      <div className="text-gold-main font-medium">{ritual.price}</div>
-                    </div>
-                    <p className="text-white/40 text-sm font-light mb-6 leading-relaxed">
-                      {ritual.description}
-                    </p>
-                    
-                    <div className="mb-6">
-                      <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Importância</p>
-                      <p className="text-white/30 text-xs italic font-light leading-relaxed">
-                        "{ritual.importance}"
-                      </p>
-                    </div>
+                        <p className="text-white/40 text-sm font-light mb-6 leading-relaxed">
+                          {ritual.descricao}
+                        </p>
+                        
+                        {ritual.importancia && (
+                          <div className="mb-6">
+                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Importância</p>
+                            <p className="text-white/30 text-xs italic font-light leading-relaxed">
+                              "{ritual.importancia}"
+                            </p>
+                          </div>
+                        )}
 
-                    <div className="mb-8">
-                      <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Benefícios</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ritual.benefits.map((benefit, idx) => (
-                          <span key={idx} className="text-[9px] text-white/40 bg-white/5 px-2 py-1 rounded-full border border-white/5">
-                            {benefit}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                        {ritual.beneficios && ritual.beneficios.length > 0 && (
+                          <div className="mb-8">
+                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Benefícios</p>
+                            <div className="flex flex-wrap gap-2">
+                              {ritual.beneficios.map((benefit, idx) => (
+                                <span key={idx} className="text-[9px] text-white/40 bg-white/5 px-2 py-1 rounded-full border border-white/5">
+                                  {benefit}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    <button 
-                      onClick={() => {
-                        setSelectedProduct({ name: `Ritual: ${ritual.title}`, price: ritual.price });
-                        showPage('checkout');
-                      }}
-                      className="button-outline w-full py-4 text-xs tracking-[0.2em]"
-                    >
-                      Participar deste Ritual
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
+                        {isPast ? (
+                          <button 
+                            disabled 
+                            className="w-full py-4 text-xs tracking-[0.2em] border border-white/10 rounded-2xl text-white/20 bg-white/[0.01] uppercase font-mono cursor-not-allowed"
+                          >
+                            Ciclo encerrado
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              setSelectedProduct({ name: `Ritual: ${ritual.titulo}`, price: ritual.preco });
+                              showPage('checkout');
+                            }}
+                            className="button-outline w-full py-4 text-xs tracking-[0.2em]"
+                          >
+                            Participar deste Ritual
+                          </button>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -4082,6 +4551,7 @@ ESTRUTURA DA RESPOSTA (Markdown):
                     { id: 'requests', label: 'Solicitações', icon: MessageCircle },
                     { id: 'products', label: 'Produtos', icon: Package },
                     { id: 'clube', label: 'Clube Clarear', icon: Music },
+                    { id: 'ciclos', label: 'Ciclos Posição', icon: Calendar },
                     { id: 'sessions', label: 'Sessões', icon: Clock },
                     { id: 'reports', label: 'Relatórios', icon: FileText },
                     { id: 'coupons', label: 'Cupons', icon: Tag },
@@ -4162,6 +4632,10 @@ ESTRUTURA DA RESPOSTA (Markdown):
 
                   {adminTab === 'products' && (
                     <AdminProductsTab />
+                  )}
+
+                  {adminTab === 'ciclos' && (
+                    <AdminCiclosTab />
                   )}
 
                   {adminTab === 'sessions' && (

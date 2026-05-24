@@ -105,7 +105,7 @@ const DashboardPosicao = () => {
       </header>
 
       {/* User Management Section */}
-      <section className="bg-card-bg rounded-xl border border-gold-main/20 overflow-hidden text-left">
+      <section className="bg-bg3 rounded-xl border border-gold-main/20 overflow-hidden text-left">
         <div className="p-6 border-b border-gold-main/10 bg-gold-main/5 flex justify-between items-center">
           <h3 className="serif text-xl text-gold-light">Usuários Cadastrados</h3>
         </div>
@@ -159,7 +159,7 @@ const DashboardPosicao = () => {
       </section>
 
       {/* Diagnósticos Section */}
-      <section className="bg-card-bg rounded-xl border border-gold-main/20 overflow-hidden text-left">
+      <section className="bg-bg3 rounded-xl border border-gold-main/20 overflow-hidden text-left">
         <div className="p-6 border-b border-gold-main/10 bg-gold-main/5">
           <h3 className="serif text-xl text-gold-light">Diagnósticos Recebidos</h3>
         </div>

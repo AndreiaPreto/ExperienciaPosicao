@@ -70,12 +70,28 @@ service cloud.firestore {
              data.notificado is bool;
     }
 
+    function isValidCiclo(data) {
+      return data.titulo is string && data.titulo.size() > 0 &&
+             data.fase is string && data.fase.size() > 0 &&
+             data.data_iso is string &&
+             data.data_exibir is string &&
+             data.mes_ano is string &&
+             data.preco is string &&
+             data.ativo is bool &&
+             data.ordem is int;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
 
     match /test/connection {
       allow read: if isAuthenticated();
+    }
+
+    match /ciclos_posicao/{cicloId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /users/{userId} {

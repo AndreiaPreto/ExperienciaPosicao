@@ -127,9 +127,35 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "name", "slug", "category", "type", "active", "order"]
+    },
+    "Ciclo": {
+      "title": "Ciclo",
+      "description": "Monthly cycles / rituais do mês",
+      "type": "object",
+      "properties": {
+        "titulo": { "type": "string" },
+        "fase": { "type": "string" },
+        "emoji": { "type": "string" },
+        "spiritual": { "type": "string" },
+        "data_iso": { "type": "string" },
+        "data_exibir": { "type": "string" },
+        "mes_ano": { "type": "string" },
+        "descricao": { "type": "string" },
+        "importancia": { "type": "string" },
+        "beneficios": { "type": "array", "items": { "type": "string" } },
+        "preco": { "type": "string" },
+        "ativo": { "type": "boolean" },
+        "ordem": { "type": "number" },
+        "criadoEm": { "type": "string", "format": "date-time" }
+      },
+      "required": ["titulo", "fase", "data_iso", "data_exibir", "mes_ano", "preco", "ativo", "ordem"]
     }
   },
   "firestore": {
+    "/ciclos_posicao/{cicloId}": {
+      "schema": "Ciclo",
+      "description": "Monthly rituais cycles"
+    },
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles"

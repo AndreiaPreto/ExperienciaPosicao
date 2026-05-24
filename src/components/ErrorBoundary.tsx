@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-earth-950 p-6 text-center">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-deep-black p-6 text-center">
           <div className="glass-card p-10 max-w-md">
             <h2 className="serif text-3xl text-gold-light mb-4">Ops! Algo deu errado.</h2>
             <p className="text-white/60 mb-8 font-light leading-relaxed">

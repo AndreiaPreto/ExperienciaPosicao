@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import admin from "firebase-admin";
 import fs from "fs";
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
@@ -462,6 +463,106 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching user access:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Gemini Mapeamento API
+  app.post("/api/gemini/mapeamento", async (req, res) => {
+    const { quizContext, suggestedFlorais, arcanosList } = req.body;
+
+    if (!quizContext || !suggestedFlorais || !arcanosList) {
+      return res.status(400).json({ error: "Missing required fields (quizContext, suggestedFlorais, arcanosList)" });
+    }
+
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY do servidor não configurada.");
+      }
+      
+      console.log(`[Gemini Route] Configured key verified. Length: ${apiKey.length}. Starts with: ${apiKey.substring(0, 4)}...`);
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      // Step 1: Select Florais (Refined by AI) using non-deprecated model "gemini-3.5-flash"
+      let floraisList = suggestedFlorais;
+      try {
+        const selectResponse = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: `Você é um especialista em Florais de Bach.
+Com base nas respostas do quiz abaixo, selecione a fórmula ideal (4 a 6 florais).
+
+RESPOSTAS DO QUIZ:
+${quizContext}
+
+FLORAIS SUGERIDOS PELO MAPEAMENTO:
+${suggestedFlorais}
+
+REGRAS:
+- Selecione entre 4 e 6 florais.
+- Priorize os florais que aparecem mais vezes ou que tratam a ferida/emoção central.
+- Retorne apenas os nomes dos florais separados por vírgula.`,
+        });
+        floraisList = selectResponse.text || suggestedFlorais;
+      } catch (e: any) {
+        console.error("Error selecting florais with AI:", e);
+      }
+
+      // Step 1.2: Sanity check resulting florais list
+      if (floraisList) {
+        floraisList = floraisList.replace(/[#*`:]/g, "").trim();
+      }
+
+      // Step 2: Generate Full Report using non-deprecated model "gemini-3.5-flash"
+      let resultText = "";
+      try {
+        const reportResponse = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: `Você é um especialista em análise emocional e Florais de Bach.
+Gere um relatório terapêutico personalizado (Mapeamento Emocional Floral).
+
+DADOS DO QUIZ:
+${quizContext}
+
+FLORAIS SELECIONADOS (coloque exatamente estes):
+${floraisList}
+
+LISTA DE ARCANOS POSSÍVEIS (Escolha o que melhor representa o padrão do usuário):
+${arcanosList.join(', ')}
+
+ESTRUTURA DA RESPOSTA (Markdown):
+1. TÍTULO: "Seu Mapeamento Emocional"
+2. ARCANO DETECTADO: Retorne apenas o nome do Arcano escolhido da lista acima. Ex: "ARCANO: Imperador"
+3. LEITURA EMOCIONAL: Analise os padrões identificados no quiz (2-3 parágrafos).
+4. ARQUÉTIPO ATIVO: Identifique o arquétipo que mais se manifesta nessas respostas e explique por quê.
+5. FÓRMULA FLORAL: Liste os florais (${floraisList}) e explique brevemente a função de cada um para este caso.
+6. MODO DE USO: 4 gotas, 4 vezes ao dia.
+7. TEMPO DE AÇÃO: Percepções em 3-7 dias, ajustes profundos em 21 dias.
+8. FRASE DE CONSCIÊNCIA: Uma frase curta e poderosa para o momento do usuário.
+9. PRÓXIMO PASSO: Orientação final de evolução.
+10. SCORE: Gere um número de 0 a 100 de alinhamento emocional. Retorne como "SCORE: [numero]".`,
+        });
+        resultText = reportResponse.text || "";
+      } catch (e: any) {
+        console.error("Error generating report with Gemini 3.5 Flash:", e);
+        throw e;
+      }
+
+      res.json({
+        floraisList,
+        resultText
+      });
+
+    } catch (error: any) {
+      console.error("Gemini route error:", error);
+      res.status(500).json({ error: error.message || "Failed to make Gemini API calls." });
     }
   });
 

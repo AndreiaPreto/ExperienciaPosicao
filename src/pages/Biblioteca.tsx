@@ -68,6 +68,14 @@ const EBOOKS_DATA: EBook[] = [
 const CATEGORIES = ['Todos', 'Florais', 'Oráculos', 'Temperamentos', 'Leis Universais'];
 
 export default function Biblioteca() {
+  React.useEffect(() => {
+    document.title = "Biblioteca POSIÇÃO · Conteúdos para alinhamento interno";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Sua biblioteca de práticas e e-books da POSIÇÃO para alinhamento pessoal e conexão intuitiva profunda.');
+    }
+  }, []);
+
   const [activeNav, setActiveNav] = useState<'todos' | 'destaques' | 'novidades'>('todos');
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
