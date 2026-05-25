@@ -22,11 +22,14 @@ const CompraDiagnostico = () => {
       className="min-h-screen bg-deep-black px-6 py-12 flex flex-col max-w-lg mx-auto"
     >
       {/* Logo */}
-      <div className="text-center mb-14">
-        <p className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-1">
-          Experiência Posição
-        </p>
-        <h1 className="font-serif text-3xl text-gold-light tracking-tight">
+      <div className="flex flex-col items-center text-center mb-10">
+        <img 
+          src="/assets/logo-experiencia-posicao.png" 
+          alt="Experiência Posição" 
+          className="h-32 sm:h-40 w-auto mb-6 object-contain"
+          referrerPolicy="no-referrer"
+        />
+        <h1 className="font-serif text-2xl text-gold-light tracking-tight">
           Diagnóstico de Posição
         </h1>
       </div>

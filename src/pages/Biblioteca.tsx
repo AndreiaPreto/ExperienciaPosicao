@@ -16,85 +16,39 @@ interface EBook {
   featured: boolean;
   bg: string;
   link: string;
+  coverUrl?: string;
 }
 
 const EBOOKS_DATA: EBook[] = [
   {
-    id: 1, icon: '🌿', cat: 'Florais',
-    title: 'Guia dos Florais de Bach',
-    sub: 'Entenda cada floral e para que ele serve na prática',
-    desc: 'Um guia direto e sem complicação sobre os 38 florais de Bach. Para cada floral: o que é, quando usar, como sentir o efeito e como combinar na sua fórmula pessoal.',
-    pages: '80 págs', badge: 'new',
-    tags: ['Florais de Bach', 'Cura Vibracional', 'Prático'],
+    id: 1, icon: '📜', cat: 'Leis Herméticas',
+    title: 'Descomplicando as Leis Herméticas',
+    sub: 'Guia visual para compreender, memorizar e aplicar os 7 princípios universais',
+    desc: 'Um guia visual completo para compreender, memorizar e aplicar os 7 princípios universais na sua vida: Mentalismo, Correspondência, Vibração, Polaridade, Ritmo, Causa e Efeito, e Gênero. Alinhe sua frequência com as leis que regem o universo e entenda o funcionamento invisível do todo.',
+    pages: '120 págs', badge: 'new',
+    tags: ['Leis Herméticas', '7 Princípios', 'Mentalismo', 'Ritmo', 'Visual'],
     featured: true,
+    bg: 'linear-gradient(135deg,#201a15,#140f0c)', // Warm golden/cream premium dark background
+    link: '#',
+    coverUrl: '/assets/leis_hermeticas_cover.png'
+  },
+  {
+    id: 2, icon: '🌿', cat: 'Florais',
+    title: 'Descomplicando os Florais de Bach',
+    sub: 'Aprenda a escolher e combinar florais para o seu equilíbrio emocional',
+    desc: 'Um guia prático para entender os 38 Florais de Bach de forma simples. Descubra como cada essência atua nas suas emoções, como preparar sua fórmula personalizada e como integrá-los na sua rotina diária de autocuidado.',
+    pages: '80 págs', badge: 'new',
+    tags: ['Florais de Bach', 'Cura Vibracional', 'Prático', 'Autocuidado'],
+    featured: false,
     bg: 'linear-gradient(135deg,#0f1a0a,#1a2e10)',
-    link: '#'
-  },
-  {
-    id: 2, icon: '💛', cat: 'Emoções',
-    title: 'Mapa das Emoções',
-    sub: 'Decodifique o que seu corpo está tentando dizer',
-    desc: 'Cada emoção tem uma mensagem. Aprenda a identificar o que ansiedade, raiva, tristeza e medo estão comunicando — e como trabalhar cada uma delas de forma consciente.',
-    pages: '65 págs', badge: 'hot',
-    tags: ['Emoções', 'Autoconhecimento', 'Corpo'],
-    featured: false,
-    bg: 'linear-gradient(135deg,#1a1208,#2e1c06)',
-    link: '#'
-  },
-  {
-    id: 3, icon: '🌙', cat: 'Rituais',
-    title: 'Rituais Lunares na Prática',
-    sub: 'Como usar os ciclos da lua no seu processo pessoal',
-    desc: 'Lua nova, crescente, cheia e minguante: entenda o que cada fase pede e como criar rituais simples e poderosos para cada momento do ciclo.',
-    pages: '55 págs', badge: null,
-    tags: ['Lua', 'Rituais', 'Ciclos'],
-    featured: false,
-    bg: 'linear-gradient(135deg,#0d0d1a,#0a0a2a)',
-    link: '#'
-  },
-  {
-    id: 4, icon: '🃏', cat: 'Tarô',
-    title: 'Tarô para Autoconhecimento',
-    sub: 'Use as cartas como espelho, não como previsão',
-    desc: 'Um olhar diferente sobre o tarô: não para prever o futuro, mas para entender padrões, decisões e o que está em movimento dentro de você agora.',
-    pages: '90 págs', badge: 'exc',
-    tags: ['Tarô', 'Reflexão', 'Padrões'],
-    featured: false,
-    bg: 'linear-gradient(135deg,#140a1a,#200a30)',
-    link: '#'
-  },
-  {
-    id: 5, icon: '🤝', cat: 'Relacionamentos',
-    title: 'Vínculos que Drenam, Vínculos que Nutrem',
-    sub: 'Como identificar e transformar seus padrões afetivos',
-    desc: 'Por que você atrai sempre os mesmos tipos de relacionamento? Este e-book explica os padrões emocionais por trás dos vínculos e como começar a mudá-los.',
-    pages: '72 págs', badge: 'new',
-    tags: ['Vínculos', 'Padrões', 'Afeto'],
-    featured: false,
-    bg: 'linear-gradient(135deg,#1a0a0a,#2a0a10)',
-    link: '#'
-  },
-  {
-    id: 6, icon: '🧘', cat: 'Autoconhecimento',
-    title: 'O Corpo Guarda Tudo',
-    sub: 'A conexão entre emoção, corpo e adoecimento',
-    desc: 'Como emoções não processadas se manifestam no corpo físico. Um guia acessível sobre o que a medicina integrativa e a psicossomática têm a dizer sobre isso.',
-    pages: '68 págs', badge: null,
-    tags: ['Corpo', 'Psicossomática', 'Saúde'],
-    featured: false,
-    bg: 'linear-gradient(135deg,#0a1a1a,#082828)',
     link: '#'
   }
 ];
 
 const CATEGORIES = [
   { id: 'all', label: 'Todos' },
-  { id: 'Emoções', label: 'Emoções' },
-  { id: 'Florais', label: 'Florais de Bach' },
-  { id: 'Rituais', label: 'Rituais' },
-  { id: 'Tarô', label: 'Tarô' },
-  { id: 'Autoconhecimento', label: 'Autoconhecimento' },
-  { id: 'Relacionamentos', label: 'Relacionamentos' }
+  { id: 'Leis Herméticas', label: 'Leis Herméticas' },
+  { id: 'Florais', label: 'Florais de Bach' }
 ];
 
 export default function Biblioteca() {
@@ -114,7 +68,7 @@ export default function Biblioteca() {
   // Overrides mapping for live user upload links
   const [linksMap, setLinksMap] = useState<Record<number, string>>(() => {
     const saved: Record<number, string> = {};
-    const ids = [1, 2, 3, 4, 5, 6];
+    const ids = [1, 2];
     ids.forEach(id => {
       const stored = localStorage.getItem(`pdf_link_${id}`);
       if (stored) {
@@ -309,14 +263,25 @@ export default function Biblioteca() {
                   >
                     {/* Cover Area */}
                     <div className="sm:w-52 h-44 sm:h-auto relative overflow-hidden flex items-center justify-center bg-black/40 shrink-0">
-                      <div
-                        className="absolute inset-0 opacity-60 group-hover:scale-105 transition-transform duration-500"
-                        style={{ background: book.bg }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                      <span className="relative z-10 text-5xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
-                        {book.icon}
-                      </span>
+                      {book.coverUrl ? (
+                        <img
+                          src={book.coverUrl}
+                          alt={book.title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div
+                          className="absolute inset-0 opacity-60 group-hover:scale-105 transition-transform duration-500"
+                          style={{ background: book.bg }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                      {!book.coverUrl && (
+                        <span className="relative z-10 text-5xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+                          {book.icon}
+                        </span>
+                      )}
                       {book.badge && (
                         <div className={`absolute top-4 right-4 z-20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBadgeClass(book.badge)}`}>
                           {getBadgeLabel(book.badge)}
@@ -363,14 +328,25 @@ export default function Biblioteca() {
                 >
                   {/* Standard Card Cover */}
                   <div className="h-44 relative overflow-hidden flex items-center justify-center bg-black/40">
-                    <div
-                      className="absolute inset-0 opacity-40 group-hover:scale-105 transition-transform duration-500"
-                      style={{ background: book.bg }}
-                    />
+                    {book.coverUrl ? (
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div
+                        className="absolute inset-0 opacity-40 group-hover:scale-105 transition-transform duration-500"
+                        style={{ background: book.bg }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    <span className="relative z-10 text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
-                      {book.icon}
-                    </span>
+                    {!book.coverUrl && (
+                      <span className="relative z-10 text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+                        {book.icon}
+                      </span>
+                    )}
                     {book.badge && (
                       <div className={`absolute top-4 right-4 z-20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBadgeClass(book.badge)}`}>
                         {getBadgeLabel(book.badge)}
@@ -434,11 +410,22 @@ export default function Biblioteca() {
             >
               {/* Cover Header */}
               <div className="h-52 relative flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 opacity-50" style={{ background: selectedBook.bg }}></div>
+                {selectedBook.coverUrl ? (
+                  <img
+                    src={selectedBook.coverUrl}
+                    alt={selectedBook.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="absolute inset-0 opacity-50" style={{ background: selectedBook.bg }}></div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#101010] via-transparent to-transparent"></div>
-                <span className="relative z-10 text-6xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]">
-                  {selectedBook.icon}
-                </span>
+                {!selectedBook.coverUrl && (
+                  <span className="relative z-10 text-6xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]">
+                    {selectedBook.icon}
+                  </span>
+                )}
 
                 <button
                   type="button"

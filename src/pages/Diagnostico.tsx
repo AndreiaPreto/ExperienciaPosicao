@@ -2571,12 +2571,29 @@ const Diagnostico = () => {
         <header className="border-b border-white/5 bg-black/25 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
             {/* Logo */}
-            <h1 
+            <div 
               onClick={() => { showPage('home'); setMobileMenuOpen(false); }}
-              className="text-lg md:text-xl text-gold-main tracking-[0.2em] uppercase font-serif cursor-pointer hover:opacity-80 transition-opacity"
+              className="cursor-pointer hover:opacity-80 transition-opacity flex items-center"
             >
-              Experiência Posição
-            </h1>
+              <img 
+                src="/assets/logo-experiencia-posicao.png" 
+                alt="Experiência Posição" 
+                className="h-16 md:h-24 lg:h-28 w-auto object-contain"
+                onError={(e) => {
+                  // Fallback to text if image fails or is empty
+                  e.currentTarget.style.display = 'none';
+                  const fb = e.currentTarget.parentElement?.querySelector('.logo-text') as HTMLElement;
+                  if (fb) {
+                    fb.classList.remove('hidden');
+                    fb.classList.add('block');
+                  }
+                }}
+                referrerPolicy="no-referrer"
+              />
+              <span className="logo-text hidden text-base md:text-lg text-gold-main tracking-[0.2em] uppercase font-serif">
+                Experiência Posição
+              </span>
+            </div>
 
             {/* Desktop Menu */}
             <nav className="hidden lg:flex items-center gap-6">
@@ -2858,6 +2875,59 @@ const Diagnostico = () => {
                         <button className="button-outline w-full py-3 text-sm">{item.cta}</button>
                       </motion.div>
                     ))}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Quem é Andréia Section */}
+              <motion.div 
+                variants={itemVariants} 
+                className="mt-32 max-w-4xl mx-auto border-t border-b border-white/5 py-16 px-6 sm:px-12"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-14 items-center">
+                  {/* Foto da Andréia */}
+                  <div className="md:col-span-4 flex justify-center">
+                    <div className="relative aspect-[3/4] w-56 md:w-full max-w-[280px] rounded-2xl overflow-hidden border border-gold-main/20 shadow-[0_12px_40px_rgba(0,0,0,0.6)] group">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent z-10" />
+                      <img 
+                        src="/assets/Foto Andreia.png" 
+                        alt="Andréia Preto" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute bottom-4 left-4 right-4 z-20 text-center">
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-gold-main font-bold font-sans">
+                          Criadora do Método
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Descrição */}
+                  <div className="md:col-span-8 text-left space-y-6">
+                    <span className="text-gold-main/35 text-[9px] uppercase tracking-[0.4em] block font-bold">
+                      A Condução por Trás da Experiência
+                    </span>
+                    <h2 className="serif text-4xl sm:text-5xl text-gold-light leading-tight font-serif font-medium">
+                      Andréia Preto
+                    </h2>
+                    <p className="text-white/70 text-base leading-relaxed font-light font-sans">
+                      Taróloga e terapeuta holística, criadora do <strong className="text-gold-light font-semibold">Método Posição</strong>, uma abordagem que integra leitura energética, estrutura emocional e direcionamento prático para gerar clareza, desbloqueio e movimento real na vida.
+                    </p>
+                    <p className="text-white/50 text-sm leading-relaxed font-light font-sans">
+                      Seu trabalho conduz você a sair da confusão mental, compreender padrões e assumir decisões com segurança, consciência e direção.
+                    </p>
+                    <div className="pt-2">
+                      <div className="inline-flex items-center gap-3 text-xs tracking-widest text-gold-main uppercase hover:text-gold-light transition-colors border-b border-gold-main/20 pb-1 cursor-pointer"
+                           onClick={() => {
+                             const contactBtn = document.getElementById('whatsapp-btn');
+                             if (contactBtn) contactBtn.click();
+                           }}
+                      >
+                        Agendar conversa pessoal
+                        <span className="text-sm">→</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
