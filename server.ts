@@ -474,12 +474,8 @@ async function ensureProductsExist() {
 }
 
 async function startServer() {
-  // Run the admin sync process on startup
-  await ensureAdminAccount();
-  await ensureProductsExist();
-
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Middleware for Stripe Webhook (needs raw body)
   app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
@@ -790,7 +786,20 @@ ESTRUTURA DA RESPOSTA (Markdown):
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    
+    // We run the admin sync process asynchronously on startup
+    // so it doesn't block the container startup and cause Cloud Run check timeouts
+    (async () => {
+      try {
+        console.log("[Self-Heal] Starting background sync processes...");
+        await ensureAdminAccount();
+        await ensureProductsExist();
+        console.log("[Self-Heal] Background sync completed successfully.");
+      } catch (err: any) {
+        console.error("[Self-Heal] Error running database sync tasks on startup:", err);
+      }
+    })();
   });
 }
 
