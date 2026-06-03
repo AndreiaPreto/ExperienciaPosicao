@@ -648,7 +648,7 @@ async function startServer() {
 
         return res.json({
           user_id: uid,
-          diagnostico_comprado: isAdmin || (userData?.mappingCredits || 0) > 0,
+          diagnostico_comprado: isAdmin || userData?.diagnostico_comprado || (userData?.mappingCredits || 0) > 0,
           mappingCredits: isAdmin ? 999 : (userData?.mappingCredits || 0),
           clube_ativo: userData?.clube_ativo || false,
           reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || false,

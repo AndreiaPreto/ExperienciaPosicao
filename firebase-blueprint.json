@@ -149,6 +149,53 @@
         "criadoEm": { "type": "string", "format": "date-time" }
       },
       "required": ["titulo", "fase", "data_iso", "data_exibir", "mes_ano", "preco", "ativo", "ordem"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notifications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["read", "unread"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "status", "createdAt"]
+    },
+    "PedidoPendente": {
+      "title": "PedidoPendente",
+      "description": "WhatsApp checkout pending order details",
+      "type": "object",
+      "properties": {
+        "produto": { "type": "string" },
+        "preco": { "type": "string" },
+        "email": { "type": "string" },
+        "nome": { "type": "string" },
+        "userId": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "status": { "type": "string", "enum": ["aguardando", "confirmado", "cancelado"] },
+        "formaPagamento": { "type": "string", "enum": ["pix", "cartao"] },
+        "criadoEm": { "type": "string", "format": "date-time" },
+        "acessoLiberado": { "type": "boolean" },
+        "liberadoEm": { "type": "string", "format": "date-time" },
+        "liberadoPor": { "type": "string" },
+        "canceladoEm": { "type": "string", "format": "date-time" }
+      },
+      "required": ["produto", "preco", "email", "status", "formaPagamento", "criadoEm", "acessoLiberado"]
+    },
+    "UserAccess": {
+      "title": "UserAccess",
+      "description": "User specific product access status",
+      "type": "object",
+      "properties": {
+        "diagnostico_comprado": { "type": "boolean" },
+        "clube_ativo": { "type": "boolean" },
+        "reprogramacao_pessoal_comprada": { "type": "boolean" },
+        "reprogramar_eu_comprado": { "type": "boolean" },
+        "mappingCredits": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -187,6 +234,18 @@
     "/clube_clarear_waitlist/{waitlistId}": {
       "schema": "ClubeClarearWaitlist",
       "description": "Waitlist for Clube Clarear"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "/pedidos_pendentes/{pedidoId}": {
+      "schema": "PedidoPendente",
+      "description": "WhatsApp checkout pending order details"
+    },
+    "/user_access/{userId}": {
+      "schema": "UserAccess",
+      "description": "User specific product access status"
     }
   }
 }

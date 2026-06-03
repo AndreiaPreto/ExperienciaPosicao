@@ -18,10 +18,10 @@ import {
   sendPasswordResetEmail,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
-import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail } from 'lucide-react';
+import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
 
@@ -706,7 +706,7 @@ const AdminCiclosTab = () => {
     descricao: '',
     importancia: '',
     beneficios: '',
-    preco: 'R$ 21',
+    preco: 'R$ 9',
     ativo: true,
     ordem: 1,
   });
@@ -794,7 +794,7 @@ const AdminCiclosTab = () => {
       descricao: ciclo.descricao || '',
       importancia: ciclo.importancia || '',
       beneficios: ciclo.beneficios ? ciclo.beneficios.join(', ') : '',
-      preco: ciclo.preco || 'R$ 21',
+      preco: ciclo.preco || 'R$ 9',
       ativo: ciclo.ativo !== undefined ? ciclo.ativo : true,
       ordem: ciclo.ordem !== undefined ? ciclo.ordem : 1,
     });
@@ -838,7 +838,7 @@ const AdminCiclosTab = () => {
           descricao:   "Ritual de reconhecimento e liberação na lua cheia de junho. Honre tudo que floresceu neste ciclo, libere o que já cumpriu seu papel e equilibre as emoções intensas que a lua amplifica.",
           importancia: "A lua cheia amplifica tudo que está ativo em você: intenções, emoções e padrões. Este ritual transforma essa amplitude em consciência.",
           beneficios:  ["Clareza emocional", "Liberação energética", "Expansão espiritual"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       1,
         },
@@ -853,7 +853,7 @@ const AdminCiclosTab = () => {
           descricao:   "Limpeza energética profunda: solte padrões, vínculos e crenças que já não cabem em quem você está se tornando.",
           importancia: "Desapegar não é perder, é criar espaço para o que está vindo.",
           beneficios:  ["Leveza emocional", "Dissolução de bloqueios", "Clareza mental"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       2,
         },
@@ -868,7 +868,7 @@ const AdminCiclosTab = () => {
           descricao:   "Ritual para ressignificar seus vínculos afetivos a partir do amor próprio. Quando você se posiciona com mais presença, seus relacionamentos mudam junto.",
           importancia: "A forma como você se relaciona com os outros é um espelho de como você se relaciona consigo mesma.",
           beneficios:  ["Amor próprio consolidado", "Vínculos mais conscientes", "Libertação de padrões afetivos"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       3,
         },
@@ -883,7 +883,7 @@ const AdminCiclosTab = () => {
           descricao:   "Ritual de conexão, atração e realinhamento afetivo com a energia de Santo Antônio. Trabalha o campo dos vínculos, das buscas do coração e da abertura para o amor genuíno.",
           importancia: "Santo Antônio não é apenas o santo dos namorados, é o patrono dos que buscam com o coração aberto e sincero.",
           beneficios:  ["Atração de vínculos verdadeiros", "Proteção nos relacionamentos", "Abertura do campo afetivo"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       4,
         },
@@ -898,7 +898,7 @@ const AdminCiclosTab = () => {
           descricao:   "Ação prática para sustentar e expandir as intenções plantadas na lua nova. A crescente pede movimento, sendo hora de dar os primeiros passos concretos.",
           importancia: "Intenção sem ação é apenas desejo. A lua crescente é o convite para encarnar o que você quer criar.",
           beneficios:  ["Disciplina consciente", "Execução de objetivos", "Autoconfiança"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       5,
         },
@@ -913,7 +913,7 @@ const AdminCiclosTab = () => {
           descricao:   "Plantio de intenções para o próximo ciclo lunar. A lua nova de junho carrega a energia do solstício de inverno: um momento de recolhimento, escuta interna e criação de novas bases.",
           importancia: "Na escuridão da lua nova há potência pura. Toda realidade começa com uma intenção bem plantada no silêncio.",
           beneficios:  ["Clareza de intenção", "Conexão com ciclos naturais", "Ativação da manifestação consciente"],
-          preco:       "R$ 21",
+          preco:       "R$ 9",
           ativo:       true,
           ordem:       6,
         },
@@ -965,7 +965,7 @@ const AdminCiclosTab = () => {
                 descricao: '',
                 importancia: '',
                 beneficios: '',
-                preco: 'R$ 21',
+                preco: 'R$ 9',
                 ativo: true,
                 ordem: ciclos.length + 1,
               });
@@ -1235,6 +1235,254 @@ const AdminCiclosTab = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any[], onRefresh: () => void, setNotification: (notif: {message: string, type: 'success' | 'error' | 'info'} | null) => void }) => {
+  const [filter, setFilter] = useState<'aguardando' | 'historico'>('aguardando');
+
+  const liberarAcesso = async (pedido: any) => {
+    try {
+      // 1. Procurar ou Criar Usuário por fallback
+      let uid = pedido.userId;
+      if (!uid) {
+        const q = query(
+          collection(db, 'users'),
+          where('email', '==', pedido.email.toLowerCase().trim())
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          uid = snap.docs[0].id;
+        } else {
+          setNotification({
+            message: 'Erro: Este cliente ainda não completou o cadastro com o e-mail: ' + pedido.email,
+            type: 'error'
+          });
+          return;
+        }
+      }
+
+      // 2. Definir o produto e créditos a liberar
+      const prod = pedido.produto.toLowerCase();
+      const acessoUpdate: any = {
+        updatedAt: new Date().toISOString()
+      };
+
+      if (prod.includes('diagnóstico') || prod.includes('diagnostico')) {
+        acessoUpdate.diagnostico_comprado = true;
+      } else if (prod.includes('mapa') || prod.includes('floral')) {
+        acessoUpdate.mappingCredits = increment(1);
+      } else if (prod.includes('clube')) {
+        acessoUpdate.clube_ativo = true;
+      } else if (prod.includes('reset') || prod.includes('reprogramação') || prod.includes('reprogramacao')) {
+        acessoUpdate.reprogramacao_pessoal_comprada = true;
+      } else if (prod.includes('reprograme')) {
+        acessoUpdate.reprogramar_eu_comprado = true;
+      }
+
+      // 3. Atualizar user_access no Firestore (and update users collection too)
+      await setDoc(doc(db, 'user_access', uid), acessoUpdate, { merge: true });
+      await setDoc(doc(db, 'users', uid), acessoUpdate, { merge: true });
+
+      // 4. Salvar notificação para o cliente receber na plataforma
+      await addDoc(collection(db, 'notifications'), {
+        userId: uid,
+        title: '🔑 Acesso Liberado!',
+        message: `Seu acesso ao produto "${pedido.produto}" foi liberado com sucesso. Aproveite!`,
+        status: 'unread',
+        createdAt: new Date().toISOString()
+      });
+
+      // 5. Atualizar status do pedido pendente
+      await updateDoc(doc(db, 'pedidos_pendentes', pedido.id), {
+        status: 'confirmado',
+        acessoLiberado: true,
+        liberadoEm: new Date().toISOString()
+      });
+
+      setNotification({
+        message: `Acesso liberado com sucesso para ${pedido.nome || pedido.email}!`,
+        type: 'success'
+      });
+      onRefresh();
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.WRITE, 'pedidos_pendentes');
+      setNotification({ message: 'Erro ao liberar acesso: ' + e.message, type: 'error' });
+    }
+  };
+
+  const cancelarPedido = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'pedidos_pendentes', id), {
+        status: 'cancelado',
+        canceladoEm: new Date().toISOString()
+      });
+      setNotification({ message: 'Pedido cancelado com sucesso.', type: 'info' });
+      onRefresh();
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.WRITE, 'pedidos_pendentes');
+      setNotification({ message: 'Erro ao cancelar pedido: ' + e.message, type: 'error' });
+    }
+  };
+
+  const filtered = pedidos.filter(p => {
+    if (filter === 'aguardando') {
+      return p.status === 'aguardando';
+    } else {
+      return p.status !== 'aguardando';
+    }
+  }).sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime());
+
+  return (
+    <div className="space-y-6">
+      {/* Sub-Tabs do painel */}
+      <div className="flex gap-4 border-b border-white/5 pb-4">
+        <button
+          onClick={() => setFilter('aguardando')}
+          className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all ${
+            filter === 'aguardando'
+              ? 'bg-[#d4af37] text-black font-extrabold shadow-md shadow-[#d4af37]/20'
+              : 'text-white/40 hover:text-white/85 hover:bg-white/5'
+          }`}
+        >
+          Aguardando Liberação
+        </button>
+        <button
+          onClick={() => setFilter('historico')}
+          className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all ${
+            filter === 'historico'
+              ? 'bg-[#d4af37] text-black font-extrabold shadow-md shadow-[#d4af37]/20'
+              : 'text-white/40 hover:text-white/85 hover:bg-white/5'
+          }`}
+        >
+          Histórico de Pedidos
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-20 bg-white/[0.01] border border-white/5 rounded-2xl">
+          <p className="text-white/30 text-sm font-light">Nenhum pedido encontrado nesta seção.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {filtered.map((pedido) => (
+            <div
+              key={pedido.id}
+              className={`glass-card p-6 border transition-all duration-300 ${
+                pedido.status === 'confirmado'
+                  ? 'border-emerald-500/10 hover:border-emerald-500/25 bg-emerald-500/[0.005]'
+                  : pedido.status === 'cancelado'
+                  ? 'border-red-500/10 hover:border-red-500/25 bg-red-500/[0.005]'
+                  : 'border-amber-500/15 hover:border-amber-500/30 bg-amber-500/[0.005]'
+              }`}
+            >
+              {/* Header do card com o produto e preço */}
+              <div className="flex justify-between items-start gap-4 mb-4">
+                <div>
+                  <h4 className="text-white font-medium text-base mb-1">{pedido.produto}</h4>
+                  <p className="font-mono text-[#d4af37] text-sm font-medium">{pedido.preco}</p>
+                </div>
+                {/* Badges do Produto */}
+                <span className={`px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider border font-bold ${
+                  pedido.formaPagamento === 'pix'
+                    ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                    : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                }`}>
+                  {pedido.formaPagamento === 'pix' ? 'PIX' : 'Cartão'}
+                </span>
+              </div>
+
+              {/* Informações do Cliente */}
+              <div className="space-y-3 bg-white/[0.01] border border-white/5 rounded-xl p-4 mb-5 text-xs font-sans text-white/50 leading-relaxed">
+                <div>
+                  <span className="text-white/20 uppercase tracking-widest text-[8px] block font-bold">Cliente</span>
+                  <p className="text-white/80 font-medium">{pedido.nome || 'Cadastro Incompleto'}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-white/20 uppercase tracking-widest text-[8px] block font-bold">WhatsApp</span>
+                    {pedido.whatsapp ? (
+                      <a
+                        href={`https://wa.me/${pedido.whatsapp.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-400 hover:underline inline-flex items-center gap-1 font-mono font-medium"
+                      >
+                        {pedido.whatsapp} ↗
+                      </a>
+                    ) : (
+                      <p className="text-white/30 font-light font-mono">Não informado</p>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-white/20 uppercase tracking-widest text-[8px] block font-bold">E-mail</span>
+                    <p className="text-white/70 break-all">{pedido.email}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                  <div>
+                    <span className="text-white/20 uppercase tracking-widest text-[8px] block font-bold">Data do Pedido</span>
+                    <p className="text-white/60 font-mono text-[10px]">
+                      {new Date(pedido.criadoEm).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                  {pedido.status === 'confirmado' && pedido.liberadoEm && (
+                    <div>
+                      <span className="text-emerald-500/40 uppercase tracking-widest text-[8px] block font-bold">Liberado em</span>
+                      <p className="text-emerald-400 font-mono text-[10px]">
+                        {new Date(pedido.liberadoEm).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                  )}
+                  {pedido.status === 'cancelado' && pedido.canceladoEm && (
+                    <div>
+                      <span className="text-red-500/40 uppercase tracking-widest text-[8px] block font-bold">Cancelado em</span>
+                      <p className="text-red-400 font-mono text-[10px]">
+                        {new Date(pedido.canceladoEm).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Ações para Pedido Pendente */}
+              {pedido.status === 'aguardando' && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => liberarAcesso(pedido)}
+                    className="button flex-1 py-3 text-xs uppercase tracking-widest font-extrabold flex items-center justify-center gap-2 font-sans font-medium hover:scale-[1.02] shadow-gold-main/20"
+                  >
+                    <Check size={14} strokeWidth={2.5} /> Confirmar & Liberar
+                  </button>
+                  <button
+                    onClick={() => cancelarPedido(pedido.id)}
+                    className="button-outline border border-[#d4af37]/25 hover:bg-red-500/10 hover:border-red-500/35 border-white/10 text-white/60 hover:text-red-400 py-3 px-4 flex items-center justify-center rounded-xl"
+                    title="Cancelar Pedido"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Status Histórico */}
+              {pedido.status !== 'aguardando' && (
+                <div className="flex items-center gap-2 text-xs">
+                  {pedido.status === 'confirmado' ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-400 bg-emerald-500/5 px-2.5 py-1 rounded-lg border border-emerald-500/15 font-bold tracking-wide uppercase text-[9px]">
+                      <ShieldCheck size={12} /> Acesso Liberado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-red-400 bg-red-500/5 px-2.5 py-1 rounded-lg border border-red-500/15 font-bold tracking-wide uppercase text-[9px]">
+                      <X size={12} /> Pedido Cancelado
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -1893,12 +2141,17 @@ const Diagnostico = () => {
 
     const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
     setAdminAppointments(appointmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+    const pedidosSnapshot = await getDocs(collection(db, 'pedidos_pendentes'));
+    setAdminPedidos(pedidosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
   const [currentAudio, setCurrentAudio] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [adminMeditationData, setAdminMeditationData] = useState({ title: '', description: '', duration: '', url: '' });
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons' | 'ciclos'>('dashboard');
+  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons' | 'ciclos' | 'pedidos'>('dashboard');
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartao' | null>(null);
+  const [pedidosPendentes, setPedidosPendentes] = useState(0);
   const [adminStats, setAdminStats] = useState({
     usersCount: 0,
     mappingsCount: 0,
@@ -1912,6 +2165,7 @@ const Diagnostico = () => {
   const [adminRequests, setAdminRequests] = useState<any[]>([]);
   const [adminCoupons, setAdminCoupons] = useState<any[]>([]);
   const [adminAppointments, setAdminAppointments] = useState<any[]>([]);
+  const [adminPedidos, setAdminPedidos] = useState<any[]>([]);
   const [selectedAdminUser, setSelectedAdminUser] = useState<any | null>(null);
   const [meditationList, setMeditationList] = useState(meditations);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
@@ -2049,6 +2303,20 @@ const Diagnostico = () => {
   }, []);
 
   useEffect(() => {
+    if (!isAdmin) return;
+    const q = query(
+      collection(db, 'pedidos_pendentes'),
+      where('status', '==', 'aguardando')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setPedidosPendentes(snap.size);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'pedidos_pendentes');
+    });
+    return () => unsub();
+  }, [isAdmin]);
+
+  useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 5000);
       return () => clearTimeout(timer);
@@ -2094,18 +2362,21 @@ const Diagnostico = () => {
           const diagnosticosSnapshot = await getDocs(collection(db, 'diagnosticos'));
           const requestsSnapshot = await getDocs(collection(db, 'reprogramacao_requests'));
           const couponsSnapshot = await getDocs(collection(db, 'coupons'));
+          const pedidosSnapshot = await getDocs(collection(db, 'pedidos_pendentes'));
           
           const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
           const mappings = mappingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const diagnosticos = diagnosticosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const requests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const coupons = couponsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const pedidos = pedidosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           
           setAdminUsers(users);
           setAdminMappings(mappings);
           setAdminDiagnosticos(diagnosticos);
           setAdminRequests(requests);
           setAdminCoupons(coupons);
+          setAdminPedidos(pedidos);
           
           setAdminStats({
             usersCount: users.length,
@@ -2489,6 +2760,34 @@ const Diagnostico = () => {
   const handleCheckout = (productName: string, price: string) => {
     setSelectedProduct({ name: productName, price });
     showPage('checkout');
+  };
+
+  const salvarPedidoPendente = async (metodo: 'pix' | 'cartao') => {
+    if (!selectedProduct) return;
+
+    const authEmail = authData.email || user?.email || '';
+    const authName = authData.name || userData?.name || '';
+    const authWhatsapp = authData.whatsapp || userData?.whatsapp || '';
+
+    const pedido = {
+      produto:      selectedProduct.name,
+      preco:        selectedProduct.price,
+      email:        authEmail,
+      nome:         authName,
+      userId:       user?.uid || null,
+      whatsapp:     authWhatsapp,
+      status:       'aguardando',     // aguardando | confirmado | cancelado
+      formaPagamento: metodo,
+      criadoEm:     new Date().toISOString(),
+      acessoLiberado: false,
+    };
+
+    try {
+      await addDoc(collection(db, 'pedidos_pendentes'), pedido);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, 'pedidos_pendentes');
+      console.error('Erro ao salvar pedido:', e);
+    }
   };
 
   const handleCheckoutAndSignup = async (e: React.FormEvent) => {
@@ -4569,50 +4868,75 @@ const Diagnostico = () => {
             </motion.div>
           )}
           {page === 'confirmation' && (
-            <motion.div 
+            <motion.div
               key="confirmation"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="animate-screen text-center max-w-2xl mx-auto py-20"
+              className="text-center max-w-2xl mx-auto py-12 px-4 animate-screen"
             >
-              <div className="w-24 h-24 rounded-full bg-gold-main/10 flex items-center justify-center mx-auto mb-10 text-gold-main">
-                <CheckCircle size={48} />
+              {/* Ícone Animado */}
+              <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20
+                              flex items-center justify-center mx-auto mb-8 text-amber-400 animate-pulse">
+                <Clock size={36} strokeWidth={1.5} />
               </div>
-              <h2 className="serif text-5xl text-gold-light mb-6">Pagamento Confirmado</h2>
-              <p className="text-white/40 text-lg mb-12 font-light leading-relaxed">
-                {selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? (
-                  `Sua solicitação de frequência pessoal foi recebida com sucesso. Nossa equipe iniciará o desenvolvimento do seu áudio exclusivo e o prazo de entrega é de até 7 dias úteis.`
-                ) : (
-                  `Sua assinatura foi ativada com sucesso. Você já pode acessar todos os conteúdos exclusivos do ${selectedProduct?.name || 'seu plano'}.`
-                )}
+
+              {/* Título Principal */}
+              <h2 className="serif text-4xl lg:text-5xl text-gold-light mb-4">
+                Aguardando Pagamento
+              </h2>
+
+              {/* Mensagem de Aguardo */}
+              <p className="text-white/50 text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">
+                Seu pedido foi registrado! Estamos aguardando a confirmação do pagamento
+                pela nossa equipe para liberar seu acesso ao produto.
               </p>
-              <div className="glass-card p-6 md:p-10 mb-12 text-left">
-                <h3 className="text-gold-main/40 font-bold tracking-[0.3em] uppercase text-[10px] mb-6">Detalhes do Pedido</h3>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-white/30 text-sm">Produto</span>
-                  <span className="text-gold-light font-medium">{selectedProduct?.name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/30 text-sm">Status</span>
-                  <span className="text-emerald-400 font-medium">Ativo</span>
-                </div>
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/5">
-                  <span className="text-white/30 text-sm">Ambiente</span>
+
+              {/* Card de Informações */}
+              <div className="glass-card border border-white/5 bg-white/[0.01] p-6 text-left mb-8 max-w-md mx-auto">
+                <p className="text-[10px] uppercase tracking-wider text-gold-main/50 mb-4 font-sans font-bold">
+                  Instruções de Liberação
+                </p>
+
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <span className="text-amber-400 text-sm font-sans mt-0.5">✓</span>
+                    <p className="text-white/60 text-xs leading-relaxed">
+                      Se escolheu <strong className="text-gold-light">PIX</strong>, faça a transferência e envie o comprovante no WhatsApp.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-amber-400 text-sm font-sans mt-0.5">✓</span>
+                    <p className="text-white/60 text-xs leading-relaxed">
+                      Se escolheu <strong className="text-gold-light">Cartão</strong>, aguarde a Andréia enviar o link de pagamento seguro.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-emerald-400 text-sm font-sans mt-0.5">✓</span>
+                    <p className="text-white/60 text-xs leading-relaxed font-semibold">
+                      Assim que confirmado, você receberá uma notificação e seu acesso será liberado instantaneamente.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <button 
-                onClick={() => {
-                  if (selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se') {
-                    showPage('reprogramacao_form');
-                  } else {
-                    setPage('home');
-                  }
-                }}
-                className="button w-full"
-              >
-                {selectedProduct?.name === 'Reset de Posição' || selectedProduct?.name === 'Reprogramação Pessoal' || selectedProduct?.name === 'Reprograme-se' ? 'Preencher Questionário' : 'Começar a Explorar'}
-              </button>
+
+              {/* Ações */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto">
+                <button
+                  onClick={() => showPage('home')}
+                  className="button w-full text-xs font-sans uppercase tracking-widest font-medium"
+                >
+                  Ir para Início
+                </button>
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUM}?text=Olá!%20Acabei%20de%20fazer%20um%20pedido%20de%20${encodeURIComponent(selectedProduct?.name || '')}%20e%20gostaria%20de%20enviar%20o%20comprovante%20ou%20solicitar%20o%20link.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button-outline flex items-center justify-center gap-2 w-full text-xs uppercase tracking-widest font-sans font-medium"
+                >
+                  Chamar no WhatsApp
+                </a>
+              </div>
             </motion.div>
           )}
 
@@ -5335,6 +5659,7 @@ const Diagnostico = () => {
                     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                     { id: 'users', label: 'Usuários', icon: Users },
                     { id: 'mappings', label: 'Mapeamentos', icon: BarChart3 },
+                    { id: 'pedidos', label: 'Pedidos', icon: ShoppingBag },
                     { id: 'requests', label: 'Solicitações', icon: MessageCircle },
                     { id: 'products', label: 'Produtos', icon: Package },
                     { id: 'clube', label: 'Clube Clarear', icon: Music },
@@ -5349,14 +5674,23 @@ const Diagnostico = () => {
                         setAdminTab(tab.id as any);
                         setSelectedAdminUser(null);
                       }}
-                      className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 text-sm font-medium tracking-wide ${
+                      className={`flex items-center justify-between gap-4 px-6 py-4 rounded-2xl transition-all duration-300 text-sm font-medium tracking-wide ${
                         adminTab === tab.id 
                           ? 'bg-gold-main text-black shadow-lg shadow-gold-main/20' 
                           : 'text-white/40 hover:text-gold-main hover:bg-white/5'
                       }`}
                     >
-                      <tab.icon size={18} />
-                      {tab.label}
+                      <span className="flex items-center gap-4">
+                        <tab.icon size={18} />
+                        {tab.label}
+                      </span>
+                      {tab.id === 'pedidos' && pedidosPendentes > 0 && (
+                        <span className={`px-2 py-0.5 rounded-full min-w-[20px] text-center text-[9px] font-bold ${
+                          adminTab === 'pedidos' ? 'bg-black text-gold-main' : 'bg-amber-400 text-black'
+                        }`}>
+                          {pedidosPendentes}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </aside>
@@ -5407,6 +5741,10 @@ const Diagnostico = () => {
 
                   {adminTab === 'mappings' && (
                     <AdminMappingsTab mappings={adminMappings} />
+                  )}
+
+                  {adminTab === 'pedidos' && (
+                    <AdminPedidosTab pedidos={adminPedidos} onRefresh={refreshAdminData} setNotification={setNotification} />
                   )}
 
                   {adminTab === 'clube' && (
@@ -5538,17 +5876,20 @@ const Diagnostico = () => {
                 </div>
 
                 {/* Botão enviar comprovante */}
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUM}?text=${msgPix(selectedProduct?.name || '', selectedProduct?.price || '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={async () => {
+                    setPaymentMethod('pix');
+                    await salvarPedidoPendente('pix');
+                    showPage('confirmation');
+                    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${msgPix(selectedProduct?.name || '', selectedProduct?.price || '')}`, '_blank');
+                  }}
                   className="button flex items-center justify-center gap-2 w-full"
                 >
                   <svg width="16" height="16" viewBox="0 0 32 32" fill="currentColor">
                     <path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.738 5.49 2.027 7.8L0 32l8.418-2.004A15.93 15.93 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/>
                   </svg>
                   Enviar comprovante pelo WhatsApp
-                </a>
+                </button>
               </div>
 
               {/* DIVISOR */}
@@ -5576,17 +5917,20 @@ const Diagnostico = () => {
                   diretamente para você no WhatsApp.
                 </p>
 
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUM}?text=${msgCartao(selectedProduct?.name || '', selectedProduct?.price || '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={async () => {
+                    setPaymentMethod('cartao');
+                    await salvarPedidoPendente('cartao');
+                    showPage('confirmation');
+                    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${msgCartao(selectedProduct?.name || '', selectedProduct?.price || '')}`, '_blank');
+                  }}
                   className="button-outline flex items-center justify-center gap-2 w-full"
                 >
                   <svg width="15" height="15" viewBox="0 0 32 32" fill="currentColor">
                     <path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.738 5.49 2.027 7.8L0 32l8.418-2.004A15.93 15.93 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/>
                   </svg>
                   Quero pagar com cartão
-                </a>
+                </button>
               </div>
 
               {/* RODAPÉ DE SEGURANÇA */}

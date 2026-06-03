@@ -12,7 +12,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && 
         ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-         (request.auth.token.email.lower() == "andreiapreto@gmail.com"));
+         ('email' in request.auth.token && (request.auth.token.email == "andreiapreto@gmail.com" || request.auth.token.email.matches("(?i)^andreiapreto@gmail\\.com$"))));
     }
     
     function isOwner(userId) {
@@ -70,6 +70,14 @@ service cloud.firestore {
              data.notificado is bool;
     }
 
+    function isValidNotification(data) {
+      return (!('userId' in data) || data.userId is string) &&
+             (!('title' in data) || (data.title is string && data.title.size() <= 200)) &&
+             (!('message' in data) || (data.message is string && data.message.size() <= 2000)) &&
+             (!('status' in data) || data.status in ['read', 'unread']) &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+
     function isValidCiclo(data) {
       return data.titulo is string && data.titulo.size() > 0 &&
              data.fase is string && data.fase.size() > 0 &&
@@ -79,6 +87,28 @@ service cloud.firestore {
              data.preco is string &&
              data.ativo is bool &&
              data.ordem is int;
+    }
+
+    function isValidPedido(data) {
+      return data.produto is string && data.produto.size() <= 200 &&
+             data.preco is string && data.preco.size() <= 50 &&
+             data.email is string && data.email.size() <= 100 &&
+             (!('nome' in data) || data.nome is string) &&
+             (!('userId' in data) || data.userId == null || data.userId is string) &&
+             (!('whatsapp' in data) || data.whatsapp is string) &&
+             data.status in ['aguardando', 'confirmado', 'cancelado'] &&
+             data.formaPagamento in ['pix', 'cartao'] &&
+             data.criadoEm is string &&
+             data.acessoLiberado is bool;
+    }
+
+    function isValidUserAccess(data) {
+      return (!('diagnostico_comprado' in data) || data.diagnostico_comprado is bool) &&
+             (!('clube_ativo' in data) || data.clube_ativo is bool) &&
+             (!('reprogramacao_pessoal_comprada' in data) || data.reprogramacao_pessoal_comprada is bool) &&
+             (!('reprogramar_eu_comprado' in data) || data.reprogramar_eu_comprado is bool) &&
+             (!('mappingCredits' in data) || data.mappingCredits is number) &&
+             (!('updatedAt' in data) || data.updatedAt is string);
     }
 
     // ===============================================================
@@ -153,6 +183,26 @@ service cloud.firestore {
     match /clube_clarear_waitlist/{waitlistId} {
       allow create: if isValidWaitlist(request.resource.data);
       allow read, update, delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidNotification(request.resource.data) && 
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && 
+                    isValidNotification(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /pedidos_pendentes/{pedidoId} {
+      allow create: if isValidPedido(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /user_access/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin() && isValidUserAccess(request.resource.data);
     }
   }
 }
