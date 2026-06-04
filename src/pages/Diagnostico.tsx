@@ -5,6 +5,7 @@ import { ARCANOS_MATRIZ, ArcanoData } from '../constants/arcanos';
 import { questions } from '../data/questions';
 import { triageQuestions } from '../data/triageQuestions';
 import { mapeamentoQuestions } from '../data/mapeamentoQuestions';
+import { lealdadesQuestions, axisData, areaLabels, getProfile, getConsciousnessLevel, getReadinessLevel } from '../data/lealdadesQuestions';
 import { auth, db } from '../services/firebase';
 import ReactMarkdown from 'react-markdown';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
@@ -61,7 +62,7 @@ const meditations = [
 
 import { useCiclos, formatarMesAno, diasParaRitual } from '../hooks/useCiclos';
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -661,6 +662,7 @@ const AdminProductsTab = () => (
       {[
         { name: 'Diagnóstico de Posição', price: 'Gratuito/R$ 21', sales: 1240, status: 'Ativo' },
         { name: 'Mapa de Posição: Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
+        { name: 'Mapeamento de Lealdades', price: 'R$ 33', sales: 184, status: 'Ativo' },
         { name: 'Reset de Posição', price: 'R$ 129', sales: 157, status: 'Ativo' },
         { name: 'Clube Posição: Núcleo Tarô', price: 'R$ 117/mês', sales: 156, status: 'Ativo' },
         { name: 'Clube Posição: Núcleo Clarear', price: 'R$ 47/mês', sales: 89, status: 'Ativo' },
@@ -2178,7 +2180,10 @@ const Diagnostico = () => {
     arquetipo: ''
   });
   const [mapeamentoAnswers, setMapeamentoAnswers] = useState<any[]>([]);
+  const [lealdadesResult, setLealdadesResult] = useState<any | null>(null);
+  const [lealdadesAnswers, setLealdadesAnswers] = useState<number[]>([]);
   const [currentMapeamentoStep, setCurrentMapeamentoStep] = useState(0);
+  const [currentLealdadesStep, setCurrentLealdadesStep] = useState(0);
   const [mapeamentoResult, setMapeamentoResult] = useState<string | null>(null);
   const [currentFlorais, setCurrentFlorais] = useState<string>('');
   const [selectedArcano, setSelectedArcano] = useState<ArcanoData | null>(null);
@@ -2735,6 +2740,7 @@ const Diagnostico = () => {
       'clube_taro_content',
       'checkout',
       'mapeamento_intro',
+      'lealdades_intro',
       'reprogramacao_form'
     ];
     
@@ -2754,7 +2760,281 @@ const Diagnostico = () => {
       return;
     }
 
+    if (newPage === 'lealdades_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
+      setPage('lealdades_intro');
+      return;
+    }
+
     setPage(newPage);
+  };
+
+  const handleCompleteLealdades = async (finalAnswers: number[]) => {
+    setPage('lealdades_analysis');
+    try {
+      const scores: { [key: string]: number } = {
+        pertencimento: 0,
+        sacrificio: 0,
+        culpa: 0,
+        compensacao: 0,
+        escassez: 0,
+        invisibilidade: 0,
+        poderPessoal: 0
+      };
+
+      const maxScores: { [key: string]: number } = {
+        pertencimento: 0,
+        sacrificio: 0,
+        culpa: 0,
+        compensacao: 0,
+        escassez: 0,
+        invisibilidade: 0,
+        poderPessoal: 0
+      };
+
+      const areas: { [key: string]: number } = {
+        amor: 0,
+        prosperidade: 0,
+        trabalho: 0,
+        familia: 0,
+        autoestima: 0,
+        espiritualidade: 0
+      };
+
+      const mechanisms: { [key: string]: number } = {};
+      let consciousnessScore = 0;
+      let consciousnessMax = 0;
+      let readinessScore = 0;
+      let readinessMax = 0;
+
+      lealdadesQuestions.forEach((q, index) => {
+        const value = finalAnswers[index] !== undefined ? finalAnswers[index] : 0;
+
+        if (q.axes) {
+          Object.keys(q.axes).forEach(axis => {
+            scores[axis] += value * q.axes![axis];
+            maxScores[axis] += 4 * q.axes![axis];
+          });
+        }
+
+        if (q.areas) {
+          Object.keys(q.areas).forEach(area => {
+            areas[area] += value * q.areas![area];
+          });
+        }
+
+        if (q.mechanism) {
+          mechanisms[q.mechanism] = (mechanisms[q.mechanism] || 0) + value;
+        }
+
+        if (q.consciousness) {
+          consciousnessScore += value;
+          consciousnessMax += 4;
+        }
+
+        if (q.readiness) {
+          readinessScore += value;
+          readinessMax += 4;
+        }
+      });
+
+      const sortedAxes = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+      const dominant = sortedAxes[0] || 'pertencimento';
+      const secondary = sortedAxes[1] || 'sacrificio';
+      const hidden = sortedAxes[2] || 'culpa';
+
+      const sortedAreas = Object.keys(areas).sort((a, b) => areas[b] - areas[a]);
+      const mainArea = sortedAreas[0] || 'familia';
+      const secondaryArea = sortedAreas[1] || 'amor';
+      const expansionArea = sortedAreas[2] || 'prosperidade';
+
+      const sortedMechanisms = Object.keys(mechanisms).sort((a, b) => mechanisms[b] - mechanisms[a]);
+      const dominantMechanism = sortedMechanisms[0] || "auto-observação";
+
+      const consciousnessPercent = consciousnessMax > 0 ? Math.round((consciousnessScore / consciousnessMax) * 100) : 0;
+      const readinessPercent = readinessMax > 0 ? Math.round((readinessScore / readinessMax) * 100) : 0;
+
+      const profile = getProfile(dominant, secondary);
+      const consciousnessLevel = getConsciousnessLevel(consciousnessPercent);
+      const readinessLevel = getReadinessLevel(readinessPercent);
+
+      const calculatedResult = {
+        scores,
+        maxScores,
+        dominant,
+        secondary,
+        hidden,
+        mainArea,
+        secondaryArea,
+        expansionArea,
+        dominantMechanism,
+        consciousnessPercent,
+        readinessPercent,
+        profile,
+        consciousnessLevel,
+        readinessLevel,
+        axisDominantDetails: axisData[dominant],
+        axisSecondaryDetails: axisData[secondary],
+        axisHiddenDetails: axisData[hidden]
+      };
+
+      setLealdadesResult(calculatedResult);
+
+      const resultText = `
+### DIAGNÓSTICO DE LEALDADES OCULTAS
+**Perfil**: ${profile.name}
+**Padrão Predominante**: ${axisData[dominant].label}
+**Padrão Secundário**: ${axisData[secondary].label}
+**Índice de Consciência**: ${consciousnessPercent}% (${consciousnessLevel})
+**Indicador de Prontidão**: ${readinessPercent}% (${readinessLevel})
+
+---
+**Medo Primário**: ${axisData[dominant].fear}
+**Ganho Inconsciente**: ${axisData[dominant].gain}
+**Custo Oculto**: ${axisData[dominant].cost}
+      `;
+
+      if (user) {
+        try {
+          await addDoc(collection(db, 'mappings'), {
+            userId: user.uid,
+            userEmail: user.email,
+            type: 'lealdades_ocultas',
+            dominant,
+            secondary,
+            hidden,
+            mainArea,
+            secondaryArea,
+            expansionArea,
+            dominantMechanism,
+            consciousnessPercent,
+            readinessPercent,
+            profileName: profile.name,
+            createdAt: new Date().toISOString(),
+            emocao: `Perfil: ${profile.name}`,
+            arquetipo: `Padrão: ${axisData[dominant].label}`,
+            alignmentScore: consciousnessPercent,
+            florais: axisData[dominant].label,
+            result: resultText
+          });
+
+          const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+          const querySnapshot = await getDocs(q);
+          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setHistory(docs);
+
+          if (!isAdmin) {
+            await updateDoc(doc(db, 'users', user.uid), {
+              mappingCredits: increment(-1)
+            });
+            refreshAccess(user.uid);
+          }
+        } catch (error) {
+          console.error("Firestore save error:", error);
+        }
+      }
+
+      setPage('lealdades_result');
+
+    } catch (err: any) {
+      console.error("Error in diagnostics calculation", err);
+      setPage('lealdades_result');
+    }
+  };
+
+  const handleCompleteMapeamento = async (finalAnswers: any[]) => {
+    setPage('mapeamento_analysis');
+    try {
+      const quizContext = finalAnswers.map(a => `- ${a.tipo}: ${a.texto} (Emoção: ${a.emocao})`).join('\n');
+      const suggestedFlorais = Array.from(new Set(finalAnswers.flatMap(a => a.florais))).join(', ');
+      
+      const derivedData = {
+        emocao: finalAnswers.find(a => a.tipo === 'emocao')?.texto || '',
+        padrao: finalAnswers.find(a => a.tipo === 'padrao')?.texto || '',
+        defesa: finalAnswers.find(a => a.tipo === 'defesa')?.texto || '',
+        ferida: finalAnswers.find(a => a.tipo === 'ferida')?.texto || '',
+        desejo: finalAnswers.find(a => a.tipo === 'expansao')?.texto || '',
+        arquetipo: 'Calculado pela IA'
+      };
+      setMapeamentoData(derivedData);
+
+      const response = await fetch("/api/gemini/mapeamento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          quizContext,
+          suggestedFlorais,
+          arcanosList: ARCANOS_MATRIZ.map(a => a.arcano)
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Servidor retornou erro ${response.status}`);
+      }
+
+      const data = await response.json();
+      const floraisList = data.floraisList || suggestedFlorais;
+      const resultText = data.resultText || "";
+
+      const scoreMatch = resultText.match(/SCORE:\s*(\d+)/);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : 75;
+      
+      const arcanoMatch = resultText.match(/ARCANO:\s*([^\n]+)/);
+      let arcanoName = arcanoMatch ? arcanoMatch[1].replace(/[#*:]/g, '').trim() : '';
+
+      if (!arcanoName || !ARCANOS_MATRIZ.some(a => a.arcano.toLowerCase() === arcanoName.toLowerCase())) {
+        const foundArcano = ARCANOS_MATRIZ.find(a => resultText.toLowerCase().includes(a.arcano.toLowerCase()));
+        if (foundArcano) arcanoName = foundArcano.arcano;
+        else arcanoName = 'Louco';
+      }
+
+      const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano.toLowerCase() === arcanoName.toLowerCase()) || ARCANOS_MATRIZ[0];
+      setSelectedArcano(arcanoData);
+      setCurrentFlorais(floraisList);
+      setMapeamentoResult(resultText);
+
+      if (user) {
+        try {
+          await addDoc(collection(db, 'mappings'), {
+            userId: user.uid,
+            userEmail: user.email,
+            type: 'mapeamento_floral',
+            emocao: derivedData.emocao,
+            padrao: derivedData.padrao,
+            defesa: derivedData.defesa,
+            ferida: derivedData.ferida,
+            desejo: derivedData.desejo,
+            arquetipo: arcanoData?.arcano || 'Calculado',
+            florais: floraisList,
+            result: resultText,
+            alignmentScore: score,
+            createdAt: new Date().toISOString()
+          });
+
+          const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+          const querySnapshot = await getDocs(q);
+          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setHistory(docs);
+
+          if (!isAdmin) {
+            await updateDoc(doc(db, 'users', user.uid), {
+              mappingCredits: increment(-1)
+            });
+            refreshAccess(user.uid);
+          }
+        } catch (error) {
+          console.error("Firestore save error:", error);
+        }
+      }
+      setPage('mapeamento_result');
+
+    } catch (err: any) {
+      console.error("Error in floral mapping calculation", err);
+      setNotification({ message: 'Erro ao calcular mapa floral: ' + err.message, type: 'error' });
+      setPage('mapeamento_result');
+    }
   };
 
   const handleCheckout = (productName: string, price: string) => {
@@ -3142,6 +3422,7 @@ const Diagnostico = () => {
                 { label: 'Início', action: () => showPage('home') },
                 { label: 'Diagnóstico de Posição', action: () => showPage('diagnostico_info') },
                 { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
+                { label: 'Lealdades Ocultas', action: () => showPage('lealdades_intro') },
                 { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
                 { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
                 { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
@@ -3235,6 +3516,7 @@ const Diagnostico = () => {
                     { label: 'Início', action: () => showPage('home') },
                     { label: 'Diagnóstico de Posição', action: () => showPage('diagnostico_info') },
                     { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
+                    { label: 'Lealdades Ocultas', action: () => showPage('lealdades_intro') },
                     { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
                     { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
                     { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
@@ -3381,9 +3663,16 @@ const Diagnostico = () => {
                       },
                       {
                         id: 'mapeamento_intro',
-                        title: 'Mapa de Posição: Floral',
-                        desc: 'Descubra sua emoção dominante, seu arquétipo ativo e sua fórmula floral personalizada.',
+                        title: 'Mapa Floral',
+                        desc: 'Descubra sua emoção dominante, seu arquétipo ativo e obtenha sua fórmula de floral personalizada.',
                         tag: 'Mapeamento',
+                        cta: 'Descobrir meu padrão',
+                      },
+                      {
+                        id: 'lealdades_intro',
+                        title: 'Mapeamento de Lealdades',
+                        desc: 'Revele padrões emocionais, vínculos inconscientes e seu perfil de lealdades profundas.',
+                        tag: 'Lealdades',
                         cta: 'Descobrir meu padrão',
                       },
                       {
@@ -3622,20 +3911,35 @@ const Diagnostico = () => {
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    Entrar com Google
+                    Google
                   </button>
                 </form>
-
-                <div className="mt-10 text-center flex flex-col gap-4">
-                  <button 
-                    onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                    className="text-gold-main/40 hover:text-gold-main transition-colors text-[10px] uppercase tracking-[0.2em] font-bold"
-                  >
-                    {authMode === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entre aqui'}
-                  </button>
+                
+                <div className="text-center mt-8 text-xs text-white/40">
+                  {authMode === 'login' ? (
+                    <>
+                      Não tem uma conta?{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setAuthMode('signup')}
+                        className="text-gold-main hover:underline font-bold"
+                      >
+                        Criar Conta
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Já possui uma conta?{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setAuthMode('login')}
+                        className="text-gold-main hover:underline font-bold"
+                      >
+                        Fazer Login
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -3651,33 +3955,24 @@ const Diagnostico = () => {
             >
               <div className="back" onClick={() => setPage('home')}>← Voltar</div>
               <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium">
-                Início → Mapa de Posição: Floral
+                Início → Mapa Floral
               </p>
-              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">🌿 Mapa de Posição: Floral</span>
-              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Você não sente o que sente por acaso.</h2>
+              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapa Floral</span>
+              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Mapa de Posição: Floral</h2>
               
               <div className="glass-card p-6 md:p-10 text-left mb-12">
-                <p className="text-white/60 mb-8 leading-relaxed text-lg font-light">
-                  Existe um padrão emocional ativo influenciando suas decisões, seu comportamento e até sua energia.
+                <p className="text-white/80 mb-6 leading-relaxed text-lg font-light">
+                  Descubra sua emoção dominante, seu arquétipo ativo e obtenha sua fórmula de floral personalizada com o poder da Inteligência Artificial.
                 </p>
-                <p className="text-white/60 mb-10 leading-relaxed text-lg font-light">
-                  Neste mapa, você vai acessar:
+                <p className="text-white/60 mb-6 leading-relaxed text-base font-light">
+                  A terapia floral ajuda a harmonizar padrões de pensamentos e sentimentos, trazendo clareza e autorregulação profunda para as dores do dia a dia.
                 </p>
-                <div className="space-y-4 mb-12">
-                  {[
-                    'Sua emoção dominante',
-                    'O padrão que está se repetindo',
-                    'O arquétipo ativo no seu campo',
-                    'Sua fórmula floral personalizada'
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-4 text-white/80">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gold-main" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <div className="text-center space-y-4">
-                  <div className="text-gold-main text-3xl serif mb-4">
+                <p className="text-white/40 mb-10 leading-relaxed text-sm font-light italic">
+                  Responda com sinceridade às 11 perguntas curtas. A sua honestidade guia a assertividade do seu mapeamento floral.
+                </p>
+
+                <div className="text-center space-y-4 font-serif">
+                  <div className="text-gold-main text-3xl mb-4">
                     {appliedCoupon ? (
                       <div className="flex flex-col items-center">
                         <span className="text-white/20 text-xs line-through">R$ 9,00</span>
@@ -3687,44 +3982,40 @@ const Diagnostico = () => {
                   </div>
 
                   {(isAdmin || (access?.mappingCredits && access.mappingCredits > 0)) ? (
-                    <div className="mb-6">
+                    <div className="mb-6 font-sans">
                       {isAdmin ? (
-                        <span className="text-gold-main text-xs uppercase tracking-widest block mb-4">
+                        <span className="text-gold-main text-xs uppercase tracking-widest block mb-4 font-bold">
                           👑 Modo Administrador: Acesso Liberado
                         </span>
                       ) : (
-                        <span className="text-emerald-400 text-xs uppercase tracking-widest block mb-4">
+                        <span className="text-emerald-400 text-xs uppercase tracking-widest block mb-4 font-bold">
                           ✨ Você possui {access.mappingCredits} {access.mappingCredits === 1 ? 'crédito' : 'créditos'}
                         </span>
                       )}
                       <button 
                         type="button"
-                        onClick={() => showPage('mapeamento_form')}
-                        className="button w-full bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                        onClick={() => {
+                          setMapeamentoAnswers([]);
+                          setCurrentMapeamentoStep(0);
+                          showPage('mapeamento_form');
+                        }}
+                        className="button w-full animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.15)]"
                       >
-                        ✨ Iniciar meu Mapa Floral
+                        Iniciar diagnóstico floral
                       </button>
                     </div>
                   ) : (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        handleCheckout('Mapa de Posição: Floral', 'R$ 9');
-                      }}
-                      className="button w-full"
-                    >
-                      👉 Quero acessar meu mapa floral
-                    </button>
-                  )}
-
-                  {isAdmin && (
-                    <button 
-                      type="button"
-                      onClick={() => showPage('mapeamento_form')}
-                      className="text-emerald-400 hover:text-emerald-300 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 py-4 border border-emerald-500/20 rounded-lg bg-emerald-500/5 hover:bg-emerald-500/10 transition-all w-full"
-                    >
-                      <ShieldCheck size={14} /> Testar Mapeamento (Admin)
-                    </button>
+                    <div className="mb-6 font-sans">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          handleCheckout('Mapa de Posição', 'R$ 9');
+                        }}
+                        className="button w-full"
+                      >
+                        👉 Adquirir meu diagnóstico floral
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -3742,123 +4033,30 @@ const Diagnostico = () => {
               {isAdmin && (
                 <div className="mb-6 p-4 rounded-xl border border-gold-main/30 bg-gold-main/[0.03] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="text-left">
-                    <span className="text-[10px] uppercase tracking-wider text-gold-main font-bold block">Painel de Teste Admin (Mapeamento)</span>
-                    <span className="text-xs text-white/50 font-light block">Preencha todas as {mapeamentoQuestions.length} perguntas do Mapeamento Floral com um clique para testar a IA e o relatório.</span>
+                    <span className="text-[10px] uppercase tracking-wider text-gold-main font-bold block">Painel de Teste Admin (Floral)</span>
+                    <span className="text-xs text-white/50 font-light block">Preencha rapidamente as perguntas com respostas simuladas.</span>
                   </div>
                   <button
-                    onClick={async () => {
-                      const simAnswers = [...mapeamentoAnswers];
+                    onClick={() => {
+                      const simAnswers = [];
                       for (let step = 0; step < mapeamentoQuestions.length; step++) {
                         const question = mapeamentoQuestions[step];
                         const randomOpt = question.opcoes[Math.floor(Math.random() * question.opcoes.length)];
-                        simAnswers[step] = {
+                        simAnswers.push({
                           pergunta_id: question.id,
                           texto: randomOpt.texto,
                           emocao: randomOpt.emocao,
                           peso: randomOpt.peso,
                           florais: randomOpt.florais,
                           tipo: question.tipo
-                        };
+                        });
                       }
                       setMapeamentoAnswers(simAnswers);
-                      setPage('mapeamento_analysis');
-                      
-                      try {
-                        const quizContext = simAnswers.map(a => `- ${a.tipo}: ${a.texto} (Emoção: ${a.emocao})`).join('\n');
-                        const suggestedFlorais = Array.from(new Set(simAnswers.flatMap(a => a.florais))).join(', ');
-                        
-                        const derivedData = {
-                          emocao: simAnswers.find(a => a.tipo === 'emocao')?.texto || '',
-                          padrao: simAnswers.find(a => a.tipo === 'padrao')?.texto || '',
-                          defesa: simAnswers.find(a => a.tipo === 'defesa')?.texto || '',
-                          ferida: simAnswers.find(a => a.tipo === 'ferida')?.texto || '',
-                          desejo: simAnswers.find(a => a.tipo === 'expansao')?.texto || '',
-                          arquetipo: 'Calculado pela IA'
-                        };
-                        setMapeamentoData(derivedData);
-
-                        const response = await fetch("/api/gemini/mapeamento", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json"
-                          },
-                          body: JSON.stringify({
-                            quizContext,
-                            suggestedFlorais,
-                            arcanosList: ARCANOS_MATRIZ.map(a => a.arcano)
-                          })
-                        });
-
-                        if (!response.ok) {
-                          const errData = await response.json().catch(() => ({}));
-                          throw new Error(errData.error || `Servidor retornou erro ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        const floraisList = data.floraisList || suggestedFlorais;
-                        const resultText = data.resultText || "";
-
-                        const scoreMatch = resultText.match(/SCORE:\s*(\d+)/);
-                        const score = scoreMatch ? parseInt(scoreMatch[1]) : 75;
-                        
-                        const arcanoMatch = resultText.match(/ARCANO:\s*([^\n]+)/);
-                        let arcanoName = arcanoMatch ? arcanoMatch[1].replace(/[#*:]/g, '').trim() : '';
-
-                        if (!arcanoName || !ARCANOS_MATRIZ.some(a => a.arcano.toLowerCase() === arcanoName.toLowerCase())) {
-                          const foundArcano = ARCANOS_MATRIZ.find(a => resultText.toLowerCase().includes(a.arcano.toLowerCase()));
-                          if (foundArcano) arcanoName = foundArcano.arcano;
-                          else arcanoName = 'Louco';
-                        }
-
-                        const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano.toLowerCase() === arcanoName.toLowerCase()) || ARCANOS_MATRIZ[0];
-                        setSelectedArcano(arcanoData);
-                        setCurrentFlorais(floraisList);
-                        setMapeamentoResult(resultText);
-
-                        if (user) {
-                          try {
-                            await addDoc(collection(db, 'mappings'), {
-                              userId: user.uid,
-                              userEmail: user.email,
-                              type: 'mapeamento_floral',
-                              arcano: arcanoName,
-                              answers: simAnswers.map(a => ({
-                                pergunta_id: a.pergunta_id,
-                                emocao: a.emocao,
-                                peso: a.peso
-                              })),
-                              emocao: derivedData.emocao,
-                              padrao: derivedData.padrao,
-                              defesa: derivedData.defesa,
-                              ferida: derivedData.ferida,
-                              desejo: derivedData.desejo,
-                              arquetipo: arcanoName,
-                              result: resultText,
-                              alignmentScore: score,
-                              florais: floraisList,
-                              createdAt: new Date().toISOString(),
-                              phrase: resultText.split('FRASE DE CONSCIÊNCIA')[1]?.split('---')[0]?.replace(/[#*:]/g, '').trim() || ''
-                            });
-
-                            const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-                            const querySnapshot = await getDocs(q);
-                            const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            setHistory(docs);
-                          } catch (error) {
-                            console.error("Firestore save error:", error);
-                          }
-                        }
-
-                        setPage('mapeamento_result');
-                      } catch (err: any) {
-                        console.error("Error in simulated mapping analysis:", err);
-                        setMapeamentoResult("Erro ao processar análise simulada: " + err.message);
-                        setPage('mapeamento_result');
-                      }
+                      handleCompleteMapeamento(simAnswers);
                     }}
                     className="w-full sm:w-auto whitespace-nowrap px-4 py-2 rounded-lg bg-gold-main/20 hover:bg-gold-main/30 text-gold-light text-xs uppercase tracking-widest font-bold transition-all border border-gold-main/30"
                   >
-                    ⚡ Preenchimento Rápido
+                    ⚡ Preenchimento Rápido (Simulado)
                   </button>
                 </div>
               )}
@@ -3867,13 +4065,13 @@ const Diagnostico = () => {
                 if (currentMapeamentoStep > 0) {
                   setCurrentMapeamentoStep(currentMapeamentoStep - 1);
                 } else {
-                  setPage('home');
+                  setPage('mapeamento_intro');
                 }
               }}>← {currentMapeamentoStep > 0 ? 'Voltar Pergunta' : 'Sair'}</div>
               
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapa de Posição: Floral</span>
+                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapa Floral</span>
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentMapeamentoStep + 1} de {mapeamentoQuestions.length}</h2>
                 </div>
                 <div className="text-right">
@@ -3895,10 +4093,10 @@ const Diagnostico = () => {
                 </h3>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {mapeamentoQuestions[currentMapeamentoStep].opcoes.map((opcao, idx) => (
+                  {mapeamentoQuestions[currentMapeamentoStep].opcoes.map((opcao, oIdx) => (
                     <button
-                      key={idx}
-                      onClick={async () => {
+                      key={oIdx}
+                      onClick={() => {
                         const newAnswers = [...mapeamentoAnswers];
                         newAnswers[currentMapeamentoStep] = {
                           pergunta_id: mapeamentoQuestions[currentMapeamentoStep].id,
@@ -3913,124 +4111,15 @@ const Diagnostico = () => {
                         if (currentMapeamentoStep < mapeamentoQuestions.length - 1) {
                           setCurrentMapeamentoStep(currentMapeamentoStep + 1);
                         } else {
-                          // Finalize and Analyze
-                          setPage('mapeamento_analysis');
-                          try {
-                            // Prepare context for AI
-                            const quizContext = newAnswers.map(a => `- ${a.tipo}: ${a.texto} (Emoção: ${a.emocao})`).join('\n');
-                            const suggestedFlorais = Array.from(new Set(newAnswers.flatMap(a => a.florais))).join(', ');
-
-                            // Populate mapeamentoData for backward compatibility (e.g. result page logic)
-                            const derivedData = {
-                              emocao: newAnswers.find(a => a.tipo === 'emocao')?.texto || '',
-                              padrao: newAnswers.find(a => a.tipo === 'padrao')?.texto || '',
-                              defesa: newAnswers.find(a => a.tipo === 'defesa')?.texto || '',
-                              ferida: newAnswers.find(a => a.tipo === 'ferida')?.texto || '',
-                              desejo: newAnswers.find(a => a.tipo === 'expansao')?.texto || '',
-                              arquetipo: 'Calculado pela IA'
-                            };
-                            setMapeamentoData(derivedData);
-
-                            // Fetch response from server-side secure Gemini API endpoint
-                            const response = await fetch("/api/gemini/mapeamento", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json"
-                              },
-                              body: JSON.stringify({
-                                quizContext,
-                                suggestedFlorais,
-                                arcanosList: ARCANOS_MATRIZ.map(a => a.arcano)
-                              })
-                            });
-
-                            if (!response.ok) {
-                              const errData = await response.json().catch(() => ({}));
-                              throw new Error(errData.error || `Servidor retornou erro ${response.status}`);
-                            }
-
-                            const data = await response.json();
-                            const floraisList = data.floraisList || suggestedFlorais;
-                            const resultText = data.resultText || "";
-
-                            const scoreMatch = resultText.match(/SCORE:\s*(\d+)/);
-                            const score = scoreMatch ? parseInt(scoreMatch[1]) : 75;
-                            
-                            const arcanoMatch = resultText.match(/ARCANO:\s*([^\n]+)/);
-                            let arcanoName = arcanoMatch ? arcanoMatch[1].replace(/[#*:]/g, '').trim() : '';
-                            
-                            // Robust arcano detection
-                            if (!arcanoName || !ARCANOS_MATRIZ.some(a => a.arcano.toLowerCase() === arcanoName.toLowerCase())) {
-                              const foundArcano = ARCANOS_MATRIZ.find(a => resultText.toLowerCase().includes(a.arcano.toLowerCase()));
-                              if (foundArcano) arcanoName = foundArcano.arcano;
-                              else arcanoName = 'Louco'; // Safe fallback
-                            }
-
-                            const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano.toLowerCase() === arcanoName.toLowerCase()) || ARCANOS_MATRIZ[0];
-                            setSelectedArcano(arcanoData);
-                            setCurrentFlorais(floraisList);
-
-                            setMapeamentoResult(resultText);
-                            
-                              // Save to Firestore
-                              if (user) {
-                                try {
-                                  await addDoc(collection(db, 'mappings'), {
-                                    userId: user.uid,
-                                    userEmail: user.email,
-                                    type: 'mapeamento_floral',
-                                    arcano: arcanoName,
-                                    answers: newAnswers.map(a => ({
-                                      pergunta_id: a.pergunta_id,
-                                      emocao: a.emocao,
-                                      peso: a.peso
-                                    })),
-                                    // For backward compatibility in admin/history
-                                    emocao: derivedData.emocao,
-                                    padrao: derivedData.padrao,
-                                    defesa: derivedData.defesa,
-                                    ferida: derivedData.ferida,
-                                    desejo: derivedData.desejo,
-                                    arquetipo: arcanoName,
-                                    result: resultText,
-                                    alignmentScore: score,
-                                    florais: floraisList,
-                                    createdAt: new Date().toISOString(),
-                                    phrase: resultText.split('FRASE DE CONSCIÊNCIA')[1]?.split('---')[0]?.replace(/[#*:]/g, '').trim() || ''
-                                  });
-
-                                // Refresh history
-                                const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-                                const querySnapshot = await getDocs(q);
-                                const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                setHistory(docs);
-
-                                // Decrement mapping credits
-                                if (!isAdmin) {
-                                  await updateDoc(doc(db, 'users', user.uid), {
-                                    mappingCredits: increment(-1)
-                                  });
-                                  refreshAccess(user.uid);
-                                }
-                                } catch (error) {
-                                  handleFirestoreError(error, OperationType.CREATE, 'mappings');
-                                  console.error("Firestore save error:", error);
-                                  // We don't throw here to still show the result to the user
-                                }
-                            }
-
-                            setPage('mapeamento_result');
-                          } catch (err: any) {
-                            console.error("Error in mapping analysis:", err);
-                            setMapeamentoResult("Desculpe, ocorreu um erro ao processar sua análise. Por favor, tente novamente em instantes.\n\nDetalhes: " + err.message);
-                            setPage('mapeamento_result');
-                          }
+                          handleCompleteMapeamento(newAnswers);
                         }
                       }}
-                      className="w-full p-6 bg-white/5 border border-white/5 rounded-lg text-left hover:bg-gold-main/10 hover:border-gold-main/30 transition-all group flex justify-between items-center"
+                      className="w-full text-left p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-gold-main/10 hover:border-gold-main/30 hover:text-gold-light transition-all flex items-center justify-between group"
                     >
-                      <span className="text-white/60 group-hover:text-gold-light transition-colors">{opcao.texto}</span>
-                      <ArrowRight size={18} className="text-gold-main/20 group-hover:text-gold-main group-hover:translate-x-1 transition-all" />
+                      <span className="text-white/60 group-hover:text-gold-light transition-colors">
+                        {opcao.texto}
+                      </span>
+                      <ArrowRight size={16} className="text-gold-main/20 group-hover:text-gold-main group-hover:translate-x-1 transition-all" />
                     </button>
                   ))}
                 </div>
@@ -4047,10 +4136,411 @@ const Diagnostico = () => {
               className="animate-screen flex flex-col items-center justify-center text-center min-h-[60vh]"
             >
               <div className="w-24 h-24 border-2 border-gold-main/20 border-t-gold-main rounded-full animate-spin mb-12" />
-              <h2 className="serif text-3xl text-gold-light mb-6">Sintonizando sua frequência...</h2>
+              <h2 className="serif text-3xl text-gold-light mb-6">Maturando seu mapeamento floral...</h2>
               <p className="text-white/40 font-light tracking-widest uppercase text-[10px] animate-pulse">
-                Analisando padrões arquetípicos e florais
+                Processando sentimentos, alquimias florais e arquétipos
               </p>
+            </motion.div>
+          )}
+
+          {page === 'lealdades_intro' && (
+            <motion.div 
+              key="lealdades_intro"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-center max-w-2xl mx-auto"
+            >
+              <div className="back" onClick={() => setPage('home')}>← Voltar</div>
+              <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium">
+                Início → Mapeamento de Lealdades
+              </p>
+              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapeamento de Lealdades</span>
+              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Lealdades Ocultas</h2>
+              
+              <div className="glass-card p-6 md:p-10 text-left mb-12">
+                <p className="text-white/80 mb-6 leading-relaxed text-lg font-light">
+                  Este diagnóstico foi criado para revelar padrões emocionais, vínculos inconscientes e estratégias de proteção que podem estar influenciando suas escolhas, seus vínculos, sua prosperidade e seu poder pessoal.
+                </p>
+                <p className="text-white/60 mb-6 leading-relaxed text-base font-light">
+                  O resultado não define quem você é. Elas apenas iluminam possíveis formas que uma parte sua encontrou para sobreviver, pertencer, proteger ou reparar.
+                </p>
+                <p className="text-white/40 mb-10 leading-relaxed text-sm font-light italic">
+                  Responda com sinceridade, sem buscar a resposta ideal. A profundidade do resultado nasce da sua honestidade consigo mesma.
+                </p>
+
+                <div className="text-center space-y-4 font-serif">
+                  <div className="text-gold-main text-3xl mb-4">
+                    {appliedCoupon ? (
+                      <div className="flex flex-col items-center">
+                        <span className="text-white/20 text-xs line-through">R$ 33,00</span>
+                        <span>R$ {Math.max(0, (33 * (appliedCoupon.discountType === 'percentage' ? (1 - appliedCoupon.value / 100) : 1) - (appliedCoupon.discountType === 'fixed' ? appliedCoupon.value : 0))).toFixed(0)},00</span>
+                      </div>
+                    ) : 'R$ 33,00'}
+                  </div>
+
+                  {(isAdmin || (access?.mappingCredits && access.mappingCredits > 0)) ? (
+                    <div className="mb-6 font-sans">
+                      {isAdmin ? (
+                        <span className="text-gold-main text-xs uppercase tracking-widest block mb-4 font-bold">
+                          👑 Modo Administrador: Acesso Liberado
+                        </span>
+                      ) : (
+                        <span className="text-emerald-400 text-xs uppercase tracking-widest block mb-4 font-bold">
+                          ✨ Você possui {access.mappingCredits} {access.mappingCredits === 1 ? 'crédito' : 'créditos'}
+                        </span>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setLealdadesAnswers([]);
+                          setCurrentLealdadesStep(0);
+                          showPage('lealdades_form');
+                        }}
+                        className="button w-full animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.15)]"
+                      >
+                        Iniciar diagnóstico de lealdades
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mb-6 font-sans">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          handleCheckout('Mapeamento de Lealdades', 'R$ 33');
+                        }}
+                        className="button w-full"
+                      >
+                        👉 Adquirir meu diagnóstico de lealdades
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'lealdades_form' && (
+            <motion.div 
+              key="lealdades_form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-left max-w-2xl mx-auto"
+            >
+              {isAdmin && (
+                <div className="mb-6 p-4 rounded-xl border border-gold-main/30 bg-gold-main/[0.03] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="text-left">
+                    <span className="text-[10px] uppercase tracking-wider text-gold-main font-bold block">Painel de Teste Admin (Lealdades)</span>
+                    <span className="text-xs text-white/50 font-light block">Preencha rapidamente as 59 perguntas com um clique para testar as fórmulas e relatórios.</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const simAnswers = [];
+                      for (let i = 0; i < lealdadesQuestions.length; i++) {
+                        simAnswers.push(Math.floor(Math.random() * 5));
+                      }
+                      setLealdadesAnswers(simAnswers);
+                      handleCompleteLealdades(simAnswers);
+                    }}
+                    className="w-full sm:w-auto whitespace-nowrap px-4 py-2 rounded-lg bg-gold-main/20 hover:bg-gold-main/30 text-gold-light text-xs uppercase tracking-widest font-bold transition-all border border-gold-main/30"
+                  >
+                    ⚡ Preenchimento Rápido
+                  </button>
+                </div>
+              )}
+
+              <div className="back" onClick={() => {
+                if (currentLealdadesStep > 0) {
+                  setCurrentLealdadesStep(currentLealdadesStep - 1);
+                } else {
+                  setPage('lealdades_intro');
+                }
+              }}>← {currentLealdadesStep > 0 ? 'Voltar Pergunta' : 'Sair'}</div>
+              
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapeamento de Lealdades</span>
+                  <h2 className="serif text-3xl text-gold-light">Pergunta {currentLealdadesStep + 1} de {lealdadesQuestions.length}</h2>
+                </div>
+                <div className="text-right">
+                  <span className="text-gold-main text-xl font-serif">{Math.round(((currentLealdadesStep) / lealdadesQuestions.length) * 100)}%</span>
+                </div>
+              </div>
+
+              <div className="h-1 w-full bg-white/5 rounded-full mb-12 overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((currentLealdadesStep) / lealdadesQuestions.length) * 100}%` }}
+                  className="h-full bg-gold-main shadow-[0_0_15px_rgba(212,175,55,0.5)]"
+                />
+              </div>
+              
+              <div className="space-y-8">
+                <h3 className="serif text-2xl text-gold-light leading-relaxed">
+                  {lealdadesQuestions[currentLealdadesStep].text}
+                </h3>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { val: 0, text: 'Não me representa' },
+                    { val: 1, text: 'Representa pouco' },
+                    { val: 2, text: 'Representa às vezes' },
+                    { val: 3, text: 'Representa bastante' },
+                    { val: 4, text: 'Representa profundamente' }
+                  ].map((opcao) => (
+                    <button
+                      key={opcao.val}
+                      onClick={() => {
+                        const newAnswers = [...lealdadesAnswers];
+                        newAnswers[currentLealdadesStep] = opcao.val;
+                        setLealdadesAnswers(newAnswers);
+
+                        if (currentLealdadesStep < lealdadesQuestions.length - 1) {
+                          setCurrentLealdadesStep(currentLealdadesStep + 1);
+                        } else {
+                          handleCompleteLealdades(newAnswers);
+                        }
+                      }}
+                      className="w-full text-left p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-gold-main/10 hover:border-gold-main/30 hover:text-gold-light transition-all flex items-center justify-between group"
+                    >
+                      <span className="text-white/60 group-hover:text-gold-light transition-colors">
+                        {opcao.val} | {opcao.text}
+                      </span>
+                      <ArrowRight size={16} className="text-gold-main/20 group-hover:text-gold-main group-hover:translate-x-1 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'lealdades_result' && lealdadesResult && (
+            <motion.div 
+              key="lealdades_result"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen text-left max-w-4xl mx-auto space-y-12"
+            >
+              <div className="back" onClick={() => setPage('home')}>← Sair do Diagnóstico</div>
+              
+              {/* Main Banner */}
+              <div className="text-center md:text-left space-y-4">
+                <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block animate-fade-in">Resultado Consolidado</span>
+                <h2 className="serif text-5xl md:text-6xl text-gold-light font-light leading-tight">Seu Mapa de Posição</h2>
+                <p className="text-white/60 font-light text-lg max-w-2xl leading-relaxed">
+                  Este diagnóstico mapeia as dinâmicas de sobrevivência inconscientes criadas ao longo da sua história. Compreender sua posição é o primeiro passo para o verdadeiro reposicionamento sistêmico.
+                </p>
+              </div>
+
+              {/* The 3 Layers Columns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Camada 1: Dominante */}
+                <div className="glass-card border-gold-main/30 bg-gold-main/[0.03] p-8 flex flex-col justify-between space-y-6 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-gold-main/40 font-bold bg-gold-main/10 rounded-bl-xl">Camada 1</div>
+                  <div className="space-y-4">
+                    <span className="text-[9px] uppercase tracking-widest text-gold-main/60 block font-bold">Padrão Predominante</span>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisDominantDetails.label}</h3>
+                    <div className="w-12 h-[1px] bg-gold-main/30" />
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisDominantDetails.description}</p>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisDominantDetails.fear}</div>
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisDominantDetails.gain}</div>
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisDominantDetails.cost}</div>
+                  </div>
+                </div>
+
+                {/* Camada 2: Secondary */}
+                <div className="glass-card border-white/5 bg-white/[0.01] p-8 flex flex-col justify-between space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold bg-white/5 rounded-bl-xl">Camada 2</div>
+                  <div className="space-y-4">
+                    <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold">Padrão Secundário</span>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisSecondaryDetails.label}</h3>
+                    <div className="w-12 h-[1px] bg-white/10" />
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisSecondaryDetails.description}</p>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisSecondaryDetails.fear}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisSecondaryDetails.gain}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisSecondaryDetails.cost}</div>
+                  </div>
+                </div>
+
+                {/* Camada 3: Hidden */}
+                <div className="glass-card border-white/5 bg-white/[0.01] p-8 flex flex-col justify-between space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold bg-white/5 rounded-bl-xl">Camada 3</div>
+                  <div className="space-y-4">
+                    <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold">Padrão Oculto</span>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisHiddenDetails.label}</h3>
+                    <div className="w-12 h-[1px] bg-white/10" />
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisHiddenDetails.description}</p>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisHiddenDetails.fear}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisHiddenDetails.gain}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisHiddenDetails.cost}</div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Camada 4: Perfil de Posição */}
+              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 font-mono text-[10px] uppercase tracking-widest text-gold-main/30 font-bold">Camada 4</div>
+                <div className="space-y-6 max-w-3xl">
+                  <span className="text-[10px] uppercase tracking-widest text-gold-main block font-bold font-bold">Seu Perfil de Posição</span>
+                  <h3 className="serif text-4xl text-gold-light leading-tight">{lealdadesResult.profile.name}</h3>
+                  <div className="w-24 h-[1px] bg-gold-main/25" />
+                  <p className="text-white/80 text-base md:text-lg font-light leading-relaxed">
+                    {lealdadesResult.profile.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Gauges & Area Impact Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {/* Indices Gauges */}
+                <div className="glass-card p-8 space-y-8">
+                  <h4 className="serif text-xl text-gold-light">Índices de Consciência e Mudança</h4>
+                  
+                  {/* Consciência */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/60 uppercase tracking-wider font-light">Índice de Consciência</span>
+                      <span className="text-gold-main font-serif">{lealdadesResult.consciousnessPercent}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-gold-main" style={{ width: `${lealdadesResult.consciousnessPercent}%` }} />
+                    </div>
+                    <p className="text-[11px] text-white/40 italic font-light">{lealdadesResult.consciousnessLevel}</p>
+                  </div>
+
+                  {/* Prontidão */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/60 uppercase tracking-wider font-light">Prontidão para Reposicionamento</span>
+                      <span className="text-gold-main font-serif">{lealdadesResult.readinessPercent}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-gold-main" style={{ width: `${lealdadesResult.readinessPercent}%` }} />
+                    </div>
+                    <p className="text-[11px] text-white/40 italic font-light">{lealdadesResult.readinessLevel}</p>
+                  </div>
+                </div>
+
+                {/* Camada 5: Areas Impactadas */}
+                <div className="glass-card p-8 space-y-6">
+                  <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold text-bold">Camada 5 | Impacto de Áreas</span>
+                  <h4 className="serif text-xl text-gold-light">Mapeamento de Áreas de Vida</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-red-500/10 bg-red-500/[0.01]">
+                      <span className="text-xs text-white/50 uppercase tracking-wider">Área Altamente Prejudicada</span>
+                      <span className="text-sm text-red-300 font-bold uppercase tracking-widest">{areaLabels[lealdadesResult.mainArea]}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-orange-500/10 bg-orange-500/[0.01]">
+                      <span className="text-xs text-white/50 uppercase tracking-wider">Impacto Secundário</span>
+                      <span className="text-sm text-orange-300 font-bold uppercase tracking-widest">{areaLabels[lealdadesResult.secondaryArea]}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-emerald-500/10 bg-emerald-500/[0.01]">
+                      <span className="text-xs text-white/50 uppercase tracking-wider">Área de Maior Expansão</span>
+                      <span className="text-sm text-emerald-300 font-bold uppercase tracking-widest">{areaLabels[lealdadesResult.expansionArea]}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Protective Mechanism */}
+              <div className="glass-card p-8 flex flex-col md:flex-row gap-6 md:items-center justify-between border-white/5 bg-white/[0.005]">
+                <div className="space-y-2 max-w-xl">
+                  <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold text-bold">Mecanismo de Proteção Ativo</span>
+                  <h4 className="serif text-2xl text-gold-light uppercase tracking-widest">{lealdadesResult.dominantMechanism}</h4>
+                  <p className="text-white/50 text-xs font-light leading-relaxed">
+                    Este é o escudo preferido que o seu subconsciente adota para afastar a dor da rejeição, escassez ou perda de vínculo. Permitir-se observar e desarmar este mecanismo com amorosidade é crucial.
+                  </p>
+                </div>
+              </div>
+
+              {/* Deep Therapeutic Reading */}
+              <div className="glass-card p-8 md:p-16 space-y-12">
+                <span className="text-gold-main/40 text-[10px] uppercase tracking-[0.5em] block text-center font-bold font-bold">Leitura Terapêutica de Integração</span>
+                
+                <div className="space-y-6 max-w-3xl mx-auto border-l border-gold-main/20 pl-6 md:pl-10">
+                  <span className="text-[9px] uppercase tracking-widest text-gold-main/50 block font-bold">Frase Inconsciente Ativa</span>
+                  <p className="serif text-3xl md:text-4xl text-gold-light italic leading-relaxed">
+                    "{lealdadesResult.axisDominantDetails.unconsciousPhrase}"
+                  </p>
+                </div>
+
+                <div className="h-[1px] w-full bg-gold-main/10" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
+                  <div className="space-y-4">
+                    <span className="text-[10px] uppercase tracking-widest text-gold-main/60 block font-bold">Movimento de Reposicionamento</span>
+                    <p className="serif text-lg text-gold-light leading-relaxed">
+                      {lealdadesResult.axisDominantDetails.repositioningMovement}
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    <span className="text-[10px] uppercase tracking-widest text-gold-main/60 block font-bold">Pergunta Reflexiva Sistêmica</span>
+                    <p className="serif text-lg text-rose-300 italic leading-relaxed">
+                      {lealdadesResult.axisDominantDetails.reflexiveQuestion}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-[1px] w-full bg-gold-main/10" />
+
+                {/* 7-Day Practice Checklist */}
+                <div className="max-w-3xl mx-auto space-y-6">
+                  <span className="text-[10px] uppercase tracking-widest text-gold-main block text-center font-bold font-bold font-bold">Prática Terapêutica Recomendada</span>
+                  <h5 className="serif text-2xl text-gold-light leading-tight text-center mb-6">{lealdadesResult.axisDominantDetails.dayPractice.name}</h5>
+                  <div className="space-y-4">
+                    {lealdadesResult.axisDominantDetails.dayPractice.steps.map((stepText: string, idx: number) => (
+                      <div key={idx} className="flex gap-4 items-start p-4 rounded-xl bg-white/[0.01] border border-white/5 hover:border-gold-main/20 transition-all">
+                        <span className="w-6 h-6 rounded-full bg-gold-main/10 border border-gold-main/30 flex items-center justify-center text-xs text-gold-main font-bold shrink-0">{idx + 1}</span>
+                        <p className="text-white/70 text-sm leading-relaxed font-light">{stepText}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA & Ending */}
+                <div className="pt-12 text-center border-t border-white/5 space-y-6 max-w-2xl mx-auto">
+                  <p className="text-white/50 text-sm font-light italic leading-relaxed">
+                    Sua expansão requer um novo posicionamento. Você está pronto para dar o próximo passo consciente?
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button 
+                      onClick={() => showPage('reprogramacao_pessoal_info')}
+                      className="button"
+                    >
+                      👉 Agendar Mentoria de Reposicionamento
+                    </button>
+                    <button 
+                      onClick={() => showPage('jornada_emocional')}
+                      className="button-outline"
+                    >
+                      Ver meu histórico completo
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const reportText = `Relatório Posição: Dominante - ${lealdadesResult.axisDominantDetails.label}, Secundário - ${lealdadesResult.axisSecondaryDetails.label}`;
+                        generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', reportText);
+                      }}
+                      className="button-outline flex items-center gap-2 justify-center"
+                    >
+                      <FileText size={18} /> Baixar Relatório (PDF)
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
             </motion.div>
           )}
 
@@ -4060,96 +4550,100 @@ const Diagnostico = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="animate-screen text-left max-w-4xl mx-auto"
+              className="animate-screen text-left max-w-4xl mx-auto space-y-12"
             >
-              <div className="back" onClick={() => setPage('home')}>← Voltar</div>
+              <div className="back" onClick={() => setPage('home')}>← Sair do Diagnóstico</div>
               
+              {/* Main Banner */}
+              <div className="text-center md:text-left space-y-4">
+                <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block animate-fade-in">Resultado Consolidado</span>
+                <h2 className="serif text-5xl md:text-6xl text-gold-light font-light leading-tight">Mapeamento Floral</h2>
+                <p className="text-white/60 font-light text-lg max-w-2xl leading-relaxed">
+                  Este diagnóstico correlaciona as suas emoções dominantes com arquétipos e frequências florais recomendadas para seu reequilíbrio integrativo.
+                </p>
+              </div>
+
               {selectedArcano && (
-                <div className="mb-12 glass-card border-gold-main/30 bg-gold-main/[0.03] p-8 md:p-12">
-                  <div className="flex flex-col md:flex-row gap-12 items-center">
-                    <div className="w-48 h-72 bg-gold-main/10 rounded-2xl border border-gold-main/20 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-gold-main/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-gold-main/20 text-[8px] uppercase tracking-[0.5em] mb-4 font-bold">Arquétipo</span>
-                      <h3 className="serif text-3xl text-gold-light mb-4">{selectedArcano.arcano}</h3>
-                      <div className="w-12 h-[1px] bg-gold-main/30" />
+                <div className="glass-card border-gold-main/30 bg-gold-main/[0.03] p-8 md:p-12 relative overflow-hidden space-y-6">
+                  <div className="absolute top-0 right-0 p-6 font-mono text-[10px] uppercase tracking-widest text-gold-main/40 font-bold bg-gold-main/10 rounded-bl-xl">Arquétipo</div>
+                  <span className="text-[10px] uppercase tracking-widest text-gold-main block font-bold">Seu Arquétipo Ativo</span>
+                  <h3 className="serif text-3xl md:text-4xl text-gold-light flex items-center gap-3">
+                    <span className="text-4xl">{selectedArcano.simbolo}</span> {selectedArcano.arcano} (Nº {selectedArcano.numero})
+                  </h3>
+                  <div className="w-24 h-[1px] bg-gold-main/25" />
+                  <p className="text-white/80 text-base font-light leading-relaxed max-w-3xl italic">
+                    "{selectedArcano.mensagem}"
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5 text-sm text-white/70">
+                    <div>
+                      <strong className="text-rose-400 uppercase text-[10px] tracking-wider block mb-2 font-bold">A Sombra / Ferida</strong>
+                      <p className="font-light leading-relaxed">{selectedArcano.ferida}</p>
                     </div>
-                    
-                    <div className="flex-1 space-y-8">
-                      <div>
-                        <h4 className="text-gold-main/40 text-[10px] uppercase tracking-widest font-bold mb-3">Sombra Ativa</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedArcano.sombra.map((s, i) => (
-                            <span key={i} className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] text-white/60 uppercase tracking-wider">
-                              {s.replace(/_/g, ' ')}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="text-gold-main/40 text-[10px] uppercase tracking-widest font-bold mb-3">Direção de Cura</h4>
-                        <p className="text-gold-light text-lg font-light italic">"{selectedArcano.direcao}"</p>
-                      </div>
-
-                      <div>
-                        <h4 className="text-gold-main/40 text-[10px] uppercase tracking-widest font-bold mb-3">Caminhos de Evolução</h4>
-                        <div className="flex flex-wrap gap-4">
-                          {selectedArcano.evolucao.map((e, i) => (
-                            <div key={i} className="flex items-center gap-2 text-white/40 text-xs">
-                              <ArrowRight size={12} className="text-gold-main/40" />
-                              <span>{e}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                    <div>
+                      <strong className="text-emerald-400 uppercase text-[10px] tracking-wider block mb-2 font-bold">O Dom / Direção</strong>
+                      <p className="font-light leading-relaxed">{selectedArcano.direcao}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="glass-card p-6 md:p-10 md:p-16">
-                <div className="markdown-body prose prose-invert max-w-none">
-                  <ReactMarkdown>{mapeamentoResult || ''}</ReactMarkdown>
-                </div>
-
-                <div className="mt-20 pt-12 border-t border-gold-main/10 text-center">
-                  <p className="text-white/60 mb-8 leading-relaxed italic">
-                    Existe um nível mais profundo desse padrão que não aparece sozinho. Ele precisa ser acessado e reorganizado.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button 
-                      onClick={() => {
-                        // Logic to suggest session based on pattern
-                        const pattern = mapeamentoData.padrao.toLowerCase();
-                        if (pattern.includes('ansiedade') || pattern.includes('controle')) {
-                          showPage('reprogramacao_pessoal_info');
-                        } else if (pattern.includes('confusão') || pattern.includes('indecisão')) {
-                          showPage('clube_clarear_info');
-                        } else if (pattern.includes('autoestima')) {
-                          showPage('reprogramar_eu_info');
-                        } else {
-                          showPage('reprogramacao_pessoal_info');
-                        }
-                      }}
-                      className="button"
-                    >
-                      👉 Trabalhar isso com acompanhamento
-                    </button>
-                    <button 
-                      onClick={() => showPage('jornada_emocional')}
-                      className="button-outline"
-                    >
-                      Ver meu histórico completo
-                    </button>
-                    <button 
-                      onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', currentFlorais)}
-                      className="button-outline flex items-center gap-2 justify-center"
-                    >
-                      <FileText size={18} /> Baixar Receita (PDF)
-                    </button>
+              {currentFlorais && currentFlorais.length > 0 && (
+                <div className="glass-card p-8 border-gold-main/20 bg-gold-main/[0.02] space-y-6">
+                  <h3 className="serif text-2xl text-gold-light">Sua Fórmula Floral Recomendada</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {(typeof currentFlorais === 'string' ? currentFlorais.split(',').map(f => f.trim()).filter(Boolean) : (Array.isArray(currentFlorais) ? currentFlorais : [])).map((floral, idx) => (
+                      <div key={idx} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-start gap-4 hover:border-gold-main/30 hover:bg-gold-main/[0.02] transition-all">
+                        <span className="w-8 h-8 rounded-full bg-gold-main/10 border border-gold-main/30 flex items-center justify-center text-gold-main text-sm font-bold shrink-0">🌸</span>
+                        <div>
+                          <h4 className="serif text-lg text-gold-light font-bold">{floral}</h4>
+                          <p className="text-white/40 text-[11px] mt-1">Frequência vibracional integrada à sua fórmula.</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              )}
+
+              {mapeamentoResult && (
+                <div className="glass-card p-8 md:p-12 space-y-8 border-white/5 bg-white/[0.005]">
+                  <h3 className="serif text-2xl text-gold-light border-b border-white/5 pb-4">Análise Terapêutica Descritiva (IA)</h3>
+                  
+                  <div className="markdown-body text-white/80 space-y-4 font-light leading-relaxed prose prose-invert max-w-none">
+                    <ReactMarkdown>{mapeamentoResult}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+              {/* End Actions */}
+              <div className="pt-8 text-center border-t border-white/5 space-y-6 max-w-2xl mx-auto">
+                <p className="text-white/50 text-sm font-light italic leading-relaxed">
+                  Sua harmonização vibracional começa agora. Deseja iniciar sua mudança sistêmica completa?
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button 
+                    onClick={() => showPage('reprogramacao_pessoal_info')}
+                    className="button"
+                  >
+                    👉 Agendar Mentoria de Integração
+                  </button>
+                  <button 
+                    onClick={() => showPage('jornada_emocional')}
+                    className="button-outline"
+                  >
+                    Ver meu histórico completo
+                  </button>
+                  <button 
+                    onClick={() => {
+                      generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', mapeamentoResult || 'Seu Mapeamento Floral');
+                    }}
+                    className="button-outline flex items-center gap-2 justify-center"
+                  >
+                    <FileText size={18} /> Baixar Relatório (PDF)
+                  </button>
+                </div>
               </div>
+
             </motion.div>
           )}
 
