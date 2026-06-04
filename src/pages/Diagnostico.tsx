@@ -1248,14 +1248,21 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
 
   const liberarAcesso = async (pedido: any) => {
     try {
+      if (!pedido || !pedido.id) {
+        setNotification({ message: 'Erro: Pedido inválido ou sem identificação.', type: 'error' });
+        return;
+      }
+
       // 1. Procurar ou Criar Usuário por fallback
       let uid = pedido.userId;
       let userExists = true;
 
-      if (!uid) {
+      const emailQuery = (pedido.email || "").toString().toLowerCase().trim();
+
+      if (!uid && emailQuery) {
         const q = query(
           collection(db, 'users'),
-          where('email', '==', pedido.email.toLowerCase().trim())
+          where('email', '==', emailQuery)
         );
         const snap = await getDocs(q);
         if (!snap.empty) {
@@ -1263,6 +1270,8 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
         } else {
           userExists = false;
         }
+      } else if (!uid) {
+        userExists = false;
       }
 
       if (!userExists) {
@@ -1276,25 +1285,31 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
         });
 
         // Novo: Notificar a cliente pelo Whatsapp
-        if (pedido.whatsapp) {
-          const cleanedPhone = pedido.whatsapp.replace(/\D/g, '');
+        const pedidoWhatsapp = String(pedido.whatsapp || '');
+        if (pedidoWhatsapp) {
+          const cleanedPhone = pedidoWhatsapp.replace(/\D/g, '');
           if (cleanedPhone) {
             const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
-            const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu pedido do "${pedido.produto}" foi confirmado e liberado! Agora você só precisa concluir o seu cadastro usando o e-mail: ${pedido.email} para liberar seus créditos automaticamente. Acesse aqui: ${window.location.origin}`);
+            const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu pedido do "${pedido.produto || 'Produto'}" foi confirmado e liberado! Agora você só precisa concluir o seu cadastro usando o e-mail: ${pedido.email || emailQuery} para liberar seus créditos automaticamente. Acesse aqui: ${window.location.origin}`);
             window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
           }
         }
 
         setNotification({
-          message: `Confirmação realizada! Como ${pedido.nome || pedido.email} ainda não concluiu o cadastro, os créditos serão liberados automaticamente assim que ela se cadastrar.`,
+          message: `Confirmação realizada! Como ${pedido.nome || pedido.email || 'a cliente'} ainda não concluiu o cadastro, os créditos serão liberados automaticamente assim que ela se cadastrar.`,
           type: 'success'
         });
         onRefresh();
         return;
       }
 
+      if (!uid) {
+        setNotification({ message: 'Erro: Não foi possível determinar o ID do usuário cadastrado.', type: 'error' });
+        return;
+      }
+
       // 2. Definir o produto e créditos a liberar
-      const prod = pedido.produto.toLowerCase();
+      const prod = (pedido.produto || "").toLowerCase();
       const acessoUpdate: any = {
         updatedAt: new Date().toISOString()
       };
@@ -1319,7 +1334,7 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
       await addDoc(collection(db, 'notifications'), {
         userId: uid,
         title: '🔑 Acesso Liberado!',
-        message: `Seu acesso ao produto "${pedido.produto}" foi liberado com sucesso. Aproveite!`,
+        message: `Seu acesso ao produto "${pedido.produto || 'Produto'}" foi liberado com sucesso. Aproveite!`,
         status: 'unread',
         createdAt: new Date().toISOString()
       });
@@ -1335,11 +1350,12 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
       });
 
       // Novo: Notificar a cliente pelo Whatsapp
-      if (pedido.whatsapp) {
-        const cleanedPhone = pedido.whatsapp.replace(/\D/g, '');
+      const wapp = String(pedido.whatsapp || '');
+      if (wapp) {
+        const cleanedPhone = wapp.replace(/\D/g, '');
         if (cleanedPhone) {
           const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
-          const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu acesso ao "${pedido.produto}" foi confirmado e liberado com sucesso! Já está disponível em sua conta para você iniciar. Acesse aqui: ${window.location.origin}`);
+          const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu acesso ao "${pedido.produto || 'Produto'}" foi confirmado e liberado com sucesso! Já está disponível em sua conta para você iniciar. Acesse aqui: ${window.location.origin}`);
           window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
         }
       }
@@ -2168,23 +2184,47 @@ const Diagnostico = () => {
     }
   };
   const refreshAdminData = async () => {
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    setAdminUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AppUser[]);
+    try {
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      setAdminUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AppUser[]);
+    } catch (e) {
+      console.error("Error fetching users for admin:", e);
+    }
     
-    const mappingsSnapshot = await getDocs(collection(db, 'mappings'));
-    setAdminMappings(mappingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const mappingsSnapshot = await getDocs(collection(db, 'mappings'));
+      setAdminMappings(mappingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (e) {
+      console.error("Error fetching mappings for admin:", e);
+    }
     
-    const requestsSnapshot = await getDocs(collection(db, 'reprogramacao_requests'));
-    setAdminRequests(requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const requestsSnapshot = await getDocs(collection(db, 'reprogramacao_requests'));
+      setAdminRequests(requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (e) {
+      console.error("Error fetching requests for admin:", e);
+    }
 
-    const couponsSnapshot = await getDocs(collection(db, 'coupons'));
-    setAdminCoupons(couponsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const couponsSnapshot = await getDocs(collection(db, 'coupons'));
+      setAdminCoupons(couponsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (e) {
+      console.error("Error fetching coupons for admin:", e);
+    }
 
-    const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
-    setAdminAppointments(appointmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
+      setAdminAppointments(appointmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (e) {
+      console.error("Error fetching appointments for admin:", e);
+    }
 
-    const pedidosSnapshot = await getDocs(collection(db, 'pedidos_pendentes'));
-    setAdminPedidos(pedidosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const pedidosSnapshot = await getDocs(collection(db, 'pedidos_pendentes'));
+      setAdminPedidos(pedidosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (e) {
+      console.error("Error fetching pedidos for admin:", e);
+    }
   };
 
   const [currentAudio, setCurrentAudio] = useState<number | null>(null);
