@@ -127,10 +127,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
-                    (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin());
-      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
-                    ((!('role' in request.resource.data) || request.resource.data.role == resource.data.role) || isAdmin());
+      allow create: if isAdmin() || (isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
+                    (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin()));
+      allow update: if isAdmin() || (isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
+                    ((!('role' in request.resource.data) || request.resource.data.role == resource.data.role) || isAdmin()));
       allow delete: if isAdmin();
     }
 
