@@ -1250,6 +1250,8 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
     try {
       // 1. Procurar ou Criar Usuário por fallback
       let uid = pedido.userId;
+      let userExists = true;
+
       if (!uid) {
         const q = query(
           collection(db, 'users'),
@@ -1259,12 +1261,26 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
         if (!snap.empty) {
           uid = snap.docs[0].id;
         } else {
-          setNotification({
-            message: 'Erro: Este cliente ainda não completou o cadastro com o e-mail: ' + pedido.email,
-            type: 'error'
-          });
-          return;
+          userExists = false;
         }
+      }
+
+      if (!userExists) {
+        // O usuário ainda não se cadastrou na plataforma.
+        // Liberamos o pedido pendente. Quando o usuário se cadastrar com esse email,
+        // o endpoint user-access ou fluxo de login fará a conciliação automática.
+        await updateDoc(doc(db, 'pedidos_pendentes', pedido.id), {
+          status: 'confirmado',
+          acessoLiberado: true,
+          liberadoEm: new Date().toISOString()
+        });
+
+        setNotification({
+          message: `Confirmação realizada! Como ${pedido.nome || pedido.email} ainda não concluiu o cadastro, os créditos serão liberados automaticamente assim que ela se cadastrar.`,
+          type: 'success'
+        });
+        onRefresh();
+        return;
       }
 
       // 2. Definir o produto e créditos a liberar
@@ -1275,7 +1291,7 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
 
       if (prod.includes('diagnóstico') || prod.includes('diagnostico')) {
         acessoUpdate.diagnostico_comprado = true;
-      } else if (prod.includes('mapa') || prod.includes('floral')) {
+      } else if (prod.includes('mapa') || prod.includes('floral') || prod.includes('lealdade') || prod.includes('lealdades')) {
         acessoUpdate.mappingCredits = increment(1);
       } else if (prod.includes('clube')) {
         acessoUpdate.clube_ativo = true;
@@ -1302,7 +1318,10 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
       await updateDoc(doc(db, 'pedidos_pendentes', pedido.id), {
         status: 'confirmado',
         acessoLiberado: true,
-        liberadoEm: new Date().toISOString()
+        liberadoEm: new Date().toISOString(),
+        reconciliado: true,
+        uid_reconciliado: uid,
+        dataReconciliado: new Date().toISOString()
       });
 
       setNotification({

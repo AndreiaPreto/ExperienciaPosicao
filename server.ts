@@ -626,44 +626,108 @@ async function startServer() {
     }
 
     try {
-      const userDoc = await db.collection("users").doc(uid as string).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        let isAdmin = userData?.role === 'admin';
-        
-        // If not admin in DB, check email
-        if (!isAdmin) {
-          try {
-            const userRecord = await admin.auth().getUser(uid as string);
-            if (userRecord.email && userRecord.email.toLowerCase() === 'andreiapreto@gmail.com') {
-              isAdmin = true;
-              if (userData?.role !== 'admin') {
-                await db.collection("users").doc(uid as string).update({ role: 'admin' });
-              }
+      // 1. Get user record from firebase auth to fetch email
+      let email: string | undefined = undefined;
+      try {
+        const userRecord = await admin.auth().getUser(uid as string);
+        email = userRecord.email?.toLowerCase().trim();
+      } catch (authErr) {
+        console.error("Error fetching user email from auth:", authErr);
+      }
+
+      const userDocRef = db.collection("users").doc(uid as string);
+      let userDoc = await userDocRef.get();
+      let userData = userDoc.exists ? userDoc.data() : null;
+
+      // 2. Perform credit reconciliation if email is known
+      let mappingCreditsToAdd = 0;
+      let setDiagnosticoComprado = false;
+      let setClubeAtivo = false;
+      let setReprogramacaoComprada = false;
+      let setReprogramarEuComprado = false;
+      const updatedFields: any = {};
+
+      if (email) {
+        const pendingDocs = await db.collection("pedidos_pendentes")
+          .where("email", "==", email)
+          .where("status", "==", "confirmado")
+          .get();
+
+        for (const doc of pendingDocs.docs) {
+          const order = doc.data();
+          if (order.acessoLiberado === true && order.reconciliado !== true) {
+            const prod = (order.produto || "").toLowerCase();
+            if (prod.includes('diagnóstico') || prod.includes('diagnostico')) {
+              setDiagnosticoComprado = true;
+              updatedFields.diagnostico_comprado = true;
+            } else if (prod.includes('mapa') || prod.includes('floral') || prod.includes('lealdade') || prod.includes('lealdades')) {
+              mappingCreditsToAdd += 1;
+            } else if (prod.includes('clube')) {
+              setClubeAtivo = true;
+              updatedFields.clube_ativo = true;
+            } else if (prod.includes('reset') || prod.includes('reprogramação') || prod.includes('reprogramacao')) {
+              setReprogramacaoComprada = true;
+              updatedFields.reprogramacao_pessoal_comprada = true;
+            } else if (prod.includes('reprograme')) {
+              setReprogramarEuComprado = true;
+              updatedFields.reprogramar_eu_comprado = true;
             }
-          } catch (e) {
-            console.error("Error fetching user record:", e);
+
+            // Mark this pending order as reconciled
+            await db.collection("pedidos_pendentes").doc(doc.id).update({
+              reconciliado: true,
+              uid_reconciliado: uid,
+              dataReconciliado: new Date().toISOString()
+            });
           }
         }
-
-        return res.json({
-          user_id: uid,
-          diagnostico_comprado: isAdmin || userData?.diagnostico_comprado || (userData?.mappingCredits || 0) > 0,
-          mappingCredits: isAdmin ? 999 : (userData?.mappingCredits || 0),
-          clube_ativo: userData?.clube_ativo || false,
-          reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || false,
-          reprogramar_eu_comprado: userData?.reprogramar_eu_comprado || false,
-        });
       }
-      
-      res.json({
+
+      // 3. Save any updates to user document
+      if (mappingCreditsToAdd > 0 || Object.keys(updatedFields).length > 0) {
+        const currentCredits = userData?.mappingCredits || 0;
+        const newCredits = currentCredits + mappingCreditsToAdd;
+        
+        const updatePayload: any = {
+          ...updatedFields,
+          mappingCredits: newCredits,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (!userData) {
+          updatePayload.uid = uid;
+          updatePayload.email = email || "";
+          updatePayload.name = email ? email.split('@')[0] : "Usuário";
+          updatePayload.role = "user";
+          await userDocRef.set(updatePayload);
+        } else {
+          await userDocRef.update(updatePayload);
+        }
+
+        // Re-read user document
+        userDoc = await userDocRef.get();
+        userData = userDoc.data();
+      }
+
+      // 4. Resolve admin status
+      let isAdmin = userData?.role === 'admin';
+      if (!isAdmin && email) {
+        if (email === 'andreiapreto@gmail.com') {
+          isAdmin = true;
+          await userDocRef.set({ role: 'admin' }, { merge: true });
+        }
+      }
+
+      // 5. Respond with resolved permissions
+      return res.json({
         user_id: uid,
-        diagnostico_comprado: false,
-        mappingCredits: 0,
-        clube_ativo: false,
-        reprogramacao_pessoal_comprada: false,
-        reprogramar_eu_comprado: false,
+        diagnostico_comprado: isAdmin || userData?.diagnostico_comprado || (userData?.mappingCredits || 0) > 0,
+        mappingCredits: isAdmin ? 999 : (userData?.mappingCredits || 0),
+        clube_ativo: userData?.clube_ativo || false,
+        reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || false,
+        reprogramar_eu_comprado: userData?.reprogramar_eu_comprado || false,
       });
+
     } catch (error) {
       console.error("Error fetching user access:", error);
       res.status(500).json({ error: "Internal server error" });
