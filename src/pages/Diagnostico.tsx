@@ -1275,6 +1275,16 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
           liberadoEm: new Date().toISOString()
         });
 
+        // Novo: Notificar a cliente pelo Whatsapp
+        if (pedido.whatsapp) {
+          const cleanedPhone = pedido.whatsapp.replace(/\D/g, '');
+          if (cleanedPhone) {
+            const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
+            const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu pedido do "${pedido.produto}" foi confirmado e liberado! Agora você só precisa concluir o seu cadastro usando o e-mail: ${pedido.email} para liberar seus créditos automaticamente. Acesse aqui: ${window.location.origin}`);
+            window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
+          }
+        }
+
         setNotification({
           message: `Confirmação realizada! Como ${pedido.nome || pedido.email} ainda não concluiu o cadastro, os créditos serão liberados automaticamente assim que ela se cadastrar.`,
           type: 'success'
@@ -1323,6 +1333,16 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
         uid_reconciliado: uid,
         dataReconciliado: new Date().toISOString()
       });
+
+      // Novo: Notificar a cliente pelo Whatsapp
+      if (pedido.whatsapp) {
+        const cleanedPhone = pedido.whatsapp.replace(/\D/g, '');
+        if (cleanedPhone) {
+          const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
+          const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu acesso ao "${pedido.produto}" foi confirmado e liberado com sucesso! Já está disponível em sua conta para você iniciar. Acesse aqui: ${window.location.origin}`);
+          window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
+        }
+      }
 
       setNotification({
         message: `Acesso liberado com sucesso para ${pedido.nome || pedido.email}!`,
@@ -2328,12 +2348,11 @@ const Diagnostico = () => {
 
   useEffect(() => {
     if (!isAdmin) return;
-    const q = query(
-      collection(db, 'pedidos_pendentes'),
-      where('status', '==', 'aguardando')
-    );
+    const q = collection(db, 'pedidos_pendentes');
     const unsub = onSnapshot(q, (snap) => {
-      setPedidosPendentes(snap.size);
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAdminPedidos(list);
+      setPedidosPendentes(list.filter((p: any) => p.status === 'aguardando').length);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'pedidos_pendentes');
     });
