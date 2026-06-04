@@ -2272,7 +2272,7 @@ const Diagnostico = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
-  const [memberTab, setMemberTab] = useState<'mappings' | 'appointments' | 'notifications'>('mappings');
+  const [memberTab, setMemberTab] = useState<'products' | 'mappings' | 'appointments' | 'notifications'>('products');
   const [viewingNotification, setViewingNotification] = useState<any | null>(null);
   const [notificationViewTab, setNotificationViewTab] = useState<'app' | 'email'>('app');
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -4762,18 +4762,37 @@ const Diagnostico = () => {
                   ))}
                 </div>
 
-                <button 
-                  onClick={() => {
-                    if (isAdmin) {
-                      showPage('diagnostico_quiz_intro');
-                    } else {
+                {(isAdmin || access?.diagnostico_comprado) ? (
+                  <div className="space-y-4">
+                    {!isAdmin && (
+                      <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest block text-center">
+                        ✨ Acesso Liberado!
+                      </span>
+                    )}
+                    {isAdmin && (
+                      <span className="text-gold-main text-xs font-bold uppercase tracking-widest block text-center">
+                        👑 Modo Administrador: Acesso Liberado
+                      </span>
+                    )}
+                    <button 
+                      onClick={() => {
+                        showPage('diagnostico_quiz_intro');
+                      }}
+                      className="button w-full animate-pulse"
+                    >
+                      Iniciar Diagnóstico
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
                       handleCheckout('Diagnóstico POSIÇÃO', 'R$ 69');
-                    }
-                  }}
-                  className="button w-full"
-                >
-                  {isAdmin ? 'Iniciar Diagnóstico (Bypass Admin)' : 'Iniciar Jornada'}
-                </button>
+                    }}
+                    className="button w-full"
+                  >
+                    Iniciar Jornada
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
@@ -5691,6 +5710,7 @@ const Diagnostico = () => {
               {!selectedMapping && (
                 <div className="flex border-b border-white/5 mb-8 gap-4 overflow-x-auto pb-1">
                   {[
+                    { id: 'products', label: 'Meus Produtos', count: 0, icon: ShoppingBag },
                     { id: 'mappings', label: 'Meus Mapeamentos', count: history.length, icon: History },
                     { id: 'appointments', label: 'Consultas & Agenda', count: userAppointments.length, icon: Calendar },
                     { id: 'notifications', label: 'Central de Notificações', count: notifications.length, unread: unreadNotificationsCount, icon: Bell }
@@ -5792,6 +5812,244 @@ const Diagnostico = () => {
                 </div>
               ) : (
                 <div className="space-y-12">
+                  {/* TAB 0: Meus Produtos */}
+                  {memberTab === 'products' && (
+                    <div className="space-y-8">
+                      <div>
+                        <h3 className="serif text-2xl text-gold-light font-serif">Seus Produtos Adquiridos</h3>
+                        <p className="text-gold-main/40 text-xs uppercase tracking-widest mt-1">Sua estante virtual de ferramentas e acompanhamentos ativos</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* 1. Diagnóstico POSIÇÃO */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Diagnóstico</span>
+                              {access?.diagnostico_comprado || isAdmin ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Não Adquirido
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2">Diagnóstico POSIÇÃO</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light">
+                              Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento essencial.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              if (access?.diagnostico_comprado || isAdmin) {
+                                showPage('diagnostico_quiz_intro');
+                              } else {
+                                showPage('diagnostico_info');
+                              }
+                            }}
+                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
+                              access?.diagnostico_comprado || isAdmin
+                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
+                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
+                            }`}
+                          >
+                            {access?.diagnostico_comprado || isAdmin ? 'Iniciar Diagnóstico' : 'Saber Mais / Adquirir'}
+                          </button>
+                        </div>
+
+                        {/* 2. Mapa Floral */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Mapeamento</span>
+                              {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access.mappingCredits} ${access.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Sem Crédito
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2">Mapa de Posição - Floral</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                              Identifique sua emoção dominante e receba sua recomendação de fórmula floral personalizada na hora via IA.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => showPage('mapeamento_intro')}
+                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
+                              isAdmin || (access?.mappingCredits && access.mappingCredits > 0)
+                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
+                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
+                            }`}
+                          >
+                            {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? 'Iniciar Mapeamento Floral' : 'Adquirir Mapa Floral'}
+                          </button>
+                        </div>
+
+                        {/* 3. Mapeamento de Lealdades */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Mapeamento</span>
+                              {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access.mappingCredits} ${access.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Sem Crédito
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2">Mapeamento de Lealdades</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                              Revele os padrões inconscientes, vínculos profundos, estratégias de proteção e seu perfil de lealdades sistêmicas.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => showPage('lealdades_intro')}
+                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
+                              isAdmin || (access?.mappingCredits && access.mappingCredits > 0)
+                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
+                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
+                            }`}
+                          >
+                            {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? 'Mapear Lealdades' : 'Adquirir Diagnóstico'}
+                          </button>
+                        </div>
+
+                        {/* 4. Reset de Posição */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Reprogramação</span>
+                              {access?.reprogramacao_pessoal_comprada || isAdmin ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Não Adquirido
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2">Reset de Posição</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                              Reorganize e estabilize seus padrões, solte crenças e sintonize seu áudio de frequência personalizado exclusivo.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              if (access?.reprogramacao_pessoal_comprada || isAdmin) {
+                                showPage('reprogramacao_form');
+                              } else {
+                                showPage('reprogramacao_pessoal_info');
+                              }
+                            }}
+                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
+                              access?.reprogramacao_pessoal_comprada || isAdmin
+                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
+                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
+                            }`}
+                          >
+                            {access?.reprogramacao_pessoal_comprada || isAdmin ? 'Preencher Questionário de Frequência' : 'Saber Mais / Comprar'}
+                          </button>
+                        </div>
+
+                        {/* 5. Reprograme-se */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Curso / Processo</span>
+                              {access?.reprogramar_eu_comprado || isAdmin ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Não Adquirido
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2 font-serif">Reprograme-se - 21 Dias</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                              Processo guiado completo com módulos profundos de reorganização mental e posicionamento diário.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              if (access?.reprogramar_eu_comprado || isAdmin) {
+                                showPage('reprogramacao_form');
+                              } else {
+                                showPage('reprogramar_eu_info');
+                              }
+                            }}
+                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
+                              access?.reprogramar_eu_comprado || isAdmin
+                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
+                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
+                            }`}
+                          >
+                            {access?.reprogramar_eu_comprado || isAdmin ? 'Preencher Questionário de Frequência' : 'Saber Mais / Comprar'}
+                          </button>
+                        </div>
+
+                        {/* 6. Clube Posição - Núcleos */}
+                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
+                          <div>
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold font-semibold">Acompanhamento</span>
+                              {access?.clube_ativo || isAdmin ? (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Assinado
+                                </span>
+                              ) : (
+                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
+                                  Não Assinante
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="serif text-xl text-gold-light mb-2 font-serif">Clube Posição - Tarô & Clarear</h4>
+                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                              Seu espaço de alinhamento recorrente. Participe das práticas semanais e orientações exclusivas.
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            {(access?.clube_ativo || isAdmin) ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                <button 
+                                  onClick={() => showPage('clube_taro_content')}
+                                  className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
+                                >
+                                  Núcleo Tarô
+                                </button>
+                                <button 
+                                  onClick={() => showPage('clube_clarear_content')}
+                                  className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
+                                >
+                                  Núcleo Clarear
+                                </button>
+                              </div>
+                            ) : (
+                              <button 
+                                onClick={() => showPage('clube_posicao_info')}
+                                className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10 transition-all duration-300"
+                              >
+                                Ver Núcleos do Clube
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  )}
+
                   {/* TAB 1: Meus Mapeamentos */}
                   {memberTab === 'mappings' && (
                     <>
