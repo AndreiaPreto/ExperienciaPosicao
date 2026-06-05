@@ -1,7 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Download, X, ArrowRight, Sparkles, Settings, Check } from 'lucide-react';
+import { Search, Download, X, ArrowRight, Sparkles, Settings, Check, Copy, CreditCard, MessageCircle, Star } from 'lucide-react';
+
+const WHATSAPP_NUM = (import.meta as any).env.VITE_WHATSAPP_NUM || '5548991261832';
+const PIX_CHAVE   = (import.meta as any).env.VITE_PIX_CHAVE || '48991261832'; // chave pix
+const PIX_TITULAR = (import.meta as any).env.VITE_PIX_TITULAR || 'Andreia Preto';
+
+const msgPix = (produto: string, preco: string) =>
+  encodeURIComponent(
+    `Olá! Acabei de fazer o pagamento via PIX do E-book *${produto}* (${preco}) e estou enviando o comprovante para receber o PDF. 🌿`
+  );
+
+const msgCartao = (produto: string, preco: string) =>
+  encodeURIComponent(
+    `Olá! Gostaria de comprar o E-book *${produto}* (${preco}) via cartão de crédito. Pode me enviar o link de pagamento? ✨`
+  );
 
 interface EBook {
   id: number;
@@ -17,6 +31,7 @@ interface EBook {
   bg: string;
   link: string;
   coverUrl?: string;
+  price: string;
 }
 
 const EBOOKS_DATA: EBook[] = [
@@ -30,7 +45,8 @@ const EBOOKS_DATA: EBook[] = [
     featured: true,
     bg: 'linear-gradient(135deg,#201a15,#140f0c)', // Warm golden/cream premium dark background
     link: '#',
-    coverUrl: '/assets/leis_hermeticas_cover.png'
+    coverUrl: '/assets/leis_hermeticas_cover.png',
+    price: 'R$ 47,00'
   },
   {
     id: 2, icon: '🌿', cat: 'Florais',
@@ -41,7 +57,8 @@ const EBOOKS_DATA: EBook[] = [
     tags: ['Florais de Bach', 'Cura Vibracional', 'Prático', 'Autocuidado'],
     featured: false,
     bg: 'linear-gradient(135deg,#0f1a0a,#1a2e10)',
-    link: '#'
+    link: '#',
+    price: 'R$ 37,00'
   }
 ];
 
@@ -64,6 +81,7 @@ export default function Biblioteca() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBook, setSelectedBook] = useState<EBook | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Overrides mapping for live user upload links
   const [linksMap, setLinksMap] = useState<Record<number, string>>(() => {
@@ -312,7 +330,7 @@ export default function Biblioteca() {
                           ))}
                         </div>
                         <span className="text-gold-main uppercase tracking-widest text-[10px] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-all">
-                          Acessar <ArrowRight size={12} />
+                          Adquirir <ArrowRight size={12} />
                         </span>
                       </div>
                     </div>
@@ -370,9 +388,9 @@ export default function Biblioteca() {
 
                     <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
                       <span className="text-[10px] text-white/30">{book.pages}</span>
-                      <div className="w-7 h-7 bg-gold-main/8 border border-gold-main/15 rounded-full flex items-center justify-center text-gold-main group-hover:bg-gold-main group-hover:text-deep-black group-hover:translate-x-1 transition-all duration-300">
-                        <ArrowRight size={14} />
-                      </div>
+                      <span className="text-gold-main uppercase tracking-widest text-[9px] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-all">
+                        Adquirir <ArrowRight size={12} />
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -460,122 +478,114 @@ export default function Biblioteca() {
                   </span>
                 </div>
 
-                {/* Modal actions */}
-                {(() => {
-                  const currentLink = linksMap[selectedBook.id] || selectedBook.link;
-                  const isConfigured = currentLink && currentLink !== '#';
-
-                  return (
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        {isConfigured ? (
-                          <a
-                            href={currentLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="button flex-1 inline-flex items-center justify-center gap-2 text-center"
-                          >
-                            ▶ Acessar E-book
-                          </a>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsEditingLink(true);
-                              setEditingUrl('');
-                            }}
-                            className="button flex-1 inline-flex items-center justify-center gap-2 text-center bg-white/10 hover:bg-white/15 text-gold-main border border-gold-main/20 cursor-pointer"
-                          >
-                            ⚙️ Vincular Arquivo PDF
-                          </button>
-                        )}
-
-                        {isConfigured && (
-                          <a
-                            href={currentLink}
-                            download={`${selectedBook.title.replace(/\s+/g, '_')}.pdf`}
-                            className="button-outline flex items-center gap-2 shrink-0 justify-center py-4"
-                          >
-                            <Download size={14} /> Download PDF
-                          </a>
-                        )}
-                      </div>
-
-                      {/* PDF Upload/Linking dynamic guide */}
-                      <div className="mt-6 border-t border-white/[0.05] pt-4">
-                        {!isEditingLink ? (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-[10px] text-white/40 truncate max-w-[280px]">
-                              Link atual: <span className="text-gold-main/80 font-mono">{isConfigured ? currentLink : 'Nenhum arquivo de teste vinculado'}</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsEditingLink(true);
-                                setEditingUrl(isConfigured ? currentLink : '');
-                              }}
-                              className="text-[10px] text-gold-main hover:text-gold-light uppercase tracking-wider font-semibold underline flex items-center gap-1 shrink-0"
-                            >
-                              <Settings size={10} /> {isConfigured ? 'Alterar PDF' : 'Subir / Configurar'}
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-4 space-y-3">
-                            <h4 className="text-xs font-semibold text-white/85 flex items-center gap-1.5 font-serif">
-                              <Sparkles size={12} className="text-gold-main" /> Como disponibilizar seu PDF?
-                            </h4>
-                            <p className="text-[11px] text-white/55 leading-relaxed font-light">
-                              <b className="font-semibold text-gold-light">Opção 1 (Definitiva):</b> Adicione o seu arquivo <code className="text-gold-main font-mono text-[10px]">PDF</code> na pasta pública do servidor (<code className="text-white">/public/</code>) e use o caminho correspondente (ex: <code className="text-white font-mono">/descomplicando_leis_hermeticas.pdf</code>).<br />
-                              <b className="font-semibold text-gold-light">Opção 2 (Imediata):</b> Cole aqui o link direto do documento (Google Drive, Dropbox, ou site externo) para liberar acesso para teste agora mesmo:
-                            </p>
-                            
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                value={editingUrl}
-                                onChange={(e) => setEditingUrl(e.target.value)}
-                                placeholder="exemplo: https://meusite.com/meu-ebook.pdf"
-                                className="flex-1 bg-black/40 border border-white/[0.1] focus:border-gold-main/50 text-white rounded px-3 py-2 text-xs outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const trimmed = editingUrl.trim();
-                                  if (trimmed) {
-                                    localStorage.setItem(`pdf_link_${selectedBook.id}`, trimmed);
-                                    setLinksMap(prev => ({ ...prev, [selectedBook.id]: trimmed }));
-                                  } else {
-                                    localStorage.removeItem(`pdf_link_${selectedBook.id}`);
-                                    setLinksMap(prev => {
-                                      const copy = { ...prev };
-                                      delete copy[selectedBook.id];
-                                      return copy;
-                                    });
-                                  }
-                                  setIsEditingLink(false);
-                                }}
-                                className="bg-gold-main hover:bg-gold-light text-deep-black font-semibold rounded px-4 py-2 text-xs flex items-center gap-1.5 transition-all"
-                              >
-                                <Check size={12} /> Salvar
-                              </button>
-                            </div>
-                            
-                            <div className="flex justify-between items-center pt-1 text-[9px] text-white/30">
-                              <span>O link configurado ficará salvo localmente neste navegador.</span>
-                              <button
-                                type="button"
-                                onClick={() => setIsEditingLink(false)}
-                                className="text-[10px] text-white/40 hover:text-white underline"
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                {/* Modal actions / Payment Checkout Information */}
+                <div className="space-y-6">
+                  {/* RESUMO DO PEDIDO */}
+                  <div className="bg-gold-main/[0.02] border border-gold-main/20 p-5 rounded-xl">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-gold-main/50 mb-1 font-semibold">
+                      Seu Pedido
+                    </p>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <p className="font-serif text-xl font-bold text-gold-light leading-snug">
+                        {selectedBook.title}
+                      </p>
+                      <p className="font-serif text-2xl font-bold text-gold-main tracking-tight shrink-0">
+                        {selectedBook.price}
+                      </p>
                     </div>
-                  );
-                })()}
+                  </div>
+
+                  {/* OPÇÃO DE PAGAMENTO — PIX */}
+                  <div className="bg-[#141414] border border-white/[0.05] p-5 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 text-xs font-semibold">
+                        ◈
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-semibold text-white/90">Pagar com PIX</p>
+                        <p className="text-[10px] text-white/40">Melhor opção · Liberação imediata</p>
+                      </div>
+                      <span className="ml-auto text-[8px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                        Recomendado
+                      </span>
+                    </div>
+
+                    {/* Chave PIX */}
+                    <div className="bg-black/40 border border-white/[0.04] p-4 rounded-xl mb-4 text-left">
+                      <p className="text-[9px] uppercase tracking-wider text-white/30 font-semibold mb-1.5">
+                        Chave PIX
+                      </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-white/70 text-xs font-mono select-all break-all leading-none">
+                          {PIX_CHAVE}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(PIX_CHAVE);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2500);
+                          }}
+                          className="flex-shrink-0 text-[10px] uppercase tracking-wider text-gold-main border border-gold-main/20 hover:border-gold-main hover:bg-gold-main/5 font-semibold px-2.5 py-1 rounded transition-all"
+                        >
+                          {copied ? '✓ Copiado' : 'Copiar'}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-white/30 font-sans mt-2">
+                        Titular: <span className="text-white/50">{PIX_TITULAR}</span>
+                      </p>
+                    </div>
+
+                    {/* Instruções de Pagamento e Entrega */}
+                    <div className="space-y-2.5 mb-5 text-left border-t border-white/[0.04] pt-4">
+                      <div className="flex items-start gap-3">
+                        <span className="font-serif text-gold-main/40 text-xs leading-none mt-1">01</span>
+                        <p className="text-white/40 text-xs font-light">Abra seu aplicativo de banco e acesse o menu PIX.</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="font-serif text-gold-main/40 text-xs leading-none mt-1">02</span>
+                        <p className="text-white/40 text-xs font-light">Cole a chave acima e transfira o valor de <b className="text-white/60 font-semibold">{selectedBook.price}</b>.</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="font-serif text-gold-main/40 text-xs leading-none mt-1">03</span>
+                        <span className="bg-gold-main/10 text-gold-main text-[10px] px-2 py-0.5 rounded border border-gold-main/20 font-semibold inline-block uppercase tracking-wider">Aviso de Entrega</span>
+                      </div>
+                      <p className="text-gold-light/90 text-xs font-serif leading-relaxed italic pl-7">
+                        Após a confirmação do pagamento, o e-book em formato PDF será enviado diretamente para seu WhatsApp.
+                      </p>
+                    </div>
+
+                    {/* Botão Enviar Comprovante */}
+                    <a
+                      href={`https://wa.me/${WHATSAPP_NUM}?text=${msgPix(selectedBook.title, selectedBook.price)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="button w-full inline-flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle size={14} className="fill-current" />
+                      Enviar comprovante pelo WhatsApp
+                    </a>
+                  </div>
+
+                  {/* CARTÃO DE CRÉDITO */}
+                  <div className="bg-[#141414]/65 border border-white/[0.03] p-4 rounded-xl flex items-center justify-between text-left gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <CreditCard size={14} className="text-white/60" />
+                        <h4 className="text-xs font-semibold text-white/80">Pagar com Cartão</h4>
+                      </div>
+                      <p className="text-[10px] text-white/30 font-light">Solicite o link de pagamento parcelado.</p>
+                    </div>
+                    <a
+                      href={`https://wa.me/${WHATSAPP_NUM}?text=${msgCartao(selectedBook.title, selectedBook.price)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-gold-main hover:text-gold-light uppercase tracking-wider font-semibold border border-gold-main/10 hover:border-gold-main/40 px-3 py-1.5 rounded bg-white/[0.02] flex items-center gap-1.5 transition-all"
+                    >
+                      Solicitar Link
+                    </a>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
