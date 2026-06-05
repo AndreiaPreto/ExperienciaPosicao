@@ -52,9 +52,9 @@ const Obrigado = () => (
         Acessar área de membros
       </Link>
 
-      {/* ✅ Número correto */}
+      {/* ✅ Número correto de WhatsApp do .env */}
       <a
-        href="https://wa.me/5548991261832?text=Olá!%20Concluí%20meu%20Diagnóstico%20de%20Posição%20e%20aguardo%20minha%20leitura."
+        href={`https://wa.me/${(import.meta as any).env.VITE_WHATSAPP_NUM || '5548991261832'}?text=Olá!%20Concluí%20meu%20Diagnóstico%20de%20Posição%20e%20aguardo%20minha%20leitura.`}
         target="_blank"
         rel="noopener noreferrer"
         className="button-outline w-full flex items-center justify-center gap-2"
