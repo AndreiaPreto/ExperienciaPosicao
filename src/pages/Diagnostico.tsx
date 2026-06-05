@@ -3778,21 +3778,21 @@ const Diagnostico = () => {
             </div>
 
             {/* Desktop Menu */}
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden xl:flex items-center gap-3 2xl:gap-5">
               {[
                 { label: 'Início', action: () => showPage('home') },
-                { label: 'Diagnóstico de Posição', action: () => showPage('diagnostico_info') },
+                { label: 'Diagnóstico', action: () => showPage('diagnostico_info') },
                 { label: 'Mapa Floral', action: () => showPage('mapeamento_intro') },
-                { label: 'Lealdades Ocultas', action: () => showPage('lealdades_intro') },
-                { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
+                { label: 'Lealdades', action: () => showPage('lealdades_intro') },
+                { label: 'Reset', action: () => showPage('reprogramacao_pessoal_info') },
                 { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
-                { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
+                { label: 'Ciclos', action: () => showPage('rituais_mes_info') },
                 { label: 'Biblioteca', action: () => navigate('/biblioteca') }
               ].map((item, idx) => (
                 <button
                   key={idx}
                   onClick={item.action}
-                  className="text-[10px] md:text-xs tracking-widest text-white/50 hover:text-gold-main uppercase transition-colors font-medium border-b border-transparent hover:border-gold-main/20 pb-1"
+                  className="text-[10px] 2xl:text-xs tracking-wider 2xl:tracking-widest text-white/50 hover:text-gold-main uppercase transition-colors font-medium border-b border-transparent hover:border-gold-main/20 pb-1 whitespace-nowrap"
                 >
                   {item.label}
                 </button>
@@ -3868,7 +3868,7 @@ const Diagnostico = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-white/65 hover:text-white transition-colors"
+                className="xl:hidden p-2 text-white/65 hover:text-white transition-colors"
               >
                 {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -3882,7 +3882,7 @@ const Diagnostico = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="lg:hidden border-t border-white/5 bg-black/95 overflow-hidden"
+                className="xl:hidden border-t border-white/5 bg-black/95 overflow-hidden"
               >
                 <div className="px-6 py-6 flex flex-col gap-4">
                   {[
