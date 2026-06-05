@@ -22,6 +22,14 @@ export interface AxisDetail {
   phrase: string;
   liberation: string;
   practice: string;
+  description: string;
+  unconsciousPhrase: string;
+  repositioningMovement: string;
+  reflexiveQuestion: string;
+  dayPractice: {
+    name: string;
+    steps: string[];
+  };
 }
 
 export const lealdadesQuestions: LealdadesQuestion[] = [
@@ -388,7 +396,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Guardião do Vínculo",
     phrase: "Eu preciso ser parecida com o meu sistema para continuar pertencendo.",
     liberation: "Eu posso pertencer sem me abandonar.",
-    practice: "Durante 7 dias, observe onde você se adapta para não desagradar. Antes de dizer sim, pergunte: isso é uma escolha ou uma tentativa de pertencer?"
+    practice: "Durante 7 dias, observe onde você se adapta para não desagradar. Antes de dizer sim, pergunte: isso é uma escolha ou uma tentativa de pertencer?",
+    description: "A necessidade visceral de ser aceito e fazer parte, muitas vezes manifestada pela anulação de si e pela adaptação de suas próprias vontades para não perder o vínculo com o clã.",
+    unconsciousPhrase: "Eu preciso ser parecida com o meu sistema para continuar pertencendo.",
+    repositioningMovement: "Eu posso pertencer sem me abandonar. Tomo a força do meu clã e sigo em direção à minha própria vida.",
+    reflexiveQuestion: "A quem na minha família estou tentando imitar ou proteger quando decido me anular?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Diferenciação Consciente",
+      steps: [
+        "Observe no cotidiano onde você se adapta e diz 'sim' querendo dizer 'não'.",
+        "Conecte-se com seu corpo e sinta a diferença entre escolha livre e submissão.",
+        "Exercite um pequeno 'não' consciente para treinar as fronteiras saudáveis do seu espaço.",
+        "Visualize seu clã acolhendo seu desenvolvimento e repita: 'Eu pertenço por amor, não pela repetição.'",
+        "Liste por escrito seus próprios pontos de vista específicos que se diferenciam dos habituais do clã.",
+        "Tome uma pequena escolha individual sobre sua rotina, visual ou hobby que seja inteiramente sua.",
+        "Feche os olhos, respire fundo e afirme: 'Eu sou digna de pertencer sendo eu mesma.'"
+      ]
+    }
   },
   sacrificio: {
     label: "Sacrifício",
@@ -399,7 +423,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Mártir Amoroso",
     phrase: "Se eu não fizer por todos, talvez ninguém fique.",
     liberation: "Meu amor não precisa custar a minha vida.",
-    practice: "Durante 7 dias, escolha uma ação diária que cuide de você antes de tentar sustentar todos ao seu redor."
+    practice: "Durante 7 dias, escolha uma ação diária que cuide de você antes de tentar sustentar todos ao seu redor.",
+    description: "A tendência inconsciente de carregar o peso do mundo e tentar suprir a dor de todos ao redor, medindo o próprio valor pelo esforço e exaustão acumulados.",
+    unconsciousPhrase: "Se eu não sofrer e carregar o peso por vocês, eu não mereço ser amada.",
+    repositioningMovement: "O meu amor e a minha presença não precisam custar a minha saúde ou a minha própria vida.",
+    reflexiveQuestion: "A quem estou tentando salvar na minha história quando escolho me sobrecarregar dessa forma?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Autoacolhimento e Carga Leve",
+      steps: [
+        "Identifique e escreva as tarefas adicionais de outras pessoas que você assumiu para si ultimamente.",
+        "Devolva ou delegue de forma consciente pelo menos uma dessas obrigações aos respectivos responsáveis.",
+        "Pratique 15 minutos diários de ócio sem culpa ou celular, desacelerando o impulso de arrumar ou resolver algo.",
+        "Antes de responder a qualquer pedido, faça uma pausa de 10 segundos e verifique se tem energia real para doar.",
+        "Entregue mentalmente o destino de quem você ama aos cuidados da própria jornada deles.",
+        "Presenteie-se com uma ação de extremo relaxamento e bem-estar (banho, leitura ou massagem).",
+        "Diga a si mesma diante do espelho: 'Eu divido as cargas e sigo em paz. É seguro descansar.'"
+      ]
+    }
   },
   culpa: {
     label: "Culpa",
@@ -410,7 +450,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Devedor Invisível",
     phrase: "Eu não posso ter mais do que aqueles que amo.",
     liberation: "Minha expansão não diminui ninguém.",
-    practice: "Durante 7 dias, perceba onde você reduz sua alegria ou seu crescimento. Repita: eu posso receber sem culpa."
+    practice: "Durante 7 dias, perceba onde você reduz sua alegria ou seu crescimento. Repita: eu posso receber sem culpa.",
+    description: "O bloqueio oculto que sabota o progresso, o brilho pessoal ou a riqueza financeira para não suscitar a sensação de traição ou superioridade em relação aos que vieram antes.",
+    unconsciousPhrase: "Eu não me dou permissão de ser plenamente feliz, livre e próspero enquanto os meus sofrem.",
+    repositioningMovement: "Eu decido honrar o caminho difícil de vocês fazendo algo positivo, próspero e alegre com a minha existência.",
+    reflexiveQuestion: "Quem na minha história familiar eu temo magoar ou trair se eu atingir todo o meu sucesso?",
+    dayPractice: {
+      name: "Prática do Sete Dias: Autorização Sistêmica de Prosperidade",
+      steps: [
+        "Acolha a culpa inicial que surge ao vivenciar grandes alegrias, sem recuar ou se punir por ela.",
+        "Escreva três conquistas recentes que você adora e permita-se simplesmente saboreá-las com gratidão.",
+        "Desenhe simbolicamente um círculo de bênçãos incluindo seus antepassados desejando a sua felicidade.",
+        "Diga internamente aos seus pais: 'Por favor, me olhem com simpatia se eu prosperar mais.'",
+        "Use ou desfrute plenamente de algo especial que você costuma poupar para o futuro.",
+        "Faça um pequeno agrado financeiro ou estético para si com o objetivo puro de celebrar o merecimento.",
+        "Afirme com profunda convicção: 'A minha felicidade celebra a história daqueles que me deram a vida.'"
+      ]
+    }
   },
   compensacao: {
     label: "Compensação",
@@ -421,7 +477,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Reparador Sistêmico",
     phrase: "Eu preciso resolver o que ficou quebrado antes de mim.",
     liberation: "Eu honro a história, mas devolvo o destino.",
-    practice: "Durante 7 dias, observe onde você tenta resolver dores que não começaram em você. Repita: eu devolvo com amor o que não me pertence."
+    practice: "Durante 7 dias, observe onde você tenta resolver dores que não começaram em você. Repita: eu devolvo com amor o que não me pertence.",
+    description: "A necessidade de assumir posturas reparadoras de injustiças, perdas e dores do passado do clã familiar, ocupando um lugar de salvação do qual não é originariamente responsável.",
+    unconsciousPhrase: "Eu me sacrifico ou assumo fardos injustos para pagar a conta sistêmica de pendências do passado.",
+    repositioningMovement: "Eu acolho e respeito profundamente as histórias do passado, porém me desvinculo desse encargo de reparação.",
+    reflexiveQuestion: "Que ferida ou injustiça ancestral eu me sinto secretamente intimada(o) a consertar hoje?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Devolução Sistêmica de Carga",
+      steps: [
+        "Examine em quais relacionamentos íntimos ou familiares você desempenha papel excessivo de terapeuta/salvador.",
+        "Dê um passo atrás em discussões ou crises que não envolvem diretamente o seu bem-estar imediato.",
+        "Imagine-se de braços estendidos entregando um fardo de pedras preciosas aos donos passados por direito.",
+        "Escreva em um papel: 'O que pertence à minha ascendência fica com ela, com profundo amor e respeito.'",
+        "Redirecione as energias poupadas para uma meta profissional ou pessoal que há muito tempo está paralisada.",
+        "Respirando pausadamente, repita mentalmente: 'Seu destino é de vocês; o meu espaço é no agora.'",
+        "Agradeça a força recebida deles e afirme sua liberdade de escrever um roteiro original para si."
+      ]
+    }
   },
   escassez: {
     label: "Escassez",
@@ -432,7 +504,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Sobrevivente Estratégico",
     phrase: "Eu preciso estar sempre pronta para perder.",
     liberation: "Eu posso construir segurança sem viver em guerra.",
-    practice: "Durante 7 dias, observe pensamentos de falta. Antes de agir por medo, pergunte: existe uma escolha mais segura e menos desesperada?"
+    practice: "Durante 7 dias, observe pensamentos de falta. Antes de agir por medo, pergunte: existe uma escolha mais segura e menos desesperada?",
+    description: "O alerta crônico inconsciente que associa o sucesso e o afeto a recursos terrivelmente escassos que podem desaparecer de forma súbita, impedindo o usufruto da estabilidade.",
+    unconsciousPhrase: "A abundância é instável e passageira; se eu me descuidar ou relaxar, a ruína chegará.",
+    repositioningMovement: "Eu posso suavizar meu estado de vigilância, confiar na fertilidade da vida e receber o fluxo da fartura.",
+    reflexiveQuestion: "Qual dor de escassez, perda material ou fome no passado da minha família gerou essa hipervigilância?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Reancoramento do Fluxo Abundante",
+      steps: [
+        "Sempre que o medo de falta assolar seus pensamentos, pare e toque no peito confirmando sua respiração.",
+        "Faça anotações de 5 recursos intangíveis e gratuitos abundantes na sua vida hoje (tempo, ar, ideias, abraços, saber).",
+        "Faça uma doação, caridade ou de desapego generoso de algo que você guardava em excesso sob pânico crônico.",
+        "Substitua na sua fala as palavras ligadas à 'luta' e 'sacrifício extremo' por termos que tragam clareza e rumo.",
+        "Agradeça ao pagar suas contas diárias pelo serviço/produto que obteve dali, abençoando o dinheiro.",
+        "Receba de braços abertos elogios ou presentes com apenas um sincero 'obrigada', sem justificativas.",
+        "Instale a confiança sistêmica afirmando: 'Eu tenho tudo o que necessito para dar meu próximo passo.'"
+      ]
+    }
   },
   invisibilidade: {
     label: "Invisibilidade",
@@ -443,7 +531,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Invisível Protegido",
     phrase: "É mais seguro não chamar atenção.",
     liberation: "Eu posso ser vista sem estar em perigo.",
-    practice: "Durante 7 dias, escolha uma pequena forma de aparecer com segurança: falar, postar, pedir, se posicionar ou mostrar algo que normalmente esconderia."
+    practice: "Durante 7 dias, escolha uma pequena forma de aparecer com segurança: falar, postar, pedir, se posicionar ou mostrar algo que normalmente esconderia.",
+    description: "A defesa interna de se manter à margem, ofuscando as suas habilidades naturais ou calando as suas ideias como forma de evitar perigos sociais e críticas estressantes.",
+    unconsciousPhrase: "Brilhar atrai perigos, inveja e solidão; se eu continuar oculta(o), estarei sempre protegida(o).",
+    repositioningMovement: "Eu mereço erguer a minha voz, habitar o meu lugar de destaque e brilhar sem que isso signifique perigo.",
+    reflexiveQuestion: "Quem no meu sistema familiar sofreu séria dor, rejeição ou exclusão por chamar muita atenção de outrem?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Ocupação do Espaço e Fluidez de Voz",
+      steps: [
+        "Preste atenção aos momentos em conversas de grupo onde você opta por omitir sua opinião por reserva mental.",
+        "Escreva em uma folha de papel suas três principais habilidades ou qualidades singulares e releia em voz alta.",
+        "Escolha expor uma crítica justa ou sua perspectiva própria e clara em um ambiente seguro.",
+        "Vista uma peça de roupa, acessório ou cor vibrante que normalmente evitaria para experimentar a visibilidade.",
+        "Visualize-se erguida na sua verdade íntima e acolhida de forma harmoniosa pelas pessoas ao redor.",
+        "Compartilhe uma ideia, texto ou registro autoral com as pessoas, validando seu domínio criativo.",
+        "Afirme com profunda aceitação corporal: 'É seguro para mim ser vista, amada e escutada no mundo.'"
+      ]
+    }
   },
   poderPessoal: {
     label: "Poder Pessoal",
@@ -454,7 +558,23 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Soberano Adiado",
     phrase: "Eu ainda não tenho permissão para ser tudo o que sou.",
     liberation: "Eu posso ocupar meu lugar com amor e firmeza.",
-    practice: "Durante 7 dias, tome uma pequena decisão por dia sem buscar validação externa. Depois diga: eu sustento minha escolha com presença."
+    practice: "Durante 7 dias, tome uma pequena decisão por dia sem buscar validação externa. Depois diga: eu sustento minha escolha com presença.",
+    description: "A resistência de crescer emocionalmente e se colocar na cadeira de motorista do próprio destino, delegando a aprovação das suas decisões importantes a instâncias de validação externas.",
+    unconsciousPhrase: "Eu me mantenho infante e hesitante para não perder a aprovação rítmica e a guarda do meu clã.",
+    repositioningMovement: "Eu me auto-autorizo a agir, assumo a rédea do meu destino e sou soberana sobre as minhas direções.",
+    reflexiveQuestion: "Qual autorização fantasiada ou bênção mágica eu sinto que deverei obter antes de poder crescer?",
+    dayPractice: {
+      name: "Prática dos 7 Dias: Soberania e Tomada de Decisão",
+      steps: [
+        "Selecione uma decisão ou ação relevante que você suspendeu aguardando a opinião de terceiros.",
+        "Analise este dilema sozinha e decida o melhor caminho baseando-se no seu conhecimento interno.",
+        "Treine responder a consultas sobre suas decisões pessoais dizendo apenas: 'A escolha já está bem definida.'",
+        "Mantenha uma postura física firme por um minuto: ombros alinhados, olhar no horizonte e pés descalços.",
+        "Assuma o custo pragmático de uma pequena escolha corajosa que favoreça a sua evolução individual.",
+        "Substitua a indecisão crônica por ritos de ação imediata que construam momentos práticos de autoconfiança.",
+        "Integre a sua maturidade sistêmica e declare internamente: 'Eu sou adulta(o). O leme de minha história agora é meu.'"
+      ]
+    }
   }
 };
 

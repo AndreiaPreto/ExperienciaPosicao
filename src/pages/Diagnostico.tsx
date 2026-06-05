@@ -22,7 +22,7 @@ import {
 import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
-import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag } from 'lucide-react';
+import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag, Search } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
 
@@ -1287,9 +1287,8 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
         // Novo: Notificar a cliente pelo Whatsapp
         const pedidoWhatsapp = String(pedido.whatsapp || '');
         if (pedidoWhatsapp) {
-          const cleanedPhone = pedidoWhatsapp.replace(/\D/g, '');
-          if (cleanedPhone) {
-            const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
+          const finalPhone = formatWhatsAppNumber(pedidoWhatsapp);
+          if (finalPhone) {
             const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu pedido do "${pedido.produto || 'Produto'}" foi confirmado e liberado! Agora você só precisa concluir o seu cadastro usando o e-mail: ${pedido.email || emailQuery} para liberar seus créditos automaticamente. Acesse aqui: ${window.location.origin}`);
             window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
           }
@@ -1352,9 +1351,8 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
       // Novo: Notificar a cliente pelo Whatsapp
       const wapp = String(pedido.whatsapp || '');
       if (wapp) {
-        const cleanedPhone = wapp.replace(/\D/g, '');
-        if (cleanedPhone) {
-          const finalPhone = cleanedPhone.length <= 11 ? `55${cleanedPhone}` : cleanedPhone;
+        const finalPhone = formatWhatsAppNumber(wapp);
+        if (finalPhone) {
           const wmsg = encodeURIComponent(`Olá, ${pedido.nome || 'Cliente'}! ✨ Seu acesso ao "${pedido.produto || 'Produto'}" foi confirmado e liberado com sucesso! Já está disponível em sua conta para você iniciar. Acesse aqui: ${window.location.origin}`);
           window.open(`https://wa.me/${finalPhone}?text=${wmsg}`, '_blank');
         }
@@ -1463,7 +1461,7 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
                     <span className="text-white/20 uppercase tracking-widest text-[8px] block font-bold">WhatsApp</span>
                     {pedido.whatsapp ? (
                       <a
-                        href={`https://wa.me/${pedido.whatsapp.replace(/\D/g, '')}`}
+                        href={`https://wa.me/${formatWhatsAppNumber(pedido.whatsapp)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-amber-400 hover:underline inline-flex items-center gap-1 font-mono font-medium"
@@ -1949,6 +1947,35 @@ const AdminCouponsTab = ({ coupons, onRefresh, setNotification }: { coupons: any
 };
 
 
+// Helper para formatar o número do WhatsApp do cliente para a API do wa.me (padrão Brasil 55)
+const formatWhatsAppNumber = (phone: string): string => {
+  if (!phone) return '';
+  let cleaned = phone.replace(/\D/g, ''); // remove tudo que não for dígito
+  
+  if (!cleaned) return '';
+
+  // Se já começar com 55 e tiver tamanho de número internacional (12 ou 13 dígitos), tratamos como completo
+  if (cleaned.startsWith('55') && cleaned.length >= 12) {
+    cleaned = cleaned.slice(2);
+  }
+
+  // Se tiver 11 dígitos (DDD de 2 dígitos + número de 9 dígitos), verificamos a regra do nono dígito do WhatsApp
+  if (cleaned.length === 11) {
+    const ddd = parseInt(cleaned.slice(0, 2), 10);
+    // Na rede interna do WhatsApp, apenas os DDDs 11 a 28 (região Sudeste) mantêm o 9º dígito.
+    // Os outros DDDs (Sul, Centro-Oeste, Norte, Nordeste) são registrados SEM o nono dígito.
+    const usesNinthDigitInWhatsApp = ddd >= 11 && ddd <= 28;
+    if (!usesNinthDigitInWhatsApp) {
+      // Remove o nono dígito (que é o terceiro caractere na string, ou seja, índice 2)
+      cleaned = cleaned.slice(0, 2) + cleaned.slice(3);
+    }
+  }
+
+  // Sempre retorna com o código de país 55 (Brasil) na frente
+  return `55${cleaned}`;
+};
+
+
 // ─── CONSTANTES DO CHECKOUT WHATSAPP ──────────────────────────
 const WHATSAPP_NUM = '5548991261832';
 const PIX_CHAVE   = '48991261832'; // chave pix
@@ -1969,6 +1996,9 @@ const msgCartao = (produto: string, preco: string) =>
 const Diagnostico = () => {
   const { access, refreshAccess } = useAccess();
   const [page, setPage] = useState<Page>('home');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedArcanoInSearch, setSelectedArcanoInSearch] = useState<ArcanoData | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<any>(null);
@@ -2316,6 +2346,16 @@ const Diagnostico = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const q = query(collection(db, 'appointments'), where('status', '==', 'scheduled'));
@@ -2399,6 +2439,58 @@ const Diagnostico = () => {
     return () => unsub();
   }, [isAdmin]);
 
+  const fetchAndMergeHistory = async (uid: string) => {
+    try {
+      const q = query(collection(db, 'mappings'), where('userId', '==', uid));
+      const querySnapshot = await getDocs(q);
+      const mappingsDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const qDiags = query(collection(db, 'diagnosticos'), where('userId', '==', uid));
+      const diagsSnapshot = await getDocs(qDiags);
+      const diagsDocs = diagsSnapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        type: 'diagnostico_posicional', 
+        ...doc.data() 
+      }));
+
+      const mergedHistory = [...mappingsDocs, ...diagsDocs].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setHistory(mergedHistory);
+    } catch (e) {
+      console.error("Error refreshing combined history:", e);
+    }
+  };
+
+  const getTreatmentLabel = (item: any) => {
+    if (!item) return 'Mapeamento';
+    if (item.type === 'lealdades_ocultas') return 'Mapeamento de Lealdades';
+    if (item.type === 'diagnostico_posicional') return 'Diagnóstico de Posicionamento';
+    return 'Mapeamento Floral';
+  };
+
+  const reconstructLealdadesResult = (item: any) => {
+    if (!item || item.type !== 'lealdades_ocultas') return null;
+    const dominant = item.dominant;
+    const secondary = item.secondary;
+    const hidden = item.hidden;
+    
+    const axisDominantDetails = axisData[dominant];
+    const axisSecondaryDetails = axisData[secondary];
+    const axisHiddenDetails = axisData[hidden];
+    const profile = getProfile(dominant, secondary);
+    const consciousnessLevel = getConsciousnessLevel(item.consciousnessPercent || 0);
+    const readinessLevel = getReadinessLevel(item.readinessPercent || 0);
+    
+    return {
+      ...item,
+      axisDominantDetails,
+      axisSecondaryDetails,
+      axisHiddenDetails,
+      profile,
+      consciousnessLevel,
+      readinessLevel
+    };
+  };
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 5000);
@@ -2410,10 +2502,7 @@ const Diagnostico = () => {
     if (user) {
       const fetchHistoryAndNotifications = async () => {
         try {
-          const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-          const querySnapshot = await getDocs(q);
-          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setHistory(docs);
+          await fetchAndMergeHistory(user.uid);
 
           const qApps = query(collection(db, 'appointments'), where('userId', '==', user.uid));
           const appSnapshot = await getDocs(qApps);
@@ -2433,6 +2522,85 @@ const Diagnostico = () => {
         }
       };
       fetchHistoryAndNotifications();
+    }
+  }, [user]);
+
+  // Save progress of questionnaires to localStorage
+  useEffect(() => {
+    if (user) {
+      const stateToSave = {
+        page,
+        currentIndex,
+        answers,
+        triageIndex,
+        triageAnswers,
+        currentMapeamentoStep,
+        mapeamentoAnswers,
+        currentLealdadesStep,
+        lealdadesAnswers,
+        selectedArcano,
+        top3Arcanos,
+        mapeamentoResult,
+        currentFlorais,
+        lealdadesResult,
+      };
+      
+      const trackingPages = ['quiz', 'triage_quiz', 'mapeamento_form', 'lealdades_form', 'final', 'mapeamento_result', 'lealdades_result'];
+      if (trackingPages.includes(page)) {
+        localStorage.setItem(`quiz_state_${user.uid}`, JSON.stringify(stateToSave));
+      }
+    }
+  }, [
+    user,
+    page,
+    currentIndex,
+    answers,
+    triageIndex,
+    triageAnswers,
+    currentMapeamentoStep,
+    mapeamentoAnswers,
+    currentLealdadesStep,
+    lealdadesAnswers,
+    selectedArcano,
+    top3Arcanos,
+    mapeamentoResult,
+    currentFlorais,
+    lealdadesResult,
+  ]);
+
+  // Attempt to restore progress on component/user loading
+  useEffect(() => {
+    if (user) {
+      const saved = localStorage.getItem(`quiz_state_${user.uid}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const resumePages = ['quiz', 'triage_quiz', 'mapeamento_form', 'lealdades_form'];
+          if (parsed && resumePages.includes(parsed.page)) {
+            if (parsed.page === 'quiz') {
+              setCurrentIndex(parsed.currentIndex || 0);
+              setAnswers(parsed.answers || []);
+              if (parsed.arcanoScores) setArcanoScores(parsed.arcanoScores);
+              setPage('quiz');
+            } else if (parsed.page === 'triage_quiz') {
+              setTriageIndex(parsed.triageIndex || 0);
+              setTriageAnswers(parsed.triageAnswers || []);
+              setPage('triage_quiz');
+            } else if (parsed.page === 'mapeamento_form') {
+              setCurrentMapeamentoStep(parsed.currentMapeamentoStep || 0);
+              setMapeamentoAnswers(parsed.mapeamentoAnswers || []);
+              setPage('mapeamento_form');
+            } else if (parsed.page === 'lealdades_form') {
+              setCurrentLealdadesStep(parsed.currentLealdadesStep || 0);
+              setLealdadesAnswers(parsed.lealdadesAnswers || []);
+              setPage('lealdades_form');
+            }
+            setNotification({ message: 'Você retornou ao seu questionário ativo de onde parou! 🔮', type: 'info' });
+          }
+        } catch (e) {
+          console.error("Error parsing saved quiz state:", e);
+        }
+      }
     }
   }, [user]);
 
@@ -2722,39 +2890,156 @@ const Diagnostico = () => {
     }
   };
 
-  const generatePrescriptionPDF = (userName: string, florais: string) => {
+  const generatePrescriptionPDF = (userName: string, itemOrFormula: any, documentType?: 'mapeamento_floral' | 'lealdades_ocultas' | 'diagnostico_posicional') => {
     const doc = new jsPDF();
     
-    // Header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(212, 175, 55); // Gold color
-    doc.text("RECEITA FLORAL", 105, 40, { align: "center" });
+    // Determine type
+    const type = documentType || (itemOrFormula && typeof itemOrFormula === 'object' ? itemOrFormula.type : 'mapeamento_floral');
     
-    doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(0.5);
-    doc.line(40, 45, 170, 45);
-    
-    // Content
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.setTextColor(60, 60, 60);
-    
-    doc.text(`Cliente: ${userName}`, 20, 70);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 80);
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("Fórmula Recomendada:", 20, 100);
-    
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(14);
-    doc.text(florais, 20, 115, { maxWidth: 170 });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(150, 150, 150);
-    doc.text("Este é um mapeamento vibracional e não substitui acompanhamento médico.", 105, 280, { align: "center" });
-    
-    doc.save(`Receita_Floral_${userName.replace(/\s+/g, '_')}.pdf`);
+    if (type === 'mapeamento_floral' || typeof itemOrFormula === 'string') {
+      const formula = typeof itemOrFormula === 'object' ? (itemOrFormula.florais || '') : itemOrFormula;
+      // Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(212, 175, 55); // Gold color
+      doc.text("RECEITA FLORAL", 105, 40, { align: "center" });
+      
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(0.5);
+      doc.line(40, 45, 170, 45);
+      
+      // Content
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(60, 60, 60);
+      
+      doc.text(`Cliente: ${userName}`, 20, 70);
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 80);
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Fórmula Recomendada:", 20, 100);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(14);
+      doc.text(formula, 20, 115, { maxWidth: 170 });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Este é um mapeamento vibracional e não substitui acompanhamento médico.", 105, 280, { align: "center" });
+      
+      doc.save(`Receita_Floral_${userName.replace(/\s+/g, '_')}.pdf`);
+    } else if (type === 'lealdades_ocultas') {
+      const item = itemOrFormula;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(212, 175, 55);
+      doc.text("RELATÓRIO DE LEALDADES SISTÊMICAS", 105, 35, { align: "center" });
+      
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(0.5);
+      doc.line(20, 40, 190, 40);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      
+      doc.text(`Cliente: ${userName}`, 20, 55);
+      doc.text(`Data: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 20, 63);
+      doc.text(`Perfil Clínico: ${item.profileName || item.emocao || 'Lealdades Ocultas'}`, 20, 71);
+      
+      let y = 85;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(212, 175, 55);
+      doc.text("Padrões Ativos Consolidados:", 20, y);
+      y += 8;
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      
+      const domLabel = item.arquetipo || 'Mapeado';
+      const secLabel = item.secondary || '';
+      doc.text(`- Camada Dominante (Ativa): ${domLabel}`, 20, y);
+      y += 6;
+      if (secLabel) {
+        doc.text(`- Camada Secundária (Fuga): ${secLabel}`, 20, y);
+        y += 6;
+      }
+      doc.text(`- Índice de Consciência Sistêmica: ${item.alignmentScore || item.consciousnessPercent || 0}%`, 20, y);
+      y += 12;
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(212, 175, 55);
+      doc.text("Diretriz Terapêutica / Prática Recomendada:", 20, y);
+      y += 8;
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      const text = item.result || 'Prática recomendada para o reequilíbrio emocional e liberação de amarras transgeracionais.';
+      const lines = doc.splitTextToSize(text, 170);
+      doc.text(lines, 20, y);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 280, { align: "center" });
+      doc.save(`Relatorio_Lealdades_${userName.replace(/\s+/g, '_')}.pdf`);
+    } else {
+      const item = itemOrFormula;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(212, 175, 55);
+      doc.text("DIAGNÓSTICO DE POSICIONAMENTO SISTÊMICO", 105, 35, { align: "center" });
+      
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(0.5);
+      doc.line(20, 40, 190, 40);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      
+      doc.text(`Cliente: ${userName}`, 20, 55);
+      doc.text(`Data: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 20, 63);
+      doc.text(`Arquétipo Dominante: ${item.archetype || item.emocao || ''}`, 20, 71);
+      
+      let y = 85;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(212, 175, 55);
+      doc.text("Diretrizes de Alinhamento e Florais:", 20, y);
+      y += 8;
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Ferida Sistêmica Ativa: ${item.ferida || 'Identificada'}`, 20, y);
+      y += 6;
+      doc.text(`Fórmula Floral Recomendada: ${item.florais || 'Não especificada'}`, 20, y);
+      y += 6;
+      doc.text(`Direção de Equilíbrio: ${item.direcao || 'Siga seu posicionamento saudável'}`, 20, y);
+      y += 12;
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(212, 175, 55);
+      doc.text("Afirmação e Reprogramação:", 20, y);
+      y += 8;
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      const text = item.reprogramacao || 'Afirme o seu lugar correto perante o seu sistema familiar.';
+      const lines = doc.splitTextToSize(text, 170);
+      doc.text(lines, 20, y);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Este relatório faz parte da sua jornada de reorganização com o Clube Clarear.", 105, 280, { align: "center" });
+      doc.save(`Diagnostico_Posicionamento_${userName.replace(/\s+/g, '_')}.pdf`);
+    }
   };
 
   const handleLogout = () => {
@@ -2995,10 +3280,8 @@ const Diagnostico = () => {
             result: resultText
           });
 
-          const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-          const querySnapshot = await getDocs(q);
-          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setHistory(docs);
+          await fetchAndMergeHistory(user.uid);
+          localStorage.removeItem(`quiz_state_${user.uid}`);
 
           if (!isAdmin) {
             await updateDoc(doc(db, 'users', user.uid), {
@@ -3091,10 +3374,8 @@ const Diagnostico = () => {
             createdAt: new Date().toISOString()
           });
 
-          const q = query(collection(db, 'mappings'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-          const querySnapshot = await getDocs(q);
-          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setHistory(docs);
+          await fetchAndMergeHistory(user.uid);
+          localStorage.removeItem(`quiz_state_${user.uid}`);
 
           if (!isAdmin) {
             await updateDoc(doc(db, 'users', user.uid), {
@@ -3413,6 +3694,8 @@ const Diagnostico = () => {
           arcanoData,
           createdAt: new Date().toISOString()
         });
+        await fetchAndMergeHistory(user.uid);
+        localStorage.removeItem(`quiz_state_${user.uid}`);
       } catch (error) {
         handleFirestoreError(error, OperationType.WRITE, 'diagnosticos');
       }
@@ -3518,6 +3801,18 @@ const Diagnostico = () => {
 
             {/* User Session Area & Mobile Menu Trigger */}
             <div className="flex items-center gap-4">
+              {/* Pesquisa / Lupa */}
+              <button 
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedArcanoInSearch(null);
+                  setSearchOpen(true);
+                }}
+                className="p-2 text-white/55 hover:text-gold-main transition-colors flex items-center justify-center rounded-full hover:bg-white/5 cursor-pointer group"
+                title="Pesquisar no site"
+              >
+                <Search size={18} className="transition-transform group-hover:scale-110" />
+              </button>
               {/* User Session */}
               <div className="hidden sm:flex items-center gap-3">
                 {user ? (
@@ -3751,7 +4046,7 @@ const Diagnostico = () => {
                         title: 'Mapeamento de Lealdades',
                         desc: 'Revele padrões emocionais, vínculos inconscientes e seu perfil de lealdades profundas.',
                         tag: 'Lealdades',
-                        cta: 'Descobrir meu padrão',
+                        cta: 'Identificar Lealdades',
                       },
                       {
                         id: 'reprogramacao_pessoal_info',
@@ -4153,14 +4448,14 @@ const Diagnostico = () => {
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentMapeamentoStep + 1} de {mapeamentoQuestions.length}</h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-gold-main text-xl font-serif">{Math.round(((currentMapeamentoStep) / mapeamentoQuestions.length) * 100)}%</span>
+                  <span className="text-gold-main text-xl font-serif">{Math.round(((currentMapeamentoStep + 1) / mapeamentoQuestions.length) * 100)}%</span>
                 </div>
               </div>
 
               <div className="h-1 w-full bg-white/5 rounded-full mb-12 overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
-                  animate={{ width: `${((currentMapeamentoStep) / mapeamentoQuestions.length) * 100}%` }}
+                  animate={{ width: `${((currentMapeamentoStep + 1) / mapeamentoQuestions.length) * 100}%` }}
                   className="h-full bg-gold-main shadow-[0_0_15px_rgba(212,175,55,0.5)]"
                 />
               </div>
@@ -4342,14 +4637,14 @@ const Diagnostico = () => {
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentLealdadesStep + 1} de {lealdadesQuestions.length}</h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-gold-main text-xl font-serif">{Math.round(((currentLealdadesStep) / lealdadesQuestions.length) * 100)}%</span>
+                  <span className="text-gold-main text-xl font-serif">{Math.round(((currentLealdadesStep + 1) / lealdadesQuestions.length) * 100)}%</span>
                 </div>
               </div>
 
               <div className="h-1 w-full bg-white/5 rounded-full mb-12 overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
-                  animate={{ width: `${((currentLealdadesStep) / lealdadesQuestions.length) * 100}%` }}
+                  animate={{ width: `${((currentLealdadesStep + 1) / lealdadesQuestions.length) * 100}%` }}
                   className="h-full bg-gold-main shadow-[0_0_15px_rgba(212,175,55,0.5)]"
                 />
               </div>
@@ -4420,14 +4715,14 @@ const Diagnostico = () => {
                   <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-gold-main/40 font-bold bg-gold-main/10 rounded-bl-xl">Camada 1</div>
                   <div className="space-y-4">
                     <span className="text-[9px] uppercase tracking-widest text-gold-main/60 block font-bold">Padrão Predominante</span>
-                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisDominantDetails.label}</h3>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisDominantDetails?.label || ''}</h3>
                     <div className="w-12 h-[1px] bg-gold-main/30" />
-                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisDominantDetails.description}</p>
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisDominantDetails?.description || ''}</p>
                   </div>
                   <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
-                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisDominantDetails.fear}</div>
-                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisDominantDetails.gain}</div>
-                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisDominantDetails.cost}</div>
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisDominantDetails?.fear || ''}</div>
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisDominantDetails?.gain || ''}</div>
+                    <div><strong className="text-gold-main/60 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisDominantDetails?.cost || ''}</div>
                   </div>
                 </div>
 
@@ -4436,14 +4731,14 @@ const Diagnostico = () => {
                   <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold bg-white/5 rounded-bl-xl">Camada 2</div>
                   <div className="space-y-4">
                     <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold">Padrão Secundário</span>
-                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisSecondaryDetails.label}</h3>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisSecondaryDetails?.label || ''}</h3>
                     <div className="w-12 h-[1px] bg-white/10" />
-                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisSecondaryDetails.description}</p>
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisSecondaryDetails?.description || ''}</p>
                   </div>
                   <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisSecondaryDetails.fear}</div>
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisSecondaryDetails.gain}</div>
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisSecondaryDetails.cost}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisSecondaryDetails?.fear || ''}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisSecondaryDetails?.gain || ''}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisSecondaryDetails?.cost || ''}</div>
                   </div>
                 </div>
 
@@ -4452,14 +4747,14 @@ const Diagnostico = () => {
                   <div className="absolute top-0 right-0 p-4 font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold bg-white/5 rounded-bl-xl">Camada 3</div>
                   <div className="space-y-4">
                     <span className="text-[9px] uppercase tracking-widest text-white/40 block font-bold">Padrão Oculto</span>
-                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisHiddenDetails.label}</h3>
+                    <h3 className="serif text-2xl text-gold-light leading-tight">{lealdadesResult.axisHiddenDetails?.label || ''}</h3>
                     <div className="w-12 h-[1px] bg-white/10" />
-                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisHiddenDetails.description}</p>
+                    <p className="text-white/60 text-xs font-light leading-relaxed">{lealdadesResult.axisHiddenDetails?.description || ''}</p>
                   </div>
                   <div className="space-y-4 pt-4 border-t border-white/5 text-xs text-white/40">
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisHiddenDetails.fear}</div>
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisHiddenDetails.gain}</div>
-                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisHiddenDetails.cost}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1">Medo Primário</strong> {lealdadesResult.axisHiddenDetails?.fear || ''}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-medium">Ganho Inconsciente</strong> {lealdadesResult.axisHiddenDetails?.gain || ''}</div>
+                    <div><strong className="text-white/50 uppercase text-[9px] tracking-wider block mb-1 font-bold">Custo Oculto</strong> {lealdadesResult.axisHiddenDetails?.cost || ''}</div>
                   </div>
                 </div>
 
@@ -4550,7 +4845,7 @@ const Diagnostico = () => {
                 <div className="space-y-6 max-w-3xl mx-auto border-l border-gold-main/20 pl-6 md:pl-10">
                   <span className="text-[9px] uppercase tracking-widest text-gold-main/50 block font-bold">Frase Inconsciente Ativa</span>
                   <p className="serif text-3xl md:text-4xl text-gold-light italic leading-relaxed">
-                    "{lealdadesResult.axisDominantDetails.unconsciousPhrase}"
+                    "{lealdadesResult.axisDominantDetails?.unconsciousPhrase || lealdadesResult.axisDominantDetails?.phrase || ''}"
                   </p>
                 </div>
 
@@ -4560,13 +4855,13 @@ const Diagnostico = () => {
                   <div className="space-y-4">
                     <span className="text-[10px] uppercase tracking-widest text-gold-main/60 block font-bold">Movimento de Reposicionamento</span>
                     <p className="serif text-lg text-gold-light leading-relaxed">
-                      {lealdadesResult.axisDominantDetails.repositioningMovement}
+                      {lealdadesResult.axisDominantDetails?.repositioningMovement || lealdadesResult.axisDominantDetails?.liberation || ''}
                     </p>
                   </div>
                   <div className="space-y-4">
                     <span className="text-[10px] uppercase tracking-widest text-gold-main/60 block font-bold">Pergunta Reflexiva Sistêmica</span>
                     <p className="serif text-lg text-rose-300 italic leading-relaxed">
-                      {lealdadesResult.axisDominantDetails.reflexiveQuestion}
+                      {lealdadesResult.axisDominantDetails?.reflexiveQuestion || "A quem estou tentando proteger com essa conduta?"}
                     </p>
                   </div>
                 </div>
@@ -4576,9 +4871,9 @@ const Diagnostico = () => {
                 {/* 7-Day Practice Checklist */}
                 <div className="max-w-3xl mx-auto space-y-6">
                   <span className="text-[10px] uppercase tracking-widest text-gold-main block text-center font-bold font-bold font-bold">Prática Terapêutica Recomendada</span>
-                  <h5 className="serif text-2xl text-gold-light leading-tight text-center mb-6">{lealdadesResult.axisDominantDetails.dayPractice.name}</h5>
+                  <h5 className="serif text-2xl text-gold-light leading-tight text-center mb-6">{lealdadesResult.axisDominantDetails?.dayPractice?.name || "Prática dos 7 Dias"}</h5>
                   <div className="space-y-4">
-                    {lealdadesResult.axisDominantDetails.dayPractice.steps.map((stepText: string, idx: number) => (
+                    {(lealdadesResult.axisDominantDetails?.dayPractice?.steps || [lealdadesResult.axisDominantDetails?.practice]).filter(Boolean).map((stepText: string, idx: number) => (
                       <div key={idx} className="flex gap-4 items-start p-4 rounded-xl bg-white/[0.01] border border-white/5 hover:border-gold-main/20 transition-all">
                         <span className="w-6 h-6 rounded-full bg-gold-main/10 border border-gold-main/30 flex items-center justify-center text-xs text-gold-main font-bold shrink-0">{idx + 1}</span>
                         <p className="text-white/70 text-sm leading-relaxed font-light">{stepText}</p>
@@ -5756,299 +6051,481 @@ const Diagnostico = () => {
               )}
 
               {selectedMapping ? (
-                <div className="glass-card p-6 md:p-10 md:p-16">
-                  <div className="flex justify-between items-start mb-12">
-                    <div>
-                      <span className={`text-[10px] uppercase tracking-widest font-bold ${calculateStatus(selectedMapping.createdAt).color}`}>
-                        {calculateStatus(selectedMapping.createdAt).label}
-                      </span>
-                      <h3 className="serif text-3xl text-gold-light mt-2">{selectedMapping.emocao}</h3>
-                      <p className="text-white/40 text-sm mt-1">{new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-gold-main/30 text-[10px] uppercase tracking-widest block mb-1">Arquétipo</span>
-                      <span className="text-gold-main text-sm font-medium">{selectedMapping.arquetipo}</span>
-                    </div>
-                  </div>
-
-                  <div className="markdown-body prose prose-invert max-w-none mb-16">
-                    <ReactMarkdown>{selectedMapping.result}</ReactMarkdown>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-12 pt-12 border-t border-gold-main/10">
-                    <div>
-                      <h4 className="text-gold-main uppercase tracking-widest text-[10px] font-bold mb-6">Fórmula Floral</h4>
-                      <div className="space-y-3">
-                        {selectedMapping.florais?.split(',').map((floral: string, i: number) => (
-                          <div key={i} className="flex items-center gap-3 text-white/60 text-sm">
-                            <div className="w-1 h-1 rounded-full bg-gold-main/40" />
-                            {floral.trim()}
+                <div className="glass-card p-6 md:p-10 md:p-16 text-left">
+                  {selectedMapping.type === 'lealdades_ocultas' ? (() => {
+                    const lResult = reconstructLealdadesResult(selectedMapping);
+                    if (!lResult) return <p className="text-white/60">Carregando relatório...</p>;
+                    return (
+                      <div className="space-y-12">
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-4 pb-6 border-b border-white/5">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block mb-2 font-bold">Relatório Completo</span>
+                            <h2 className="serif text-3xl text-gold-light">Mapeamento de Lealdades</h2>
+                            <p className="text-white/40 text-sm mt-1">{new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-gold-main uppercase tracking-widest text-[10px] font-bold mb-6">Frase de Consciência</h4>
-                      <p className="text-white/60 italic font-light leading-relaxed">
-                        "{selectedMapping.phrase || 'A clareza é o primeiro passo para o alinhamento.'}"
-                      </p>
-                    </div>
-                  </div>
+                          <div className="md:text-right">
+                            <span className="text-gold-main/30 text-[9px] uppercase tracking-widest block mb-1 font-bold">Camada Dominante</span>
+                            <span className="text-gold-main text-sm font-semibold">{lResult.axisDominantDetails?.label || ''}</span>
+                          </div>
+                        </div>
 
-                  <div className="mt-16 pt-12 border-t border-gold-main/10 flex flex-col md:flex-row gap-4 justify-center">
-                    <button 
-                      onClick={() => showPage('mapeamento_intro')}
-                      className="button"
-                    >
-                      Refazer Mapeamento
-                    </button>
-                    <button 
-                      onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', selectedMapping.florais)}
-                      className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center"
-                    >
-                      <FileText size={18} /> Baixar Receita (PDF)
-                    </button>
-                  </div>
+                        {/* The 3 Layers Columns */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="glass-card border-gold-main/20 bg-gold-main/[0.03] p-5 flex flex-col justify-between space-y-4 relative overflow-hidden text-left">
+                            <div className="absolute top-0 right-0 p-2 font-mono text-[8px] uppercase tracking-widest text-gold-main/40 bg-gold-main/10 rounded-bl-xl font-bold">Camada 1</div>
+                            <div className="space-y-2 text-left">
+                              <span className="text-[8px] uppercase tracking-widest text-gold-main/60 block font-bold">Padrão Predominante</span>
+                              <h3 className="serif text-lg text-gold-light leading-tight">{lResult.axisDominantDetails?.label || ''}</h3>
+                              <p className="text-white/60 text-xs font-light leading-relaxed">{lResult.axisDominantDetails?.description || ''}</p>
+                            </div>
+                            <div className="space-y-2 pt-3 border-t border-white/5 text-[10px] text-white/40 text-left">
+                              <div><strong className="text-gold-main/60 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Medo Primário</strong> {lResult.axisDominantDetails?.fear || ''}</div>
+                              <div><strong className="text-gold-main/60 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Ganho Inconsciente</strong> {lResult.axisDominantDetails?.gain || ''}</div>
+                              <div><strong className="text-gold-main/60 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Custo Oculto</strong> {lResult.axisDominantDetails?.cost || ''}</div>
+                            </div>
+                          </div>
+
+                          <div className="glass-card border-white/5 bg-white/[0.01] p-5 flex flex-col justify-between space-y-4 relative overflow-hidden text-left">
+                            <div className="absolute top-0 right-0 p-2 font-mono text-[8px] uppercase tracking-widest text-white/30 bg-white/5 rounded-bl-xl font-bold">Camada 2</div>
+                            <div className="space-y-2 text-left">
+                              <span className="text-[8px] uppercase tracking-widest text-white/40 block font-bold">Padrão Secundário</span>
+                              <h3 className="serif text-lg text-gold-light leading-tight">{lResult.axisSecondaryDetails?.label || ''}</h3>
+                              <p className="text-white/60 text-xs font-light leading-relaxed">{lResult.axisSecondaryDetails?.description || ''}</p>
+                            </div>
+                            <div className="space-y-2 pt-3 border-t border-white/5 text-[10px] text-white/40 text-left">
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Medo Primário</strong> {lResult.axisSecondaryDetails?.fear || ''}</div>
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Ganho Inconsciente</strong> {lResult.axisSecondaryDetails?.gain || ''}</div>
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Custo Oculto</strong> {lResult.axisSecondaryDetails?.cost || ''}</div>
+                            </div>
+                          </div>
+
+                          <div className="glass-card border-white/5 bg-white/[0.01] p-5 flex flex-col justify-between space-y-4 relative overflow-hidden text-left">
+                            <div className="absolute top-0 right-0 p-2 font-mono text-[8px] uppercase tracking-widest text-white/30 bg-white/5 rounded-bl-xl font-bold">Camada 3</div>
+                            <div className="space-y-2 text-left">
+                              <span className="text-[8px] uppercase tracking-widest text-white/40 block font-bold">Padrão Oculto</span>
+                              <h3 className="serif text-lg text-gold-light leading-tight">{lResult.axisHiddenDetails?.label || ''}</h3>
+                              <p className="text-white/60 text-xs font-light leading-relaxed">{lResult.axisHiddenDetails?.description || ''}</p>
+                            </div>
+                            <div className="space-y-2 pt-3 border-t border-white/5 text-[10px] text-white/40 text-left">
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Medo Primário</strong> {lResult.axisHiddenDetails?.fear || ''}</div>
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Ganho Inconsciente</strong> {lResult.axisHiddenDetails?.gain || ''}</div>
+                              <div><strong className="text-white/50 uppercase text-[8px] tracking-wider block mb-0.5 font-bold">Custo Oculto</strong> {lResult.axisHiddenDetails?.cost || ''}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Profile Section */}
+                        <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-6 relative overflow-hidden text-left">
+                          <div className="space-y-3">
+                            <span className="text-[10px] uppercase tracking-widest text-gold-main block font-bold">Seu Perfil de Posição</span>
+                            <h3 className="serif text-2xl text-gold-light">{lResult.profile?.name || lResult.profileName}</h3>
+                            <p className="text-white/80 text-xs font-light leading-relaxed">{lResult.profile?.description}</p>
+                          </div>
+                        </div>
+
+                        {/* Gauges & Recommended Day Practice */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5 text-left">
+                          <div className="space-y-6">
+                            <h4 className="serif text-lg text-gold-light">Índices de Consciência</h4>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-white/60 uppercase tracking-wider font-light">Índice de Consciência</span>
+                                <span className="text-gold-main font-serif">{lResult.consciousnessPercent}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-gold-main" style={{ width: `${lResult.consciousnessPercent}%` }} />
+                              </div>
+                              <p className="text-[10px] text-white/40 italic font-light">{lResult.consciousnessLevel}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-white/60 uppercase tracking-wider font-light">Indicador de Prontidão</span>
+                                <span className="text-gold-main font-serif">{lResult.readinessPercent}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-gold-main" style={{ width: `${lResult.readinessPercent}%` }} />
+                              </div>
+                              <p className="text-[10px] text-white/40 italic font-light">{lResult.readinessLevel}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4 text-left">
+                            <h4 className="serif text-lg text-gold-light">Frase do Inconsciente Ativo</h4>
+                            <p className="serif text-lg text-gold-light/95 italic leading-relaxed">
+                              "{lResult.axisDominantDetails?.unconsciousPhrase || lResult.axisDominantDetails?.phrase || ''}"
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 7-Day Practice Checklist */}
+                        <div className="space-y-6 pt-6 border-t border-white/5 text-left">
+                          <span className="text-[10px] uppercase tracking-widest text-gold-main block text-center font-bold">Prática Terapêutica Recomendada</span>
+                          <h5 className="serif text-xl text-gold-light leading-tight text-center">{lResult.axisDominantDetails?.dayPractice?.name || "Prática dos 7 Dias"}</h5>
+                          <div className="space-y-3">
+                            {(lResult.axisDominantDetails?.dayPractice?.steps || [lResult.axisDominantDetails?.practice]).filter(Boolean).map((stepText: string, idx: number) => (
+                              <div key={idx} className="flex gap-4 items-start p-4 rounded-xl bg-white/[0.01] border border-white/5 text-left">
+                                <span className="w-5 h-5 rounded-full bg-gold-main/10 border border-gold-main/20 flex items-center justify-center text-[10px] text-gold-main font-bold shrink-0">{idx + 1}</span>
+                                <p className="text-white/70 text-xs leading-relaxed font-light">{stepText}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row gap-4 justify-center">
+                          <button onClick={() => setSelectedMapping(null)} className="button">Voltar para Lista</button>
+                          <button onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', selectedMapping, 'lealdades_ocultas')} className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center">
+                            <FileText size={18} /> Abrir Relatório (PDF)
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })() : selectedMapping.type === 'diagnostico_posicional' ? (() => {
+                    const arcanoData = ARCANOS_MATRIZ.find(a => a.arcano === selectedMapping.archetype) || ARCANOS_MATRIZ[0];
+                    const top3 = selectedMapping.top3Arcanos || [selectedMapping.archetype];
+                    return (
+                      <div className="space-y-10 text-left">
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-4 pb-6 border-b border-white/5">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block mb-2 font-bold">Relatório Completo</span>
+                            <h2 className="serif text-3xl text-gold-light">Diagnóstico de Posição</h2>
+                            <p className="text-white/40 text-sm mt-1">{new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                          <div className="md:text-right">
+                            <span className="text-gold-main/30 text-[9px] uppercase tracking-widest block mb-1 font-bold">Arquétipo Vencedor</span>
+                            <span className="text-gold-main text-sm font-semibold">{arcanoData.simbolo} {arcanoData.arcano}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center text-center pb-8 border-b border-white/5">
+                          <p className="serif text-3xl md:text-4xl text-gold-light mb-2">
+                            {arcanoData.simbolo} {arcanoData.arcano}
+                          </p>
+                          <p className="text-white/30 text-[9px] uppercase tracking-widest mb-4">
+                            Arcano {arcanoData.numero} · Alinhamento POSIÇÃO
+                          </p>
+                          <p className="text-white/70 leading-relaxed font-light text-sm max-w-xl mx-auto">
+                            {arcanoData.mensagem}
+                          </p>
+                        </div>
+
+                        {/* Triad */}
+                        {top3 && top3.length >= 3 && (
+                          <div className="space-y-6 pb-8 border-b border-white/5 text-left">
+                            <div className="text-center">
+                              <span className="text-gold-main/30 text-[8px] uppercase tracking-[0.4em] mb-1 block font-bold">Tríade de Posição</span>
+                              <p className="text-white/40 text-xs font-light max-w-lg mx-auto font-sans">
+                                Seu bloqueio atual nasce da interação entre <span className="text-gold-light font-medium">{top3[0]}</span>, <span className="text-gold-light font-medium">{top3[1]}</span> e <span className="text-gold-light font-medium">{top3[2]}</span>.
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                              {top3.map((nome, index) => {
+                                const arc = ARCANOS_MATRIZ.find(a => a.arcano === nome);
+                                if (!arc) return null;
+                                const labels = ["Dominante", "Secundário", "Terciário"];
+                                const colors = [
+                                  "border-gold-main/20 bg-gold-main/[0.01]",
+                                  "border-white/5 bg-white/[0.01]",
+                                  "border-white/5 bg-black/20"
+                                ];
+                                return (
+                                  <div key={nome} className={`p-4 rounded-xl border ${colors[index]} text-left`}>
+                                    <span className="text-[8px] uppercase tracking-widest text-gold-main/70 font-bold block mb-1">Arcano {labels[index]}</span>
+                                    <h4 className="serif text-sm text-gold-light mb-2">{arc.simbolo} {arc.arcano}</h4>
+                                    <div className="space-y-3 text-[10px] leading-relaxed">
+                                      <div>
+                                        <span className="text-white/30 block text-[8px] uppercase tracking-wider font-semibold mb-0.5">Luz/Dom:</span>
+                                        <p className="text-white/60 font-light">{arc.dom}</p>
+                                      </div>
+                                      <div className="pt-1.5 border-t border-white/5">
+                                        <span className="text-white/30 block text-[8px] uppercase tracking-wider font-semibold mb-0.5">Sombra:</span>
+                                        <p className="text-white/60 font-light">{arc.sombra.join(', ')}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-8 text-xs text-white/75 pt-4 text-left">
+                          <div className="space-y-3 text-left">
+                            <span className="text-[#d4af37] tracking-widest uppercase font-bold text-[9px] block font-semibold">Sombra Ativa</span>
+                            <p className="text-white/60 leading-relaxed font-light capitalize">{arcanoData.sombra.join(', ').replace(/_/g, ' ')}</p>
+                          </div>
+                          <div className="space-y-3 text-left">
+                            <span className="text-[#d4af37] tracking-widest uppercase font-bold text-[9px] block font-semibold">Dom Ativo</span>
+                            <p className="text-white/60 leading-relaxed font-light">{arcanoData.dom}</p>
+                          </div>
+                        </div>
+
+                        <div className="glass-card p-5 border-gold-main/15 text-left">
+                          <span className="text-gold-main/60 text-[9px] uppercase tracking-widest font-bold mb-2 block">🌿 Seu caminho agora</span>
+                          <p className="text-gold-light/90 font-light leading-relaxed italic text-sm">"{arcanoData.direcao}"</p>
+                        </div>
+
+                        {arcanoData.reprogramacao && (
+                          <div className="space-y-3 text-left">
+                            <span className="text-[#d4af37] tracking-widest uppercase font-bold text-[9px] block">Afirmação de Reorganização</span>
+                            <p className="text-white/65 italic leading-relaxed text-sm">"{arcanoData.reprogramacao}"</p>
+                          </div>
+                        )}
+
+                        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row gap-4 justify-center">
+                          <button onClick={() => setSelectedMapping(null)} className="button">Voltar para Lista</button>
+                          <button onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', selectedMapping, 'diagnostico_posicional')} className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center">
+                            <FileText size={18} /> Abrir Relatório (PDF)
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })() : (
+                    <>
+                      {/* Default Mapeamento Floral details */}
+                      <div className="flex justify-between items-start mb-12">
+                        <div>
+                          <span className={`text-[10px] uppercase tracking-widest font-bold ${calculateStatus(selectedMapping.createdAt).color}`}>
+                            {calculateStatus(selectedMapping.createdAt).label}
+                          </span>
+                          <h3 className="serif text-3xl text-gold-light mt-2">{selectedMapping.emocao}</h3>
+                          <p className="text-white/40 text-sm mt-1">{new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-gold-main/30 text-[10px] uppercase tracking-widest block mb-1">Arquétipo</span>
+                          <span className="text-gold-main text-sm font-medium">{selectedMapping.arquetipo}</span>
+                        </div>
+                      </div>
+
+                      <div className="markdown-body prose prose-invert max-w-none mb-16">
+                        <ReactMarkdown>{selectedMapping.result}</ReactMarkdown>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-12 pt-12 border-t border-gold-main/10">
+                        <div>
+                          <h4 className="text-gold-main uppercase tracking-widest text-[10px] font-bold mb-6">Fórmula Floral</h4>
+                          <div className="space-y-3">
+                            {selectedMapping.florais?.split(',').map((floral: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3 text-white/60 text-sm">
+                                <div className="w-1 h-1 rounded-full bg-gold-main/40" />
+                                {floral.trim()}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-gold-main uppercase tracking-widest text-[10px] font-bold mb-6">Frase de Consciência</h4>
+                          <p className="text-white/60 italic font-light leading-relaxed">
+                            "{selectedMapping.phrase || 'A clareza é o primeiro passo para o alinhamento.'}"
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-16 pt-12 border-t border-gold-main/10 flex flex-col md:flex-row gap-4 justify-center">
+                        <button onClick={() => setSelectedMapping(null)} className="button">Voltar para Lista</button>
+                        <button onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', selectedMapping.florais, 'mapeamento_floral')} className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center">
+                          <FileText size={18} /> Baixar Receita (PDF)
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-12">
                   {/* TAB 0: Meus Produtos */}
-                  {memberTab === 'products' && (
-                    <div className="space-y-8">
-                      <div>
-                        <h3 className="serif text-2xl text-gold-light font-serif">Seus Produtos Adquiridos</h3>
-                        <p className="text-gold-main/40 text-xs uppercase tracking-widest mt-1">Sua estante virtual de ferramentas e acompanhamentos ativos</p>
-                      </div>
+                  {memberTab === 'products' && (() => {
+                    const hasDiagnostico = !!(access?.diagnostico_comprado || isAdmin);
+                    const hasMapaFloral = !!(isAdmin || (access?.mappingCredits && access.mappingCredits > 0));
+                    const hasLealdades = !!(isAdmin || (access?.mappingCredits && access.mappingCredits > 0));
+                    const hasReset = !!(access?.reprogramacao_pessoal_comprada || isAdmin);
+                    const hasReprogrameSe = !!(access?.reprogramar_eu_comprado || isAdmin);
+                    const hasClube = !!(access?.clube_ativo || isAdmin);
+                    
+                    const totalProducts = [hasDiagnostico, hasMapaFloral, hasLealdades, hasReset, hasReprogrameSe, hasClube].filter(Boolean).length;
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* 1. Diagnóstico POSIÇÃO */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Diagnóstico</span>
-                              {access?.diagnostico_comprado || isAdmin ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Não Adquirido
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2">Diagnóstico POSIÇÃO</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light">
-                              Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento essencial.
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => {
-                              if (access?.diagnostico_comprado || isAdmin) {
-                                showPage('diagnostico_quiz_intro');
-                              } else {
-                                showPage('diagnostico_info');
-                              }
-                            }}
-                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
-                              access?.diagnostico_comprado || isAdmin
-                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
-                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
-                            }`}
-                          >
-                            {access?.diagnostico_comprado || isAdmin ? 'Iniciar Diagnóstico' : 'Saber Mais / Adquirir'}
-                          </button>
+                    return (
+                      <div className="space-y-8">
+                        <div>
+                          <h3 className="serif text-2xl text-gold-light font-serif">Seus Produtos Adquiridos</h3>
+                          <p className="text-gold-main/40 text-xs uppercase tracking-widest mt-1">Sua estante virtual de ferramentas e acompanhamentos ativos</p>
                         </div>
 
-                        {/* 2. Mapa Floral */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Mapeamento</span>
-                              {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access.mappingCredits} ${access.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Sem Crédito
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2">Mapa de Posição - Floral</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                              Identifique sua emoção dominante e receba sua recomendação de fórmula floral personalizada na hora via IA.
+                        {totalProducts === 0 ? (
+                          <div className="glass-card p-8 text-center border-gold-main/10 bg-gold-main/[0.01] max-w-lg mx-auto py-12">
+                            <ShoppingBag className="w-12 h-12 text-gold-main/30 mx-auto mb-4" />
+                            <h4 className="serif text-lg text-gold-light mb-2">Estante Vazia</h4>
+                            <p className="text-white/40 text-sm leading-relaxed mb-6 font-light">
+                              Você ainda não possui produtos ativos liberados nesta conta. Explore mais detalhes em nossa página inicial.
                             </p>
+                            <button 
+                              onClick={() => showPage('home')}
+                              className="px-6 py-3 bg-[#d4af37] text-black rounded-xl text-xs uppercase tracking-[0.15em] font-bold hover:bg-[#c5a880] transition-all"
+                            >
+                              Explorar Produtos
+                            </button>
                           </div>
-                          <button 
-                            onClick={() => showPage('mapeamento_intro')}
-                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
-                              isAdmin || (access?.mappingCredits && access.mappingCredits > 0)
-                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
-                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
-                            }`}
-                          >
-                            {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? 'Iniciar Mapeamento Floral' : 'Adquirir Mapa Floral'}
-                          </button>
-                        </div>
-
-                        {/* 3. Mapeamento de Lealdades */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Mapeamento</span>
-                              {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access.mappingCredits} ${access.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Sem Crédito
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2">Mapeamento de Lealdades</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                              Revele os padrões inconscientes, vínculos profundos, estratégias de proteção e seu perfil de lealdades sistêmicas.
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => showPage('lealdades_intro')}
-                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
-                              isAdmin || (access?.mappingCredits && access.mappingCredits > 0)
-                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
-                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
-                            }`}
-                          >
-                            {isAdmin || (access?.mappingCredits && access.mappingCredits > 0) ? 'Mapear Lealdades' : 'Adquirir Diagnóstico'}
-                          </button>
-                        </div>
-
-                        {/* 4. Reset de Posição */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Reprogramação</span>
-                              {access?.reprogramacao_pessoal_comprada || isAdmin ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Não Adquirido
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2">Reset de Posição</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                              Reorganize e estabilize seus padrões, solte crenças e sintonize seu áudio de frequência personalizado exclusivo.
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => {
-                              if (access?.reprogramacao_pessoal_comprada || isAdmin) {
-                                showPage('reprogramacao_form');
-                              } else {
-                                showPage('reprogramacao_pessoal_info');
-                              }
-                            }}
-                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
-                              access?.reprogramacao_pessoal_comprada || isAdmin
-                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
-                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
-                            }`}
-                          >
-                            {access?.reprogramacao_pessoal_comprada || isAdmin ? 'Preencher Questionário de Frequência' : 'Saber Mais / Comprar'}
-                          </button>
-                        </div>
-
-                        {/* 5. Reprograme-se */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold">Curso / Processo</span>
-                              {access?.reprogramar_eu_comprado || isAdmin ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Não Adquirido
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2 font-serif">Reprograme-se - 21 Dias</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                              Processo guiado completo com módulos profundos de reorganização mental e posicionamento diário.
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => {
-                              if (access?.reprogramar_eu_comprado || isAdmin) {
-                                showPage('reprogramacao_form');
-                              } else {
-                                showPage('reprogramar_eu_info');
-                              }
-                            }}
-                            className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold transition-all duration-300 ${
-                              access?.reprogramar_eu_comprado || isAdmin
-                                ? 'bg-[#d4af37] text-black hover:bg-[#c5a880]'
-                                : 'bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10'
-                            }`}
-                          >
-                            {access?.reprogramar_eu_comprado || isAdmin ? 'Preencher Questionário de Frequência' : 'Saber Mais / Comprar'}
-                          </button>
-                        </div>
-
-                        {/* 6. Clube Posição - Núcleos */}
-                        <div className="glass-card p-6 border-gold-main/10 bg-gold-main/[0.01] flex flex-col justify-between hover:border-gold-main/30 transition-all duration-300">
-                          <div>
-                            <div className="flex justify-between items-start mb-4">
-                              <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.2em] font-sans font-bold font-semibold font-semibold">Acompanhamento</span>
-                              {access?.clube_ativo || isAdmin ? (
-                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Assinado
-                                </span>
-                              ) : (
-                                <span className="bg-white/5 border border-white/10 text-white/40 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold">
-                                  Não Assinante
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="serif text-xl text-gold-light mb-2 font-serif">Clube Posição - Tarô & Clarear</h4>
-                            <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                              Seu espaço de alinhamento recorrente. Participe das práticas semanais e orientações exclusivas.
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            {(access?.clube_ativo || isAdmin) ? (
-                              <div className="grid grid-cols-2 gap-2">
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* 1. Diagnóstico ... */}
+                            {hasDiagnostico && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold">Diagnóstico</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Diagnóstico POSIÇÃO</h4>
+                                  <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                                    Mapeie sua frequência atual e descubra o caminho exato para o seu alinhamento essencial.
+                                  </p>
+                                </div>
                                 <button 
-                                  onClick={() => showPage('clube_taro_content')}
-                                  className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
+                                  onClick={() => showPage('diagnostico_quiz_intro')}
+                                  className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
                                 >
-                                  Núcleo Tarô
-                                </button>
-                                <button 
-                                  onClick={() => showPage('clube_clarear_content')}
-                                  className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
-                                >
-                                  Núcleo Clarear
+                                  Iniciar Diagnóstico
                                 </button>
                               </div>
-                            ) : (
-                              <button 
-                                onClick={() => showPage('clube_posicao_info')}
-                                className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-transparent text-gold-main border border-gold-main/20 hover:bg-gold-main/10 transition-all duration-300"
-                              >
-                                Ver Núcleos do Clube
-                              </button>
                             )}
-                          </div>
-                        </div>
 
+                            {/* 2. Mapa Floral */}
+                            {hasMapaFloral && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold">Mapeamento</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access?.mappingCredits || 0} ${access?.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Mapa de Posição - Floral</h4>
+                                  <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                                    Identifique sua emoção dominante e receba sua recomendação de fórmula floral personalizada na hora via IA.
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => showPage('mapeamento_intro')}
+                                  className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
+                                >
+                                  Iniciar Mapeamento Floral
+                                </button>
+                              </div>
+                            )}
+
+                            {/* 3. Mapeamento de Lealdades */}
+                            {hasLealdades && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold">Mapeamento</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access?.mappingCredits || 0} ${access?.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Mapeamento de Lealdades</h4>
+                                  <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                                    Revele os padrões inconscientes, vínculos profundos, estratégias de proteção e seu perfil de lealdades sistêmicas.
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => showPage('lealdades_intro')}
+                                  className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
+                                >
+                                  Mapear Lealdades
+                                </button>
+                              </div>
+                            )}
+
+                            {/* 4. Reset de Posição */}
+                            {hasReset && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold">Reprogramação</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Reset de Posição</h4>
+                                  <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                                    Reorganize e estabilize seus padrões, solte crenças e sintonize seu áudio de frequência personalizado exclusivo.
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => showPage('reprogramacao_form')}
+                                  className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
+                                >
+                                  Preencher Questionário de Frequência
+                                </button>
+                              </div>
+                            )}
+
+                            {/* 5. Reprograme-se */}
+                            {hasReprogrameSe && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold">Curso / Processo</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Liberado
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2 font-serif">Reprograme-se - 21 Dias</h4>
+                                  <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
+                                    Processo guiado completo com módulos profundos de reorganização mental e posicionamento diário.
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => showPage('reprogramacao_form')}
+                                  className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
+                                >
+                                  Acessar Curso
+                                </button>
+                              </div>
+                            )}
+
+                            {/* 6. Clube Posição - Tarô & Clarear */}
+                            {hasClube && (
+                              <div className="glass-card p-6 border-gold-main/20 bg-gold-main/[0.02] flex flex-col justify-between hover:border-gold-main/40 transition-all duration-300">
+                                <div>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <span className="text-gold-main/40 text-[9px] uppercase tracking-[0.15em] font-sans font-bold font-semibold font-semibold">Acompanhamento</span>
+                                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo / Assinado
+                                    </span>
+                                  </div>
+                                  <h4 className="serif text-xl text-gold-light mb-2 font-serif">Clube Posição - Tarô & Clarear</h4>
+                                  <p className="text-white/40 text-[9px] leading-relaxed mb-6 font-light font-sans">
+                                    Seu espaço de alinhamento recorrente. Participe das práticas semanais e orientações exclusivas.
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                  <button 
+                                    onClick={() => showPage('clube_taro_content')}
+                                    className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
+                                  >
+                                    Núcleo Tarô
+                                  </button>
+                                  <button 
+                                    onClick={() => showPage('clube_clarear_content')}
+                                    className="py-2.5 rounded-xl text-[10px] uppercase tracking-[0.1em] font-bold bg-[#1A1612] text-gold-main border border-gold-main/20 hover:bg-[#d4af37] hover:text-black transition-all"
+                                  >
+                                    Núcleo Clarear
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* TAB 1: Meus Mapeamentos */}
                   {memberTab === 'mappings' && (
@@ -6129,14 +6606,21 @@ const Diagnostico = () => {
                                     <Calendar size={20} />
                                   </div>
                                   <div>
-                                    <div className="flex items-center gap-3 mb-1">
-                                      <h4 className="serif text-xl text-gold-light">{item.emocao}</h4>
-                                      <span className={`text-[8px] uppercase tracking-widest font-bold ${status.color}`}>
-                                        {status.label}
+                                    <div className="flex flex-col gap-1 mb-1">
+                                      <span className="text-gold-main/80 text-[9px] uppercase tracking-widest font-bold">
+                                        {getTreatmentLabel(item)}
                                       </span>
+                                      <div className="flex items-center gap-3">
+                                        <h4 className="serif text-xl text-gold-light">
+                                          {item.type === 'diagnostico_posicional' ? `Arquétipo: ${item.archetype}` : item.emocao}
+                                        </h4>
+                                        <span className={`text-[8px] uppercase tracking-widest font-bold ${status.color}`}>
+                                          {status.label}
+                                        </span>
+                                      </div>
                                     </div>
                                     <p className="text-white/30 text-xs font-light">
-                                      {new Date(item.createdAt).toLocaleDateString('pt-BR')} • {item.arquetipo} • {item.alignmentScore || '0'}% Alinhamento
+                                      {new Date(item.createdAt).toLocaleDateString('pt-BR')} {item.arquetipo ? `• ${item.arquetipo}` : ''} • {item.alignmentScore || item.consciousnessPercent || '0'}% Alinhamento
                                     </p>
                                   </div>
                                 </div>
@@ -7197,6 +7681,474 @@ const Diagnostico = () => {
               </div>
             </motion.div>
           )}
+        </AnimatePresence>
+
+        {/* Modal de Busca Interativo / Lupa de Pesquisa */}
+        <AnimatePresence>
+          {searchOpen && (() => {
+            // Lista de navegação rápida com palavras-chave de apoio
+            const navSearchItems = [
+              { type: 'page', title: 'Início', keyword: 'inicio home comecar voltar principal', desc: 'Voltar para a página inicial com todos os serviços e visão geral.', action: () => { showPage('home'); setSearchOpen(false); } },
+              { type: 'page', title: 'Diagnóstico de Posição', keyword: 'diagnostico quiz teste sentimentos emocional arcano', desc: 'Faça o teste de diagnóstico de posição para identificar seu estado emocional e arcanos dominantes.', action: () => { showPage('diagnostico_info'); setSearchOpen(false); } },
+              { type: 'page', title: 'Mapa Floral / Mapeamento Floral', keyword: 'floral bach remedio flores planta', desc: 'Descubra a fórmula floral recomendada ideal para harmonizar seu padrão de sombra atual.', action: () => { showPage('mapeamento_intro'); setSearchOpen(false); } },
+              { type: 'page', title: 'Lealdades Ocultas', keyword: 'lealdades ancestrais familia cla pai mae herdada padrao', desc: 'Exame de padrões invisíveis herdados da família, clã familiar e ancestralidade.', action: () => { showPage('lealdades_intro'); setSearchOpen(false); } },
+              { type: 'page', title: 'Reset de Posição / Reprogramação Pessoal', keyword: 'reset reprogramacao agendamento sessao consulta crenca audio', desc: 'Sessão individual para dissolver bloqueios inconscientes e reprogramar crenças limitantes.', action: () => { showPage('reprogramacao_pessoal_info'); setSearchOpen(false); } },
+              { type: 'page', title: 'Clube de Posição', keyword: 'clube assinar taro circulo leitura semanal', desc: 'Círculo exclusivo de orientação semanal, leitura de tarô de autoconhecimento e rituais do mês.', action: () => { showPage('clube_posicao_info'); setSearchOpen(false); } },
+              { type: 'page', title: 'Ciclos & Rituais do Mês (Ciclos Posição)', keyword: 'ciclos rituais mes lua sol energia ritos lua', desc: 'Rituais mensais sistêmicos para alinhamento energético e tomada de posição pessoal.', action: () => { showPage('rituais_mes_info'); setSearchOpen(false); } },
+              { type: 'page', title: 'Biblioteca de Apoio (Conteúdos)', keyword: 'biblioteca artigos textos pdf audio materiais downloads apoio clareza', desc: 'Artigos, leituras sistêmicas, PDFs, áudios e guias práticos sobre desenvolvimento emocional.', action: () => { navigate('/biblioteca'); setSearchOpen(false); } },
+              { type: 'page', title: 'Jornada Emocional', keyword: 'jornada historico dados cadastros notificacoes', desc: 'Seu painel pessoal de membro, histórico e central de notificações.', action: () => { showPage('jornada_emocional'); setMemberTab('mappings'); setSearchOpen(false); } }
+            ];
+
+            const floraisInfo = [
+              { name: 'Wild Oat', desc: 'Para direcionamento de vida e definição de vocação/propósito íntimo real.' },
+              { name: 'Cerato', desc: 'Para autoconfiança de intuição, parando de perguntar opiniões alheias e duvidar de si.' },
+              { name: 'Scleranthus', desc: 'Para indecisão crônica entre duas alternativas e falta de equilíbrio interno.' },
+              { name: 'Larch', desc: 'Para autoestima frágil, sentimento de inferioridade e medo recorrente de falhar.' },
+              { name: 'Rock Water', desc: 'Para autoexigência obsessiva, rigidez moral ou física extrema e perfeccionismo inflexível.' },
+              { name: 'Water Violet', desc: 'Para isolamento, orgulho protetivo e dificuldade de abrir canais de profunda comunhão.' },
+              { name: 'Agrimony', desc: 'Para mascarar sofrimento ou ansiedades ocultas por trás de um sorriso artificial.' },
+              { name: 'Mimulus', desc: 'Para medos específicos do cotidiano, timidez social e receios simples.' },
+              { name: 'Chicory', desc: 'Para amor possessivo, controle emocional ciumento e apego de manipulação benevolente.' },
+              { name: 'Red Chestnut', desc: 'Para ansiedade e preocupação excessiva com a segurança e saúde de entes queridos.' },
+              { name: 'Heather', desc: 'Para autopreocupação egocêntrica, tagarelice emocional e medo de ficar sozinho.' },
+              { name: 'Vervain', desc: 'Para intolerância entusiasmada, fanatismo idealista e esforço excessivo de convencer.' },
+              { name: 'Oak', desc: 'Para o lutador incansável que nunca para, mesmo à beira de esgotamento total.' },
+              { name: 'Pine', desc: 'Para sentimento severo de culpa infundada, autorreprovação e complexo de culpa.' },
+              { name: 'Centaury', desc: 'Para incapacidade de dizer não, submissão voluntária e busca de agradar outros a todo custo.' },
+              { name: 'Impatiens', desc: 'Para pressa extrema, irritação com lentidão alheia, impulsividade e tensionamento mental.' },
+              { name: 'Cherry Plum', desc: 'Para medo do descontrole emocional irracional ou impulsos involuntários nocivos.' },
+              { name: 'Star of Bethlehem', desc: 'Consolo sutil para sequelas de traumas profundos, perdas amargas ou choques.' },
+              { name: 'Walnut', desc: 'Proteção contra influências e opiniões alheias marcantes em tempos de grandes mudanças.' },
+              { name: 'Elm', desc: 'Para sensação esmagadora de incapacidade temporária diante de muita responsabilidade.' },
+              { name: 'Wild Rose', desc: 'Resgate do entusiasmo e combate à resignação triste, desinteresse passivo e apatia.' },
+              { name: 'Hornbeam', desc: 'Força mental para começar o dia, superando cansaço de segunda-feira sem base patológica.' },
+              { name: 'Honeysuckle', desc: 'Para nostalgia constante de momentos passados dourados ou arrependimento do ontem.' },
+              { name: 'Crab Apple', desc: 'Para senso de impureza, obsessão por pequenos defeitos físicos e asseio.' },
+              { name: 'Rock Rose', desc: 'Para terror extremo paralisante, pânico súbito ou pesadelos traumatizantes.' },
+              { name: 'Aspen', desc: 'Para medos indefinidos de origem mística ou desconhecida e ansiedade imotivada súbita.' },
+              { name: 'Willow', desc: 'Para ressentimento amargo, vitimização interior e culpar a vida pela sua sorte.' }
+            ];
+
+            const queryWords = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+            const matchedPagesInSearch = queryWords.length > 0
+              ? navSearchItems.filter(item => 
+                  queryWords.every(word => 
+                    item.title.toLowerCase().includes(word) || 
+                    item.desc.toLowerCase().includes(word) || 
+                    (item.keyword && item.keyword.toLowerCase().includes(word))
+                  )
+                )
+              : [];
+
+            const matchedArcanosInSearch = queryWords.length > 0
+              ? ARCANOS_MATRIZ.filter(arc => 
+                  queryWords.every(word => 
+                    arc.arcano.toLowerCase().includes(word) || 
+                    arc.dom.toLowerCase().includes(word) || 
+                    arc.ferida.toLowerCase().includes(word) || 
+                    arc.reprogramacao.toLowerCase().includes(word) ||
+                    arc.sombra.some(s => s.toLowerCase().includes(word)) ||
+                    arc.florais.some(f => f.toLowerCase().includes(word))
+                  )
+                )
+              : [];
+
+            const matchedFloraisInSearch = queryWords.length > 0
+              ? floraisInfo.filter(f => 
+                  queryWords.every(word => 
+                    f.name.toLowerCase().includes(word) || 
+                    f.desc.toLowerCase().includes(word)
+                  )
+                )
+              : [];
+
+            return (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[110] bg-black/85 backdrop-blur-md flex items-start justify-center p-4 md:p-12 overflow-y-auto"
+                onClick={() => setSearchOpen(false)}
+              >
+                <div 
+                  className="relative w-full max-w-3xl bg-[#0e0b09] border border-gold-main/20 rounded-3xl p-6 md:p-8 mt-4 md:mt-12 flex flex-col shadow-[0_0_80px_rgba(212,175,55,0.06)]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Botão Fechar */}
+                  <button 
+                    onClick={() => setSearchOpen(false)}
+                    className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors cursor-pointer p-2 rounded-full hover:bg-white/5"
+                    title="Fechar busca"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  {/* Cabeçalho de Busca */}
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
+                    <Search className="text-gold-main flex-shrink-0 animate-pulse" size={22} />
+                    <input 
+                      type="text" 
+                      placeholder="O que você busca? Ex: 'Mago', 'Sombra', 'Lealdades', 'Wild Oat'..." 
+                      className="bg-transparent border-none outline-none text-white placeholder-white/30 w-full text-base md:text-lg font-light py-1 focus:ring-0 focus:outline-none"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setSelectedArcanoInSearch(null);
+                      }}
+                      autoFocus
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedArcanoInSearch(null);
+                        }} 
+                        className="text-white/30 hover:text-white text-xs uppercase tracking-widest font-mono shrink-0 hover:underline"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Exibição condicional de resultados */}
+                  <div className="overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+                    {selectedArcanoInSearch ? (
+                      /* Visualização detalhada do Arcano selecionado */
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-6"
+                      >
+                        {/* Cabeçalho do Detalhe */}
+                        <div className="flex items-center justify-between border-b border-gold-main/10 pb-4">
+                          <button 
+                            onClick={() => setSelectedArcanoInSearch(null)}
+                            className="text-gold-main/60 hover:text-gold-main text-xs uppercase tracking-widest flex items-center gap-1.5 font-bold"
+                          >
+                            ← Voltar aos Resultados
+                          </button>
+                          <span className="text-[10px] text-white/30 tracking-[0.2em] font-mono uppercase">
+                            Detalhes do Arcano
+                          </span>
+                        </div>
+
+                        {/* Corpo do Detalhe */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl bg-[#1d1611] px-2.5 py-1.5 border border-gold-main/20 rounded-xl">{selectedArcanoInSearch.simbolo}</span>
+                              <div>
+                                <h3 className="text-2xl font-serif text-[#E5D5C5] tracking-wide">
+                                  {selectedArcanoInSearch.arcano}
+                                </h3>
+                                <p className="text-xs text-gold-main/75 tracking-wider font-mono">
+                                  ARCANO Nº {selectedArcanoInSearch.numero}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="text-white/70 text-sm font-light leading-relaxed font-serif italic pt-2">
+                              "{selectedArcanoInSearch.mensagem}"
+                            </p>
+
+                            <div className="bg-[#14100d] border border-gold-main/10 rounded-2xl p-4 space-y-2 mt-4">
+                              <h4 className="text-[10px] text-gold-main font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gold-main" />
+                                Dom e Missão
+                              </h4>
+                              <p className="text-white/80 text-xs font-light leading-relaxed">
+                                {selectedArcanoInSearch.dom}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="bg-[#14100d] border border-red-900/20 rounded-2xl p-4 space-y-3">
+                              <div>
+                                <h4 className="text-[10px] text-red-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                                  💀 Sombra e Ferida Primária
+                                </h4>
+                                <p className="text-white/80 text-xs font-light leading-relaxed font-serif italic">
+                                  Ferida: {selectedArcanoInSearch.ferida}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {selectedArcanoInSearch.sombra.map((som, sIdx) => (
+                                  <span 
+                                    key={sIdx}
+                                    className="bg-red-400/5 text-red-300 border border-red-500/10 rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wider"
+                                  >
+                                    {som}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="bg-[#14100d] border border-emerald-950/30 rounded-2xl p-4 space-y-2">
+                              <h4 className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                🌿 Fórmula Floral Recomendada
+                              </h4>
+                              <div className="flex flex-wrap gap-2 pt-1 font-mono">
+                                {selectedArcanoInSearch.florais.map((flr, fIdx) => (
+                                  <span 
+                                    key={fIdx}
+                                    className="bg-emerald-400/5 text-emerald-300 border border-emerald-500/15 rounded-md px-2 py-0.5 text-[10px]"
+                                  >
+                                    {flr}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-white/40 font-light leading-relaxed pt-1">
+                                Esta fórmula de Bach ajuda a modular os estados de sombra do arquétipo.
+                              </p>
+                            </div>
+
+                            <div className="bg-[#14100d] border border-blue-950/30 rounded-2xl p-4 space-y-1">
+                              <h4 className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                🪐 Reprogramação Recomendada
+                              </h4>
+                              <p className="text-white/80 text-xs font-light leading-relaxed">
+                                {selectedArcanoInSearch.reprogramacao}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Rodapé de Ações do Arcano */}
+                        <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                          <button
+                            onClick={() => {
+                              showPage('diagnostico_quiz_intro');
+                              setSearchOpen(false);
+                            }}
+                            className="flex-1 bg-gold-main text-black hover:bg-[#d4af37] py-3 rounded-xl text-xs uppercase tracking-widest font-black text-center transition-colors shadow-lg cursor-pointer"
+                          >
+                            Fazer Avaliação Completa
+                          </button>
+                          <button
+                            onClick={() => {
+                              showPage('reprogramacao_pessoal_info');
+                              setSearchOpen(false);
+                            }}
+                            className="flex-1 bg-transparent border border-gold-main/20 text-gold-main hover:bg-gold-main/10 py-3 rounded-xl text-xs uppercase tracking-widest font-bold text-center transition-colors cursor-pointer"
+                          >
+                            Agendar Reprogramação
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : searchQuery.trim().length === 0 ? (
+                      /* Mostrar Sugestões Iniciais */
+                      <div className="space-y-6">
+                        <div>
+                          <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold mb-3 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gold-main" />
+                            Atalhos e Seções Principais
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {navSearchItems.map((item, idx) => (
+                              <div 
+                                key={idx}
+                                onClick={item.action}
+                                className="p-3 bg-[#13100e]/80 border border-white/5 hover:border-gold-main/30 rounded-2xl cursor-pointer hover:bg-[#1a1512] transition-all group flex flex-col justify-between"
+                              >
+                                <h5 className="text-[11px] font-bold uppercase tracking-widest text-[#E5D5C5] group-hover:text-gold-main transition-colors mb-1">
+                                  {item.title}
+                                </h5>
+                                <p className="text-[10px] text-white/40 font-light leading-normal line-clamp-2">
+                                  {item.desc}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                          <div>
+                            <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold mb-3 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gold-main animate-pulse" />
+                              Temas Populares
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {['Mago', 'Sombra', 'Reset', 'Ansiedade', 'Wild Oat', 'Guia Floral', 'Lealdade Familiar', 'Tarô'].map((tag, idx) => (
+                                <button 
+                                  key={idx}
+                                  onClick={() => setSearchQuery(tag)}
+                                  className="bg-white/5 border border-white/10 hover:border-gold-main/40 hover:bg-[#1c1714] text-white/60 hover:text-gold-main px-3 py-1 rounded-full text-xs font-light transition-all cursor-pointer"
+                                >
+                                  #{tag}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold mb-3 flex items-center gap-2">
+                              ✨ Portal de Autoconhecimento
+                            </h4>
+                            <p className="text-[10.5px] text-white/40 font-light leading-relaxed">
+                              Digite sentimentos, nomes de florais de Bach, ou arcanos maiores do Tarô para obter insights sistêmicos imediatos sobre sua vibração emocional.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Mostrar Resultados da Pesquisa */
+                      <div className="space-y-6">
+                        {/* Se não houver nada nas três categorias */}
+                        {matchedPagesInSearch.length === 0 && matchedArcanosInSearch.length === 0 && matchedFloraisInSearch.length === 0 ? (
+                          <div className="text-center py-10 space-y-3">
+                            <p className="text-3xl">🧩</p>
+                            <p className="text-white/40 text-sm font-light">
+                              Nenhum resultado encontrado para <strong className="text-white">"{searchQuery}"</strong>.
+                            </p>
+                            <p className="text-xs text-gold-main/60 italic font-mono">
+                              Tente termos como "Mago", "Sombra", "Wild Oat", "Reset" ou "Floral"
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {/* 1. Categorias: Páginas */}
+                            {matchedPagesInSearch.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold border-b border-white/5 pb-1 flex items-center justify-between">
+                                  <span>Seções do Sistema</span>
+                                  <span className="text-[9px] font-mono text-white/30">{matchedPagesInSearch.length} matches</span>
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {matchedPagesInSearch.map((item, idx) => (
+                                    <div 
+                                      key={idx}
+                                      onClick={item.action}
+                                      className="p-3.5 bg-[#120f0d] border border-white/5 hover:border-gold-main/30 rounded-2xl cursor-pointer hover:bg-[#191411] transition-all group flex flex-col gap-1"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <h5 className="text-[11px] font-bold uppercase tracking-widest text-[#E5D5C5] group-hover:text-gold-main transition-colors">
+                                          {item.title}
+                                        </h5>
+                                        <ArrowRight size={12} className="text-white/20 group-hover:text-gold-main transition-colors" />
+                                      </div>
+                                      <p className="text-[10px] text-white/40 font-light leading-normal">
+                                        {item.desc}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 2. Categorias: Arcanos */}
+                            {matchedArcanosInSearch.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold border-b border-white/5 pb-1 flex items-center justify-between">
+                                  <span>Arcanos do Diagnóstico</span>
+                                  <span className="text-[9px] font-mono text-white/30">{matchedArcanosInSearch.length} matches</span>
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {matchedArcanosInSearch.map((arc, idx) => (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => setSelectedArcanoInSearch(arc)}
+                                      className="p-3.5 bg-[#120f0d] border border-white/5 hover:border-amber-500/20 rounded-2xl cursor-pointer hover:bg-[#1c1613] transition-all group flex items-start gap-3"
+                                    >
+                                      <div className="text-2xl mt-1 select-none flex-shrink-0 bg-[#221812] border border-gold-main/10 rounded-lg w-10 h-10 flex items-center justify-center">
+                                        {arc.simbolo}
+                                      </div>
+                                      <div className="space-y-1 overflow-hidden flex-1">
+                                        <div className="flex items-center gap-1.5 justify-between">
+                                          <h5 className="text-[12px] font-serif font-semibold text-white group-hover:text-gold-main transition-colors truncate">
+                                            {arc.arcano}
+                                          </h5>
+                                          <span className="text-[8px] font-mono text-gold-main/50 tracking-wider flex-shrink-0">
+                                            Nº {arc.numero}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-white/40 font-light leading-normal truncate">
+                                          {arc.dom}
+                                        </p>
+                                        <div className="flex flex-wrap gap-1 pt-1.5">
+                                          {arc.sombra.slice(0, 2).map((sb, sbIdx) => (
+                                            <span key={sbIdx} className="bg-red-400/5 text-red-300 border border-red-500/5 text-[8.5px] uppercase tracking-wider rounded px-1 flex-shrink-0">
+                                              {sb}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 3. Categorias: Florais */}
+                            {matchedFloraisInSearch.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] text-gold-main uppercase tracking-[0.2em] font-bold border-b border-white/5 pb-1 flex items-center justify-between">
+                                  <span>Guia e Essências Florais</span>
+                                  <span className="text-[9px] font-mono text-white/30">{matchedFloraisInSearch.length} matches</span>
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {matchedFloraisInSearch.map((flor, idx) => {
+                                    // Encontrar arcanos que recomendam este floral
+                                    const recommendingArcanos = ARCANOS_MATRIZ.filter(arc => 
+                                      arc.florais.some(f => f.toLowerCase() === flor.name.toLowerCase())
+                                    );
+
+                                    return (
+                                      <div 
+                                        key={idx}
+                                        className="p-3.5 bg-[#120f0d] border border-white/5 rounded-2xl flex flex-col justify-between gap-3 border-l-2 border-l-emerald-500/30"
+                                      >
+                                        <div className="space-y-1">
+                                          <div className="flex items-center justify-between">
+                                            <h5 className="text-[12px] font-mono font-semibold text-emerald-400">
+                                              🌿 {flor.name}
+                                            </h5>
+                                            <span className="bg-emerald-500/10 text-emerald-400 rounded-full font-mono px-2 py-0.5 uppercase tracking-widest text-[7.5px] flex-shrink-0">
+                                              Bach
+                                            </span>
+                                          </div>
+                                          <p className="text-[10.5px] text-white/50 font-light leading-relaxed">
+                                            {flor.desc}
+                                          </p>
+                                        </div>
+                                        
+                                        {recommendingArcanos.length > 0 && (
+                                          <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
+                                            <span className="text-[8px] text-white/30 font-mono uppercase tracking-wider flex-shrink-0">Presente no Arcano:</span>
+                                            {recommendingArcanos.map((rArc, rIdx) => (
+                                              <button
+                                                key={rIdx}
+                                                onClick={() => setSelectedArcanoInSearch(rArc)}
+                                                className="bg-[#241d19] border border-gold-main/10 hover:border-gold-main/30 hover:bg-[#342721] text-gold-main text-[9.5px] font-serif rounded-full px-2 py-0.5 flex items-center gap-1 transition-all cursor-pointer"
+                                              >
+                                                <span>{rArc.simbolo}</span>
+                                                <span>{rArc.arcano}</span>
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Rodapé Inteligente do Modal */}
+                  <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-6 text-white/30 text-[9px] font-mono shrink-0">
+                    <span>Pressione ESC para fechar</span>
+                    <span>Experiência Posição Sistêmica</span>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </AnimatePresence>
       </div>
     </>
