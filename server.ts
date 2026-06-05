@@ -639,6 +639,10 @@ async function startServer() {
       let userDoc = await userDocRef.get();
       let userData = userDoc.exists ? userDoc.data() : null;
 
+      const userAccessDocRef = db.collection("user_access").doc(uid as string);
+      let userAccessDoc = await userAccessDocRef.get();
+      let userAccessData = userAccessDoc.exists ? userAccessDoc.data() : null;
+
       // 2. Perform credit reconciliation if email is known
       let mappingCreditsToAdd = 0;
       let setDiagnosticoComprado = false;
@@ -721,11 +725,11 @@ async function startServer() {
       // 5. Respond with resolved permissions
       return res.json({
         user_id: uid,
-        diagnostico_comprado: isAdmin || userData?.diagnostico_comprado || (userData?.mappingCredits || 0) > 0,
-        mappingCredits: isAdmin ? 999 : (userData?.mappingCredits || 0),
-        clube_ativo: userData?.clube_ativo || false,
-        reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || false,
-        reprogramar_eu_comprado: userData?.reprogramar_eu_comprado || false,
+        diagnostico_comprado: isAdmin || userData?.diagnostico_comprado || userAccessData?.diagnostico_comprado || (userData?.mappingCredits || 0) > 0 || (userAccessData?.mappingCredits || 0) > 0,
+        mappingCredits: isAdmin ? 999 : Math.max((userData?.mappingCredits || 0), (userAccessData?.mappingCredits || 0)),
+        clube_ativo: userData?.clube_ativo || userAccessData?.clube_ativo || false,
+        reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || userAccessData?.reprogramacao_pessoal_comprada || false,
+        reprogramar_eu_comprado: userData?.reprogramar_eu_comprado || userAccessData?.reprogramar_eu_comprado || false,
       });
 
     } catch (error) {

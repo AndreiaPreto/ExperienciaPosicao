@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface UserAccess {
   user_id: string;
@@ -50,15 +51,56 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeUsers: (() => void) | null = null;
+    let unsubscribeUserAccess: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      // Clean up previous listeners if any
+      if (unsubscribeUsers) {
+        unsubscribeUsers();
+        unsubscribeUsers = null;
+      }
+      if (unsubscribeUserAccess) {
+        unsubscribeUserAccess();
+        unsubscribeUserAccess = null;
+      }
+
       if (user) {
+        // Initial fetch
         fetchAccess(user.uid);
+
+        // Listen in real-time to users collection
+        try {
+          unsubscribeUsers = onSnapshot(doc(db, 'users', user.uid), () => {
+            fetchAccess(user.uid);
+          }, (err) => {
+            console.error("Error listening to users collection changes in AccessContext:", err);
+          });
+        } catch (e) {
+          console.error("Failed to subscribe to users updates in AccessContext:", e);
+        }
+
+        // Listen in real-time to user_access collection
+        try {
+          unsubscribeUserAccess = onSnapshot(doc(db, 'user_access', user.uid), () => {
+            fetchAccess(user.uid);
+          }, (err) => {
+            console.error("Error listening to user_access collection changes in AccessContext:", err);
+          });
+        } catch (e) {
+          console.error("Failed to subscribe to user_access updates in AccessContext:", e);
+        }
+
       } else {
         fetchAccess();
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUsers) unsubscribeUsers();
+      if (unsubscribeUserAccess) unsubscribeUserAccess();
+    };
   }, []);
 
   const simulatePurchase = (type: 'diagnostico' | 'clube' | 'reprogramacao_pessoal' | 'reprogramar_eu') => {

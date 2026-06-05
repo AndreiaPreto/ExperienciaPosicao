@@ -2000,6 +2000,22 @@ const Diagnostico = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArcanoInSearch, setSelectedArcanoInSearch] = useState<ArcanoData | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    try {
+      return localStorage.getItem('product_banner_dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const dismissProductBanner = () => {
+    setIsBannerDismissed(true);
+    try {
+      localStorage.setItem('product_banner_dismissed', 'true');
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -2385,6 +2401,12 @@ const Diagnostico = () => {
       try {
         setUser(u);
         if (u) {
+          try {
+            localStorage.removeItem('product_banner_dismissed');
+            setIsBannerDismissed(false);
+          } catch (e) {
+            console.error(e);
+          }
           // Check if user is admin
           try {
             const userDoc = await getDoc(doc(db, 'users', u.uid));
@@ -3749,6 +3771,42 @@ const Diagnostico = () => {
 
       <div className="atmosphere"></div>
       <div className="relative z-10 min-h-screen">
+        {/* Top Product Access Notification Strip */}
+        {user && !isBannerDismissed && (() => {
+          const hasAnyActives = !!(
+            access?.diagnostico_comprado || 
+            access?.clube_ativo || 
+            access?.reprogramacao_pessoal_comprada || 
+            access?.reprogramar_eu_comprado || 
+            (access?.mappingCredits && access.mappingCredits > 0)
+          );
+          if (!hasAnyActives) return null;
+          return (
+            <div className="bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#d4af37] text-black px-6 py-2.5 flex items-center justify-between text-xs font-semibold tracking-wider relative z-50 shadow-md">
+              <div className="flex-1 flex items-center justify-center gap-2 text-center flex-wrap">
+                <span className="inline-block animate-bounce font-extrabold">⭐</span>
+                <span>Você possui produtos ativos liberados em sua conta!</span>
+                <button 
+                  onClick={() => {
+                    setMemberTab('products');
+                    showPage('jornada_emocional');
+                  }}
+                  className="bg-black text-[#d4af37] hover:bg-black/85 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-extrabold ml-2.5 transition-all shadow border border-[#d4af37]/45 cursor-pointer"
+                >
+                  Ver Meus Produtos
+                </button>
+              </div>
+              <button 
+                onClick={dismissProductBanner} 
+                className="text-black/60 hover:text-black p-1 bg-black/5 hover:bg-black/10 rounded-full transition-all ml-4"
+                title="Fechar aviso"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          );
+        })()}
+
         {/* Global Navigation Header - Experiência Posição */}
         <header className="border-b border-white/5 bg-black/25 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
@@ -6926,7 +6984,17 @@ const Diagnostico = () => {
                           </div>
 
                           {/* Footer */}
-                          <div className="p-6 border-t border-white/5 bg-[#121110] flex justify-end">
+                          <div className="p-6 border-t border-white/5 bg-[#121110] flex justify-end gap-3 flex-wrap">
+                            <button 
+                              onClick={() => {
+                                setViewingNotification(null);
+                                setMemberTab('products');
+                                showPage('jornada_emocional');
+                              }}
+                              className="bg-[#d4af37] text-black hover:bg-[#c5a880] px-5 py-2 rounded-xl text-xs uppercase tracking-widest font-extrabold transition-all"
+                            >
+                              Visualizar Minhas Compras
+                            </button>
                             <button 
                               onClick={() => setViewingNotification(null)}
                               className="bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/25 hover:bg-[#d4af37]/20 px-5 py-2 rounded-xl text-xs uppercase tracking-widest font-extrabold transition-all"
