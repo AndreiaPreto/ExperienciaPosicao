@@ -200,6 +200,16 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /evaluations/{evaluationId} {
+      allow create: if request.resource.data.rating is number && 
+                    request.resource.data.rating >= 1 && 
+                    request.resource.data.rating <= 5 && 
+                    (!('comment' in request.resource.data) || (request.resource.data.comment is string && request.resource.data.comment.size() <= 2000)) &&
+                    (!('userId' in request.resource.data) || request.resource.data.userId is string || request.resource.data.userId == null);
+      allow read: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /user_access/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow write: if isAdmin() && isValidUserAccess(request.resource.data);

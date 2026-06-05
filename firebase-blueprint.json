@@ -196,6 +196,19 @@
         "mappingCredits": { "type": "number" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Evaluation": {
+      "title": "Evaluation",
+      "description": "Feedback evaluation submitted by customers post-purchase",
+      "type": "object",
+      "properties": {
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["rating", "createdAt"]
     }
   },
   "firestore": {
@@ -242,6 +255,10 @@
     "/pedidos_pendentes/{pedidoId}": {
       "schema": "PedidoPendente",
       "description": "WhatsApp checkout pending order details"
+    },
+    "/evaluations/{evaluationId}": {
+      "schema": "Evaluation",
+      "description": "Feedback evaluation ratings submitted by customers"
     },
     "/user_access/{userId}": {
       "schema": "UserAccess",

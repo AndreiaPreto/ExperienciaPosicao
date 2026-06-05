@@ -22,7 +22,7 @@ import {
 import { doc, setDoc, getDoc, collection, query, where, getDocs, orderBy, getDocFromServer, serverTimestamp, updateDoc, increment, addDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { jsPDF } from 'jspdf';
 import { useAccess } from '../context/AccessContext';
-import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag, Search } from 'lucide-react';
+import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag, Search, Star } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
 
@@ -1947,6 +1947,117 @@ const AdminCouponsTab = ({ coupons, onRefresh, setNotification }: { coupons: any
 };
 
 
+const AdminEvaluationsTab = ({ evaluations, onRefresh, setNotification }: { evaluations: any[], onRefresh: () => void, setNotification: (n: any) => void }) => {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'evaluations', id));
+      onRefresh();
+      setNotification({ message: "Avaliação excluída com sucesso!", type: 'success' });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `evaluations/${id}`);
+      setNotification({ message: "Erro ao excluir avaliação.", type: 'error' });
+    }
+  };
+
+  const averageRating = evaluations.length > 0 
+    ? (evaluations.reduce((acc, current) => acc + current.rating, 0) / evaluations.length).toFixed(1)
+    : '0.0';
+
+  return (
+    <div className="space-y-6 animate-fade-in text-left">
+      <div className="flex justify-between items-center bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+        <div>
+          <h3 className="serif text-xl text-gold-light">Avaliações do Atendimento</h3>
+          <p className="text-white/30 text-xs mt-1">Veja o que seus clientes acham do atendimento após a compra.</p>
+        </div>
+        <div className="text-center bg-gold-main/5 border border-gold-main/20 px-6 py-4 rounded-xl flex flex-col items-center justify-center">
+          <div className="flex items-center gap-1.5 justify-center mb-1">
+            <span className="serif text-3xl font-bold text-gold-main">{averageRating}</span>
+            <Star className="fill-gold-main text-gold-main w-5 h-5" />
+          </div>
+          <span className="text-white/20 text-[9px] uppercase tracking-wider font-sans font-bold">
+            {evaluations.length} {evaluations.length === 1 ? 'avaliação' : 'avaliações'}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {evaluations.map((ev, i) => (
+          <div key={i} className="p-5 border border-white/5 rounded-2xl bg-white/[0.01] flex flex-col justify-between group hover:border-gold-main/20 transition-all gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, idx) => (
+                    <Star
+                      key={idx}
+                      className={`w-3.5 h-3.5 ${
+                        idx < ev.rating
+                          ? 'fill-gold-main text-gold-main'
+                          : 'text-white/10 fill-transparent'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-white/20 text-[9px] font-sans">
+                  {ev.createdAt ? new Date(ev.createdAt).toLocaleDateString('pt-BR') : ''}
+                </span>
+              </div>
+
+              {ev.comment ? (
+                <p className="text-white/80 text-xs italic font-light leading-relaxed">
+                  "{ev.comment}"
+                </p>
+              ) : (
+                <p className="text-white/20 text-xs italic font-light">Sem comentários adicionais.</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-white/5 mt-auto">
+              <div className="min-w-0">
+                <p className="text-[10px] text-gold-main/50 font-sans truncate" title={ev.userEmail || 'Anônimo'}>
+                  {ev.userEmail || 'Anônimo'}
+                </p>
+                <p className="text-[9px] text-white/20 uppercase tracking-wider">Cliente</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (confirmDeleteId === ev.id) {
+                    handleDelete(ev.id);
+                    setConfirmDeleteId(null);
+                  } else {
+                    setConfirmDeleteId(ev.id);
+                  }
+                }}
+                onMouseLeave={() => setConfirmDeleteId(null)}
+                className={`p-2 transition-colors flex items-center gap-1.5 rounded-lg ${
+                  confirmDeleteId === ev.id
+                    ? 'text-red-400 bg-red-400/10'
+                    : 'text-white/20 hover:text-red-400 hover:bg-white/[0.02]'
+                }`}
+                title="Excluir"
+              >
+                {confirmDeleteId === ev.id ? (
+                  <span className="text-[8px] font-bold uppercase tracking-wider">Confirmar?</span>
+                ) : (
+                  <Trash2 size={14} />
+                )}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {evaluations.length === 0 && (
+        <p className="text-center text-white/20 italic py-12 bg-white/[0.01] rounded-2xl border border-dashed border-white/5">Nenhuma avaliação recebida até o momento.</p>
+      )}
+    </div>
+  );
+};
+
+
 // Helper para formatar o número do WhatsApp do cliente para a API do wa.me (padrão Brasil 55)
 const formatWhatsAppNumber = (phone: string): string => {
   if (!phone) return '';
@@ -2259,6 +2370,14 @@ const Diagnostico = () => {
     }
 
     try {
+      const evaluationsSnapshot = await getDocs(collection(db, 'evaluations'));
+      setAdminEvaluations(evaluationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    } catch (e) {
+      console.error("Error fetching evaluations for admin:", e);
+    }
+
+    try {
       const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
       setAdminAppointments(appointmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (e) {
@@ -2276,7 +2395,7 @@ const Diagnostico = () => {
   const [currentAudio, setCurrentAudio] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [adminMeditationData, setAdminMeditationData] = useState({ title: '', description: '', duration: '', url: '' });
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons' | 'ciclos' | 'pedidos'>('dashboard');
+  const [adminTab, setAdminTab] = useState<'dashboard' | 'users' | 'mappings' | 'products' | 'clube' | 'sessions' | 'reports' | 'requests' | 'coupons' | 'ciclos' | 'pedidos' | 'evaluations'>('dashboard');
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartao' | null>(null);
   const [pedidosPendentes, setPedidosPendentes] = useState(0);
   const [adminStats, setAdminStats] = useState({
@@ -2291,6 +2410,7 @@ const Diagnostico = () => {
   const [adminDiagnosticos, setAdminDiagnosticos] = useState<any[]>([]);
   const [adminRequests, setAdminRequests] = useState<any[]>([]);
   const [adminCoupons, setAdminCoupons] = useState<any[]>([]);
+  const [adminEvaluations, setAdminEvaluations] = useState<any[]>([]);
   const [adminAppointments, setAdminAppointments] = useState<any[]>([]);
   const [adminPedidos, setAdminPedidos] = useState<any[]>([]);
   const [selectedAdminUser, setSelectedAdminUser] = useState<any | null>(null);
@@ -7049,6 +7169,7 @@ const Diagnostico = () => {
                     { id: 'sessions', label: 'Sessões', icon: Clock },
                     { id: 'reports', label: 'Relatórios', icon: FileText },
                     { id: 'coupons', label: 'Cupons', icon: Tag },
+                    { id: 'evaluations', label: 'Avaliações', icon: Star },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -7164,6 +7285,10 @@ const Diagnostico = () => {
 
                   {adminTab === 'coupons' && (
                     <AdminCouponsTab coupons={adminCoupons} onRefresh={refreshAdminData} setNotification={setNotification} />
+                  )}
+
+                  {adminTab === 'evaluations' && (
+                    <AdminEvaluationsTab evaluations={adminEvaluations} onRefresh={refreshAdminData} setNotification={setNotification} />
                   )}
                 </main>
               </div>

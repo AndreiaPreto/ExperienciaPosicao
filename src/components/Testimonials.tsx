@@ -16,7 +16,7 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     id: 'test-1',
-    name: 'Camila Medeiros',
+    name: 'Carolina Marques',
     role: 'Executiva de Tecnologia',
     text: 'O Diagnóstico de Posição foi uma virada de chave absoluta na minha vida. Sair da profunda confusão mental e enxergar com total clareza a minha estrutura de presença energética e emocional mudou de forma definitiva a maneira como tomei decisões difíceis na minha carreira corporativa.',
     rating: 5,
