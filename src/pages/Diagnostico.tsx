@@ -3071,63 +3071,431 @@ const Diagnostico = () => {
       
       doc.save(`Receita_Floral_${userName.replace(/\s+/g, '_')}.pdf`);
     } else if (type === 'lealdades_ocultas') {
-      const item = itemOrFormula;
+      let item = itemOrFormula;
+      if (item && (!item.axisDominantDetails || !item.profile)) {
+        const reconstructed = reconstructLealdadesResult(item);
+        if (reconstructed) {
+          item = reconstructed;
+        }
+      }
+      
+      // Page 1: Perfil de Posição & Índices
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(212, 175, 55);
+      doc.setFontSize(20);
+      doc.setTextColor(197, 160, 40); // gold/bronze
       doc.text("RELATÓRIO DE LEALDADES SISTÊMICAS", 105, 35, { align: "center" });
       
-      doc.setDrawColor(212, 175, 55);
-      doc.setLineWidth(0.5);
-      doc.line(20, 40, 190, 40);
-      
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(9.5);
+      doc.setTextColor(120, 120, 120);
+      doc.text("EXPERIÊNCIA POSIÇÃO · MÉTODO SISTÊMICO", 105, 42, { align: "center" });
+
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(0.6);
+      doc.line(20, 47, 190, 47);
+
+      // Client Info Block
+      doc.setFillColor(250, 247, 242);
+      doc.rect(20, 54, 170, 25, "F");
       
-      doc.text(`Cliente: ${userName}`, 20, 55);
-      doc.text(`Data: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 20, 63);
-      doc.text(`Perfil Clínico: ${item.profileName || item.emocao || 'Lealdades Ocultas'}`, 20, 71);
-      
-      let y = 85;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(212, 175, 55);
-      doc.text("Padrões Ativos Consolidados:", 20, y);
-      y += 8;
-      
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text("DADOS DO CLIENTE", 25, 60);
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.setTextColor(60, 60, 60);
-      
-      const domLabel = item.arquetipo || 'Mapeado';
-      const secLabel = item.secondary || '';
-      doc.text(`- Camada Dominante (Ativa): ${domLabel}`, 20, y);
-      y += 6;
-      if (secLabel) {
-        doc.text(`- Camada Secundária (Fuga): ${secLabel}`, 20, y);
-        y += 6;
-      }
-      doc.text(`- Índice de Consciência Sistêmica: ${item.alignmentScore || item.consciousnessPercent || 0}%`, 20, y);
-      y += 12;
-      
+      doc.setTextColor(70, 70, 70);
+      doc.text(`Nome: ${userName}`, 25, 67);
+      doc.text(`Data do Diagnóstico: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 25, 73);
+
+      // Seção 1: Seu Perfil de Posição
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(212, 175, 55);
-      doc.text("Diretriz Terapêutica / Prática Recomendada:", 20, y);
-      y += 8;
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("1. SEU PERFIL DE POSIÇÃO", 20, 92);
       
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.3);
+      doc.line(20, 95, 190, 95);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(54, 45, 40);
+      doc.text(item.profile?.name || item.profileName || 'Caminhante em Reposicionamento', 20, 104);
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
-      const text = item.result || 'Prática recomendada para o reequilíbrio emocional e liberação de amarras transgeracionais.';
-      const lines = doc.splitTextToSize(text, 170);
-      doc.text(lines, 20, y);
-      
+      const profileDesc = item.profile?.description || 'A sua jornada sistêmica revela uma combinação singular de sabedoria e desafios nos seus relacionamentos familiares e profissionais.';
+      const splitDesc = doc.splitTextToSize(profileDesc, 170);
+      doc.text(splitDesc, 20, 111, { lineHeightFactor: 1.4 });
+
+      // Seção 2: Índices Sistêmicos & Força de Mudança
+      let yIndices = 160;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("2. ÍNDICES SISTÊMICOS", 20, yIndices);
+      doc.line(20, yIndices + 3, 190, yIndices + 3);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(120, 120, 120);
+      doc.text("Estes índices avaliam seu grau de percepção sobre seus padrões e sua disposição para mudá-los.", 20, yIndices + 9);
+
+      doc.setFillColor(250, 247, 242);
+      doc.rect(20, yIndices + 15, 170, 36, "F");
+
+      // Consciência Sistêmica
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.setTextColor(150, 150, 150);
-      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 280, { align: "center" });
-      doc.save(`Relatorio_Lealdades_${userName.replace(/\s+/g, '_')}.pdf`);
+      doc.setTextColor(54, 45, 40);
+      doc.text(`Índice de Consciência Sistêmica: ${item.consciousnessPercent || item.alignmentScore || 0}%`, 25, yIndices + 23);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      const levelC = item.consciousnessLevel || getConsciousnessLevel(item.consciousnessPercent || item.alignmentScore || 0);
+      doc.text(`(${levelC})`, 185, yIndices + 23, { align: "right" });
+
+      doc.setFillColor(220, 220, 220);
+      doc.rect(25, yIndices + 26, 160, 1.5, "F");
+      doc.setFillColor(212, 175, 55);
+      const consciousBarWidth = Math.max(0, Math.min(100, item.consciousnessPercent || item.alignmentScore || 0)) * 1.6;
+      doc.rect(25, yIndices + 26, consciousBarWidth, 1.5, "F");
+
+      // Prontidão para Reposicionamento
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(54, 45, 40);
+      doc.text(`Prontidão para Reposicionamento: ${item.readinessPercent || 0}%`, 25, yIndices + 35);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      const levelR = item.readinessLevel || getReadinessLevel(item.readinessPercent || 0);
+      doc.text(`(${levelR})`, 185, yIndices + 35, { align: "right" });
+
+      doc.setFillColor(220, 220, 220);
+      doc.rect(25, yIndices + 38, 160, 1.5, "F");
+      doc.setFillColor(212, 175, 55);
+      const readinessBarWidth = Math.max(0, Math.min(100, item.readinessPercent || 0)) * 1.6;
+      doc.rect(25, yIndices + 38, readinessBarWidth, 1.5, "F");
+
+      // Mecanismo de Proteção Ativo
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(54, 45, 40);
+      doc.text(`Mecanismo de Proteção Ativo:`, 20, yIndices + 59);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(197, 160, 40);
+      doc.text(String(item.dominantMechanism || "").toUpperCase(), 82, yIndices + 59);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      const mechDesc = "Este é o escudo preferido que o seu subconsciente adota para afastar a dor da rejeição, escassez ou perda de vínculo. Permitir-se observar e desarmar este mecanismo com amorosidade é crucial no processo de integração.";
+      const splitMech = doc.splitTextToSize(mechDesc, 170);
+      doc.text(splitMech, 20, yIndices + 64, { lineHeightFactor: 1.35 });
+
+      // Footer Page 1
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 1 de 3", 190, 282, { align: "right" });
+
+
+      // PAGE 2: AS TRÊS CAMADAS DE FUNCIONAMENTO
+      doc.addPage();
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(197, 160, 40);
+      doc.text("RELATÓRIO DE LEALDADES SISTÊMICAS", 20, 22);
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.3);
+      doc.line(20, 25, 190, 25);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(54, 45, 40);
+      doc.text("3. SUAS TRÊS CAMADAS DE FUNCIONAMENTO", 20, 37);
+
+      // Camada 1: Dominante
+      doc.setFillColor(250, 247, 242);
+      doc.rect(20, 45, 170, 68, "F");
+      doc.setDrawColor(197, 160, 40);
+      doc.setLineWidth(0.5);
+      doc.rect(20, 45, 170, 68, "D");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(197, 160, 40);
+      doc.text("CAMADA 1: PADRÃO PREDOMINANTE (ATIVO)", 25, 52);
+
+      doc.setFontSize(13);
+      doc.setTextColor(54, 45, 40);
+      const domLabel = item.axisDominantDetails?.label || item.dominant || 'Mapeado';
+      doc.text(domLabel, 25, 59);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(80, 80, 80);
+      const domDesc = item.axisDominantDetails?.description || '';
+      const splitDomDesc = doc.splitTextToSize(domDesc, 160);
+      doc.text(splitDomDesc, 25, 65, { lineHeightFactor: 1.35 });
+
+      let yOffset1 = 82;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("MEDO PRIMÁRIO:", 25, yOffset1);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p1_fear = doc.splitTextToSize(item.axisDominantDetails?.fear || '', 125);
+      doc.text(p1_fear, 58, yOffset1);
+
+      let numLines1 = p1_fear.length;
+      yOffset1 += Math.max(5, numLines1 * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("GANHO OCULTO:", 25, yOffset1);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p1_gain = doc.splitTextToSize(item.axisDominantDetails?.gain || '', 125);
+      doc.text(p1_gain, 58, yOffset1);
+
+      let numLines2 = p1_gain.length;
+      yOffset1 += Math.max(5, numLines2 * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("CUSTO OCULTO:", 25, yOffset1);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p1_cost = doc.splitTextToSize(item.axisDominantDetails?.cost || '', 125);
+      doc.text(p1_cost, 58, yOffset1);
+
+
+      // Camada 2: Secundário
+      doc.setFillColor(252, 250, 246);
+      doc.rect(20, 120, 170, 68, "F");
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.4);
+      doc.rect(20, 120, 170, 68, "D");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text("CAMADA 2: PADRÃO SECUNDÁRIO (FUGA)", 25, 127);
+
+      doc.setFontSize(13);
+      doc.setTextColor(54, 45, 40);
+      const secLabel = item.axisSecondaryDetails?.label || item.secondary || 'Mapeado';
+      doc.text(secLabel, 25, 134);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(80, 80, 80);
+      const secDesc = item.axisSecondaryDetails?.description || '';
+      const splitSecDesc = doc.splitTextToSize(secDesc, 160);
+      doc.text(splitSecDesc, 25, 140, { lineHeightFactor: 1.35 });
+
+      let yOffset2 = 157;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("MEDO PRIMÁRIO:", 25, yOffset2);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p2_fear = doc.splitTextToSize(item.axisSecondaryDetails?.fear || '', 125);
+      doc.text(p2_fear, 58, yOffset2);
+
+      let numLinesP2 = p2_fear.length;
+      yOffset2 += Math.max(5, numLinesP2 * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("GANHO OCULTO:", 25, yOffset2);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p2_gain = doc.splitTextToSize(item.axisSecondaryDetails?.gain || '', 125);
+      doc.text(p2_gain, 58, yOffset2);
+
+      let numLinesP2G = p2_gain.length;
+      yOffset2 += Math.max(5, numLinesP2G * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("CUSTO OCULTO:", 25, yOffset2);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p2_cost = doc.splitTextToSize(item.axisSecondaryDetails?.cost || '', 125);
+      doc.text(p2_cost, 58, yOffset2);
+
+
+      // Camada 3: Oculto
+      doc.setFillColor(252, 250, 246);
+      doc.rect(20, 195, 170, 68, "F");
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.4);
+      doc.rect(20, 195, 170, 68, "D");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text("CAMADA 3: PADRÃO OCULTO (INCONSCIENTE)", 25, 202);
+
+      doc.setFontSize(13);
+      doc.setTextColor(54, 45, 40);
+      const hidLabel = item.axisHiddenDetails?.label || item.hidden || 'Mapeado';
+      doc.text(hidLabel, 25, 209);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(80, 80, 80);
+      const hidDesc = item.axisHiddenDetails?.description || '';
+      const splitHidDesc = doc.splitTextToSize(hidDesc, 160);
+      doc.text(splitHidDesc, 25, 215, { lineHeightFactor: 1.35 });
+
+      let yOffset3 = 232;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("MEDO PRIMÁRIO:", 25, yOffset3);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p3_fear = doc.splitTextToSize(item.axisHiddenDetails?.fear || '', 125);
+      doc.text(p3_fear, 58, yOffset3);
+
+      let numLinesP3 = p3_fear.length;
+      yOffset3 += Math.max(5, numLinesP3 * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("GANHO OCULTO:", 25, yOffset3);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p3_gain = doc.splitTextToSize(item.axisHiddenDetails?.gain || '', 125);
+      doc.text(p3_gain, 58, yOffset3);
+
+      let numLinesP3G = p3_gain.length;
+      yOffset3 += Math.max(5, numLinesP3G * 4.3);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(110, 110, 110);
+      doc.text("CUSTO OCULTO:", 25, yOffset3);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      const p3_cost = doc.splitTextToSize(item.axisHiddenDetails?.cost || '', 125);
+      doc.text(p3_cost, 58, yOffset3);
+
+      // Footer Page 2
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 2 de 3", 190, 282, { align: "right" });
+
+
+      // PAGE 3: LEITURA TERAPÊUTICA & DIRETRIZES
+      doc.addPage();
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(197, 160, 40);
+      doc.text("RELATÓRIO DE LEALDADES SISTÊMICAS", 20, 22);
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.3);
+      doc.line(20, 25, 190, 25);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(54, 45, 40);
+      doc.text("4. LEITURA TERAPÊUTICA & DIREÇÃO", 20, 37);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("FRASE INCONSCIENTE ATIVA:", 20, 47);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(12.5);
+      doc.setTextColor(197, 160, 40);
+      const uncPhrase = item.axisDominantDetails?.unconsciousPhrase || item.axisDominantDetails?.phrase || '';
+      const splitUnc = doc.splitTextToSize(`"${uncPhrase}"`, 170);
+      doc.text(splitUnc, 20, 53, { lineHeightFactor: 1.35 });
+
+      let ySec4 = 55 + (splitUnc.length * 6);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("MOVIMENTO DE REPOSICIONAMENTO:", 20, ySec4);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10.5);
+      doc.setTextColor(70, 70, 70);
+      const repoMove = item.axisDominantDetails?.repositioningMovement || item.axisDominantDetails?.liberation || '';
+      const splitRepo = doc.splitTextToSize(repoMove, 170);
+      doc.text(splitRepo, 20, ySec4 + 6, { lineHeightFactor: 1.35 });
+
+      let yReflexive = ySec4 + 10 + (splitRepo.length * 6);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("PERGUNTA REFLEXIVA SISTÊMICA:", 20, yReflexive);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      doc.setTextColor(180, 80, 80);
+      const refQues = item.axisDominantDetails?.reflexiveQuestion || "A quem estou tentando proteger com essa conduta?";
+      const splitRef = doc.splitTextToSize(`"${refQues}"`, 170);
+      doc.text(splitRef, 20, yReflexive + 6, { lineHeightFactor: 1.35 });
+
+      // Seção 5: Prática Recomendada
+      let ySec5 = yReflexive + 12 + (splitRef.length * 6);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("5. DIRETRIZ E PRÁTICA INTEGRATIVA (7 DIAS)", 20, ySec5);
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.3);
+      doc.line(20, ySec5 + 3, 190, ySec5 + 3);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(54, 45, 40);
+      const practiceName = item.axisDominantDetails?.dayPractice?.name || "Prática Diária de Equilíbrio";
+      doc.text(practiceName, 20, ySec5 + 11);
+
+      let yStep = ySec5 + 18;
+      const steps = item.axisDominantDetails?.dayPractice?.steps || [item.axisDominantDetails?.practice];
+      steps.filter(Boolean).forEach((stepText: string, idx: number) => {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(212, 175, 55);
+        doc.text(`${idx + 1}.`, 20, yStep);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(70, 70, 70);
+        doc.setFontSize(9.5);
+        const splitStepText = doc.splitTextToSize(stepText, 160);
+        doc.text(splitStepText, 26, yStep, { lineHeightFactor: 1.3 });
+        yStep += Math.max(6, splitStepText.length * 4.8);
+      });
+
+      // Footer Page 3
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 3 de 3", 190, 282, { align: "right" });
+
+      doc.save(`Lealdades_Sistemicas_${userName.replace(/\s+/g, '_')}.pdf`);
     } else {
       const item = itemOrFormula;
       doc.setFont("helvetica", "bold");

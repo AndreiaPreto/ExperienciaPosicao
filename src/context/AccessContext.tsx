@@ -25,9 +25,15 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [access, setAccess] = useState<UserAccess | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchAccess = async (uid?: string) => {
+  const fetchAccess = async (uid?: string, email?: string) => {
     try {
-      const url = uid ? `/api/user-access?uid=${uid}` : '/api/user-access';
+      let url = '/api/user-access';
+      if (uid) {
+        url = `/api/user-access?uid=${uid}`;
+        if (email) {
+          url += `&email=${encodeURIComponent(email)}`;
+        }
+      }
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -67,12 +73,12 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (user) {
         // Initial fetch
-        fetchAccess(user.uid);
+        fetchAccess(user.uid, user.email || undefined);
 
         // Listen in real-time to users collection
         try {
           unsubscribeUsers = onSnapshot(doc(db, 'users', user.uid), () => {
-            fetchAccess(user.uid);
+            fetchAccess(user.uid, user.email || undefined);
           }, (err) => {
             console.error("Error listening to users collection changes in AccessContext:", err);
           });
@@ -83,7 +89,7 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Listen in real-time to user_access collection
         try {
           unsubscribeUserAccess = onSnapshot(doc(db, 'user_access', user.uid), () => {
-            fetchAccess(user.uid);
+            fetchAccess(user.uid, user.email || undefined);
           }, (err) => {
             console.error("Error listening to user_access collection changes in AccessContext:", err);
           });
@@ -109,7 +115,7 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <AccessContext.Provider value={{ access, loading, refreshAccess: (uid?: string) => fetchAccess(uid || auth.currentUser?.uid), simulatePurchase }}>
+    <AccessContext.Provider value={{ access, loading, refreshAccess: (uid?: string) => fetchAccess(uid || auth.currentUser?.uid, auth.currentUser?.email || undefined), simulatePurchase }}>
       {children}
     </AccessContext.Provider>
   );

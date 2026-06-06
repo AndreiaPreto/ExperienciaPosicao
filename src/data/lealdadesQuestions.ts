@@ -423,7 +423,7 @@ export const axisData: { [key: string]: AxisDetail } = {
     archetype: "Mártir Amoroso",
     phrase: "Se eu não fizer por todos, talvez ninguém fique.",
     liberation: "Meu amor não precisa custar a minha vida.",
-    practice: "Durante 7 dias, escolha uma ação diária que cuide de você antes de tentar sustentar todos ao seu redor.",
+    practice: "Durante 7 dias, choose uma ação diária que cuide de você antes de tentar sustentar todos ao seu redor.",
     description: "A tendência inconsciente de carregar o peso do mundo e tentar suprir a dor de todos ao redor, medindo o próprio valor pelo esforço e exaustão acumulados.",
     unconsciousPhrase: "Se eu não sofrer e carregar o peso por vocês, eu não mereço ser amada.",
     repositioningMovement: "O meu amor e a minha presença não precisam custar a minha saúde ou a minha própria vida.",
@@ -499,13 +499,13 @@ export const axisData: { [key: string]: AxisDetail } = {
     label: "Escassez",
     fear: "Se eu relaxar, algo pode faltar ou desmoronar.",
     gain: "Sensação de controle, preparo e autoproteção.",
-    cost: "Ansiedade, tensão e dificuldade de confiar.",
+    cost: "Ansiedade, tolerância e dificuldade de confiar.",
     mechanism: "Hipervigilância de sobrevivência.",
     archetype: "Sobrevivente Estratégico",
     phrase: "Eu preciso estar sempre pronta para perder.",
     liberation: "Eu posso construir segurança sem viver em guerra.",
-    practice: "Durante 7 dias, observe pensamentos de falta. Antes de agir por medo, pergunte: existe uma escolha mais segura e menos desesperada?",
-    description: "O alerta crônico inconsciente que associa o sucesso e o afeto a recursos terrivelmente escassos que podem desaparecer de forma súbita, impedindo o usufruto da estabilidade.",
+    practice: "Durante 7 dias, observe simples pensamentos de falta. Antes de agir por medo, pergunte: existe uma escolha mais segura e menos desesperada?",
+    description: "O alerta crônico inconsciente que associa o sucesso e o afeto a recursos terrivelmente escassos que podem desaparecer de forma curta, impedindo o usufruto da estabilidade.",
     unconsciousPhrase: "A abundância é instável e passageira; se eu me descuidar ou relaxar, a ruína chegará.",
     repositioningMovement: "Eu posso suavizar meu estado de vigilância, confiar na fertilidade da vida e receber o fluxo da fartura.",
     reflexiveQuestion: "Qual dor de escassez, perda material ou fome no passado da minha família gerou essa hipervigilância?",
@@ -591,29 +591,88 @@ export const getProfile = (dominant: string, secondary: string) => {
   const pair = [dominant, secondary].sort().join("+");
 
   const profiles: { [key: string]: { name: string; description: string } } = {
+    // ── Perfis originais ──
     "pertencimento+sacrificio": {
       name: "Guardião Sobrecarregado",
-      description: "Você pode ter aprendido a proteger vínculos assumindo responsabilidades excessivas."
+      description: "Você pode ter aprendido a proteger vínculos assumindo responsabilidades excessivas. Cuidar dos outros tornou-se a forma mais segura de garantir que você continua pertencendo."
     },
     "escassez+invisibilidade": {
       name: "Sobrevivente Vigilante",
-      description: "Você pode ter desenvolvido estratégias de proteção baseadas em alerta, cauteloso e discrição."
+      description: "Você pode ter desenvolvido estratégias de proteção baseadas em alerta constante e discrição. Permanecer invisível pareceu, em algum momento, mais seguro do que aparecer e arriscar."
     },
     "compensacao+culpa": {
       name: "Reparador Sistêmico",
-      description: "Você pode estar tentando equilibrar histórias, dores ou responsabilidades que não começaram em você."
+      description: "Você pode estar tentando equilibrar histórias, dores ou responsabilidades que não começaram em você. Carregar o peso do clã virou uma forma de se sentir útil e pertencente."
     },
     "invisibilidade+pertencimento": {
       name: "Invisível Estratégico",
-      description: "Você pode ter aprendido que a discrição ajuda a manter segurança, aceitação e vínculo."
+      description: "Você pode ter aprendido que a discrição ajuda a manter segurança, aceitação e vínculo. Não aparecer demais tornou-se uma estratégia inconsciente de sobrevivência relacional."
     },
     "culpa+poderPessoal": {
       name: "Soberano Adiado",
-      description: "Você reconhece seu potencial, mas pode sentir culpa ou medo ao ocupar plenamente o seu lugar."
+      description: "Você reconhece seu potencial, mas pode sentir culpa ou medo ao ocupar plenamente o seu lugar. A autorização para crescer ainda parece depender de algo ou alguém fora de você."
     },
     "escassez+poderPessoal": {
       name: "Construtor Resiliente",
-      description: "Você possui força de realização, mas pode agir a partir da sobrevivência mais do que da confiança."
+      description: "Você possui força de realização, mas pode agir a partir da sobrevivência mais do que da confiança. Seu power pessoal existe — mas ainda espera por uma segurança que talvez nunca chegue do lado de fora."
+    },
+
+    // ── Perfis expandidos — 15 combinações adicionais ──
+    "culpa+pertencimento": {
+      name: "Devedor do Clã",
+      description: "Você pode carregar a crença de que crescer, prosperar ou se diferenciar representa uma traição àqueles que ama. Pertencer parece exigir que você não ultrapasse certos limites invisíveis do seu sistema familiar."
+    },
+    "compensacao+pertencimento": {
+      name: "Guardião Sistêmico",
+      description: "Você pode sentir que sua função no sistema é manter o equilíbrio e reparar o que ficou incompleto. Pertencer e compensar estão tão entrelaçados que separar o que é seu do que é herdado pode parecer impossível."
+    },
+    "escassez+pertencimento": {
+      name: "Sobrevivente Vinculado",
+      description: "Você pode ter aprendido que recursos — tempo, dinheiro, amor — são escassos e que manter vínculos é a única forma segura de garantir que você não ficará sozinha. O medo de faltar e o medo de ser excluída caminham juntos."
+    },
+    "pertencimento+poderPessoal": {
+      name: "Líder Silenciosa",
+      description: "Você possui clareza e força interior, mas pode conter seu poder para não ameaçar os vínculos que importam. Liderar ou se destacar ainda parece carregar o risco de perder o lugar onde você pertence."
+    },
+    "culpa+sacrificio": {
+      name: "Mártir Consciente",
+      description: "Você pode se sobrecarregar pelos outros e ao mesmo tempo sentir culpa por querer mais para si. Descansar, receber ou prosperar parece sempre exigir que você pague algum preço antes — como se o merecimento precisasse ser justificado pelo esforço."
+    },
+    "compensacao+sacrificio": {
+      name: "Reparador Sobrecarregado",
+      description: "Você pode estar carregando tanto as histórias do passado quanto as necessidades do presente. A sensação de que precisa resolver o que ficou quebrado antes de mim, enquanto ainda sustenta tudo ao redor, cria um peso quase impossível de nomear."
+    },
+    "invisibilidade+sacrificio": {
+      name: "Cuidadora Silenciosa",
+      description: "Você pode dedicar-se profundamente aos outros enquanto permanece discreta sobre suas próprias necessidades. Aparecer parece perigoso, mas desaparecer enquanto cuida tornou-se uma forma de existir sem ocupar espaço demais."
+    },
+    "poderPessoal+sacrificio": {
+      name: "Força Contida",
+      description: "Você pode possuir grande capacidade de realização, mas subordiná-la às necessidades alheias parece mais seguro do que assumir plenamente o leme da própria vida. Sua força existe — mas ainda aguarda permissão para se manifestar sem custo relacional."
+    },
+    "culpa+escassez": {
+      name: "Merecedora Bloqueada",
+      description: "Você pode sentir que a abundância é instável e que receber mais do que os outros é uma forma de trair ou abandonar quem ficou para trás. Prosperar com leveza ainda parece um privilégio que você não se autorizou plenamente."
+    },
+    "culpa+invisibilidade": {
+      name: "Brilho Suspenso",
+      description: "Você pode diminuir suas conquistas e conter seu brilho para não provocar inveja, comparação ou rejeição. Aparecer com tudo que você é ainda carrega o peso de uma culpa antiga — como se ocupar espaço de destaque fosse, de alguma forma, errado."
+    },
+    "compensacao+escassez": {
+      name: "Guardião da Falta",
+      description: "Você pode carregar tanto histórias de escassez herdadas quanto a missão de reparar faltas do passado. A hipervigilância sobre o que pode faltar e a sensação de responsabilidade pelas carências do clã criam um estado de alerta permanente difícil de soltar."
+    },
+    "compensacao+invisibilidade": {
+      name: "Reparador Discreto",
+      description: "Você pode trabalhar silenciosamente para equilibrar dores e injustiças do seu sistema, sem jamais reivindicar reconhecimento por isso. Permanecer invisível enquanto repara parece mais seguro do que ser vista — e talvez cobrada — pelo esforço."
+    },
+    "compensacao+poderPessoal": {
+      name: "Herdeiro Travado",
+      description: "Você pode sentir que possui um propósito importante, mas que assumir plenamente sua força significaria deixar para trás algo ou alguém que ainda precisa de você. Crescer parece trair uma missão sistêmica que você nunca escolheu conscientemente, mas carrega com lealdade."
+    },
+    "invisibilidade+poderPessoal": {
+      name: "Soberana Oculta",
+      description: "Você pode possuir grande poder interior, mas mantê-lo discreto parece mais seguro do que trazê-lo à luz. Aparecer com autoridade ainda carrega o risco imaginado de ser julgada, atacada ou de perder o vínculo com quem prefere você menor."
     }
   };
 

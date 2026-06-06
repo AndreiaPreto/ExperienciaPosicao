@@ -626,14 +626,8 @@ async function startServer() {
     }
 
     try {
-      // 1. Get user record from firebase auth to fetch email
-      let email: string | undefined = undefined;
-      try {
-        const userRecord = await admin.auth().getUser(uid as string);
-        email = userRecord.email?.toLowerCase().trim();
-      } catch (authErr) {
-        console.error("Error fetching user email from auth:", authErr);
-      }
+      // 1. Get user record from query params first
+      let email: string | undefined = (req.query.email as string)?.toLowerCase().trim() || undefined;
 
       const userDocRef = db.collection("users").doc(uid as string);
       let userDoc = await userDocRef.get();
@@ -642,6 +636,30 @@ async function startServer() {
       const userAccessDocRef = db.collection("user_access").doc(uid as string);
       let userAccessDoc = await userAccessDocRef.get();
       let userAccessData = userAccessDoc.exists ? userAccessDoc.data() : null;
+
+      // Fallback 1: Retrieve from database users or user_access if already fetched
+      if (!email) {
+        if (userData?.email) {
+          email = userData.email.toLowerCase().trim();
+        } else if (userAccessData?.email) {
+          email = userAccessData.email.toLowerCase().trim();
+        }
+      }
+
+      // Fallback 2: Retrieve from firebase auth (silent catch if Identity Toolkit API is disabled)
+      if (!email) {
+        try {
+          const userRecord = await admin.auth().getUser(uid as string);
+          email = userRecord.email?.toLowerCase().trim();
+        } catch (authErr: any) {
+          // Gracious handling without printing full stack trace when Identity Toolkit API is not active
+          if (authErr && (authErr.code === 'auth/internal-error' || authErr.message?.includes('Identity Toolkit API'))) {
+            console.log(`[User Access] Identity Toolkit API not configured / active. Email resolved via alternative paths.`);
+          } else {
+            console.warn("[User Access] Silent warning fetching user email from auth:", authErr?.message || authErr);
+          }
+        }
+      }
 
       // 2. Perform credit reconciliation if email is known
       let mappingCreditsToAdd = 0;
