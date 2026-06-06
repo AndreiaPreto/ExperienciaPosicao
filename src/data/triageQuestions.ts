@@ -1,137 +1,122 @@
+// triageQuestions.ts — versão 2.0
+// Quiz de triagem com 10 perguntas cobrindo dimensões distintas
+// Cada pergunta investiga uma dimensão diferente para identificar o produto mais adequado
+// Mapeamento de produtos:
+//   A → Diagnostico de Posição (diagnostico_info)
+//   B → Mapeamento de Lealdades (lealdades_intro)
+//   C → Mapa Floral (mapeamento_intro)
+//   D → Reset de Posição (reprogramacao_pessoal_info)
+//   E → Clube Posição (clube_posicao_info)
+
 export const triageQuestions = [
   {
-    q: "Nos últimos dias, como você tem se sentido com mais frequência?",
+    // Dimensão 1: Onde está o peso principal agora
+    q: "Onde você sente que o peso maior está concentrado agora?",
     a: [
-      "Confusa e dispersa",
-      "Sobrecarregada emocionalmente",
-      "Buscando respostas externas",
-      "Travada sem saber por onde começar"
+      "Na minha cabeça — não consigo parar de pensar e analisar",
+      "Nas minhas origens e relações — sinto que carrego algo que não é só meu",
+      "No meu corpo e nas minhas emoções — me sinto fisicamente pesada ou bloqueada",
+      "Em algo específico que aconteceu — tenho uma ferida emocional recente",
+      "No dia a dia — me sinto perdida sem saber o que priorizar",
     ]
   },
   {
-    q: "O que é que mais tem incomodado você atualmente?",
+    // Dimensão 2: Profundidade / origem do padrão
+    q: "Quando você pensa na origem do que está vivendo, o que ressoa mais?",
     a: [
-      "Falta de clareza",
-      "Cansaço emocional",
-      "Dúvidas sobre o caminho",
-      "Sensação de estagnação"
+      "É algo sobre quem eu sou — não entendo bem meu propósito ou padrão",
+      "Vem de longe — família, infância, repetições que eu não escolhi",
+      "Parece um bloqueio energético — algo que não flui mesmo quando me esforço",
+      "Foi algo recente — uma situação me desequilibrou e eu ainda não me reorganizei",
+      "É uma soma de tudo — preciso de acompanhamento contínuo para manter o equilíbrio",
     ]
   },
   {
-    q: "Quando algo não sai como você esperava, qual sua reação?",
+    // Dimensão 3: Tipo de solução desejada
+    q: "O que você mais quer ao final de uma experiência de autoconhecimento?",
     a: [
-      "Tenta entender mentalmente",
-      "Se sente afetada emocionalmente",
-      "Procura orientação",
-      "Evita lidar no momento"
+      "Um relatório claro sobre quem eu sou e por onde devo começar",
+      "Entender os vínculos e lealdades invisíveis que estão me travando",
+      "Uma fórmula ou recurso prático que eu possa usar no meu dia a dia",
+      "Me reorganizar internamente — soltar padrões e começar de novo",
+      "Orientação contínua — quero ter suporte e espaço de clareza regularmente",
     ]
   },
   {
-    q: "Neste momento, você sente que está:",
+    // Dimensão 4: Tentativas anteriores
+    q: "Você já tentou resolver o que está vivendo antes. O que aconteceu?",
     a: [
-      "Perdida",
-      "Sobrecarregada",
-      "Buscando respostas",
-      "Precisando se reorganizar"
+      "Nunca parei para investigar de forma profunda — essa seria a primeira vez",
+      "Fiz terapia, constelação ou algo parecido — sinto que há camadas que ainda não resolvi",
+      "Tentei mas sinto que preciso de algo mais corporal ou energético",
+      "Resolvi parcialmente — mas voltou ou apareceu de forma diferente",
+      "Já investi em processos — quero agora manter o que conquistei",
     ]
   },
   {
-    q: "Como você descreveria suas decisões hoje?",
+    // Dimensão 5: Área de vida mais afetada
+    q: "Qual área da sua vida está pedindo mais atenção agora?",
     a: [
-      "Confusas",
-      "Impulsivas",
-      "Dependentes de validação",
-      "Evitadas"
+      "Minha identidade — não sei quem sou ou o que realmente quero",
+      "Relacionamentos e família — há tensão, culpa ou padrões repetidos nas minhas relações",
+      "Saúde, energia e bem-estar — me sinto física ou emocionalmente esgotada",
+      "Autoestima e confiança — me saboto ou me sinto pouco merecedora",
+      "Propósito e vida cotidiana — quero clareza sobre meu caminho de forma sustentada",
     ]
   },
   {
-    q: "Quando você precisa tomar uma decisão, o que acontece?",
+    // Dimensão 6: Comportamento predominante sob pressão
+    q: "Quando algo te pressiona, qual é a sua resposta mais frequente?",
     a: [
-      "Procrastina",
-      "Age e depois repensa",
-      "Pergunta para alguém",
-      "Fica paralisada"
+      "Fico na cabeça — analiso, procrastino e não sei por onde começar",
+      "Assumo responsabilidades que não são minhas ou me calo para não conflitar",
+      "Meu corpo reage — fico tensa, com sono, cansaço ou sintomas físicos",
+      "Fico impulsiva ou reativamente emocional — e depois me arrependo",
+      "Me cobro muito — e me sinto sozinha no processo de resolver",
     ]
   },
   {
-    q: "Qual você sente que é seu maior desafio hoje?",
+    // Dimensão 7: Relação com herança e família
+    q: "Como você descreve a influência da sua família ou origem na sua vida hoje?",
     a: [
-      "Mental",
-      "Emocional",
-      "Energético",
-      "Estrutural"
+      "Pouco relevante agora — minha questão é mais sobre mim mesma e meu presente",
+      "Muito relevante — sinto que repito padrões ou cargo algo da minha história",
+      "Sinto no corpo — minha herança aparece como tensão, bloqueio ou sintoma físico",
+      "Causou uma ferida específica — que ainda me afeta mesmo que eu já saiba disso",
+      "Já trabalhei isso — agora quero sustentar minha trajetória com apoio regular",
     ]
   },
   {
-    q: "O que você mais gostaria de alcançar agora?",
+    // Dimensão 8: Urgência e tempo
+    q: "Como você descreveria a urgência do que está vivendo?",
     a: [
-      "Clarear a mente",
-      "Se sentir mais leve",
-      "Receber respostas",
-      "Ter direção"
+      "Não é urgente — mas sinto que preciso de um ponto de partida claro",
+      "É crônico — esse padrão está há anos e quero entender a raiz",
+      "É imediato — preciso de algo que me ajude agora, de forma rápida e prática",
+      "É uma crise recente — algo me desequilibrou e preciso me reorganizar",
+      "É uma manutenção — quero suporte constante para não perder o rumo",
     ]
   },
   {
-    q: "Qual é o seu padrão mais repetido no momento?",
+    // Dimensão 9: Relação com o próprio corpo e emoção
+    q: "Como você se relaciona com suas emoções e sensações físicas atualmente?",
     a: [
-      "Confusão",
-      "Sobrecarga",
-      "Busca externa",
-      "Travamento"
+      "Prefiro entender antes de sentir — processo mais pela mente",
+      "Sinto muito, mas não sei de onde vem — parece maior do que eu",
+      "Tenho sintomas físicos claros — tensão, ansiedade no corpo, falta de energia",
+      "Estou em processo de cura — algo me feriu e estou me reorganizando",
+      "Alterno bastante — preciso de um espaço seguro e contínuo para isso",
     ]
   },
   {
-    q: "Em qual área você sente mais dificuldade hoje?",
+    // Dimensão 10: Intenção central
+    q: "Qual dessas frases descreve melhor a sua intenção agora?",
     a: [
-      "Entender o que está acontecendo",
-      "Lidar com emoções",
-      "Confiar em si",
-      "Agir"
+      "\"Quero entender quem eu sou e qual é o meu padrão central\"",
+      "\"Quero descobrir o que herdei e o que é realmente meu\"",
+      "\"Quero me sentir mais leve, equilibrada e com mais energia\"",
+      "\"Quero me reorganizar depois de algo que me desestabilizou\"",
+      "\"Quero ter um espaço de orientação e acompanhamento contínuo\"",
     ]
   },
-  {
-    q: "Quando você pensa no futuro, qual sentimento predomina?",
-    a: [
-      "Dúvida",
-      "Ansiedade",
-      "Curiosidade",
-      "Insegurança"
-    ]
-  },
-  {
-    q: "Como você se sente em relação ao seu estado atual?",
-    a: [
-      "Mentalmente cansada",
-      "Emocionalmente sobrecarregada",
-      "Buscando direcionamento",
-      "Sem ação"
-    ]
-  },
-  {
-    q: "O que você sente que mais precisa neste exato momento?",
-    a: [
-      "Clareza",
-      "Alívio",
-      "Resposta",
-      "Estrutura"
-    ]
-  },
-  {
-    q: "Em relação ao seu dia a dia, você sente que está:",
-    a: [
-      "Pensando demais",
-      "Sentindo demais",
-      "Buscando demais",
-      "Fazendo de menos"
-    ]
-  },
-  {
-    q: "Se você pudesse resolver algo hoje, o que seria?",
-    a: [
-      "Entender melhor sua situação",
-      "Se sentir mais leve",
-      "Ter uma resposta clara",
-      "Saber exatamente o que fazer"
-    ]
-  }
 ];

@@ -112,8 +112,89 @@ function buildSafeDb(unwrappedDb: any, forceFallback: boolean = false) {
   if (forceFallback) {
     isUsingInMemoryFallback = true;
   }
+
+  function buildSafeQuery(colName: string, unwrappedQuery: any, filters: Array<{ field: string, op: string, val: any }> = []): any {
+    return {
+      where: (field: string, op: string, val: any) => {
+        const nextFilters = [...filters, { field, op, val }];
+        const nextUnwrapped = unwrappedQuery ? unwrappedQuery.where(field, op, val) : null;
+        return buildSafeQuery(colName, nextUnwrapped, nextFilters);
+      },
+      get: async () => {
+        if (isUsingInMemoryFallback) {
+          const colStore = inMemoryStore[colName] || {};
+          const docs = Object.entries(colStore)
+            .filter(([id, data]: [string, any]) => {
+              return filters.every(f => {
+                const itemVal = data[f.field];
+                if (f.op === '==') return itemVal === f.val;
+                if (f.op === '!=') return itemVal !== f.val;
+                if (f.op === '>') return itemVal > f.val;
+                if (f.op === '>=') return itemVal >= f.val;
+                if (f.op === '<') return itemVal < f.val;
+                if (f.op === '<=') return itemVal <= f.val;
+                if (f.op === 'array-contains') return Array.isArray(itemVal) && itemVal.includes(f.val);
+                if (f.op === 'in') return Array.isArray(f.val) && f.val.includes(itemVal);
+                return true;
+              });
+            })
+            .map(([id, data]) => ({
+              id,
+              ref: {
+                delete: async () => {
+                  if (inMemoryStore[colName]) {
+                    delete inMemoryStore[colName][id];
+                  }
+                }
+              },
+              data: () => data
+            }));
+          return { docs };
+        }
+        try {
+          return await unwrappedQuery.get();
+        } catch (err: any) {
+          if (err && (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.status === 7 || String(err).includes("PERMISSION_DENIED"))) {
+            console.warn(`⚠️ [SafeDB] PERMISSION_DENIED on query ${colName} with filters. Falling back to InMemory DB.`);
+            isUsingInMemoryFallback = true;
+            const colStore = inMemoryStore[colName] || {};
+            const docs = Object.entries(colStore)
+              .filter(([id, data]: [string, any]) => {
+                return filters.every(f => {
+                  const itemVal = data[f.field];
+                  if (f.op === '==') return itemVal === f.val;
+                  if (f.op === '!=') return itemVal !== f.val;
+                  if (f.op === '>') return itemVal > f.val;
+                  if (f.op === '>=') return itemVal >= f.val;
+                  if (f.op === '<') return itemVal < f.val;
+                  if (f.op === '<=') return itemVal <= f.val;
+                  if (f.op === 'array-contains') return Array.isArray(itemVal) && itemVal.includes(f.val);
+                  if (f.op === 'in') return Array.isArray(f.val) && f.val.includes(itemVal);
+                  return true;
+                });
+              })
+              .map(([id, data]) => ({
+                id,
+                ref: {
+                  delete: async () => {
+                    if (inMemoryStore[colName]) {
+                      delete inMemoryStore[colName][id];
+                    }
+                  }
+                },
+                data: () => data
+              }));
+            return { docs };
+          }
+          throw err;
+        }
+      }
+    };
+  }
+
   return {
     collection: (colName: string) => {
+      const colRef = unwrappedDb ? unwrappedDb.collection(colName) : null;
       return {
         doc: (docId: string) => {
           return {
@@ -178,6 +259,9 @@ function buildSafeDb(unwrappedDb: any, forceFallback: boolean = false) {
               }
             }
           };
+        },
+        where: (field: string, op: string, val: any) => {
+          return buildSafeQuery(colName, colRef, []).where(field, op, val);
         },
         get: async () => {
           if (isUsingInMemoryFallback) {

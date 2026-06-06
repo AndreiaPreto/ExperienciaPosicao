@@ -662,7 +662,7 @@ const AdminProductsTab = () => (
       {[
         { name: 'Diagnóstico de Posição', price: 'Gratuito/R$ 21', sales: 1240, status: 'Ativo' },
         { name: 'Mapa de Posição: Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
-        { name: 'Mapeamento de Lealdades', price: 'R$ 33', sales: 184, status: 'Ativo' },
+        { name: 'Mapeamento de Lealdades Ocultas', price: 'R$ 33', sales: 184, status: 'Ativo' },
         { name: 'Reset de Posição', price: 'R$ 129', sales: 157, status: 'Ativo' },
         { name: 'Clube Posição: Núcleo Tarô', price: 'R$ 117/mês', sales: 156, status: 'Ativo' },
         { name: 'Clube Posição: Núcleo Clarear', price: 'R$ 47/mês', sales: 89, status: 'Ativo' },
@@ -2107,6 +2107,17 @@ const msgCartao = (produto: string, preco: string) =>
 const Diagnostico = () => {
   const { access, refreshAccess } = useAccess();
   const [page, setPage] = useState<Page>('home');
+  const [pageHistory, setPageHistory] = useState<Page[]>([]);
+
+  const goBack = () => {
+    if (pageHistory.length > 0) {
+      const prev = pageHistory[pageHistory.length - 1];
+      setPageHistory(prevList => prevList.slice(0, -1));
+      setPage(prev);
+    } else {
+      setPage('home');
+    }
+  };
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArcanoInSearch, setSelectedArcanoInSearch] = useState<ArcanoData | null>(null);
@@ -2604,8 +2615,8 @@ const Diagnostico = () => {
 
   const getTreatmentLabel = (item: any) => {
     if (!item) return 'Mapeamento';
-    if (item.type === 'lealdades_ocultas') return 'Mapeamento de Lealdades';
-    if (item.type === 'diagnostico_posicional') return 'Diagnóstico de Posicionamento';
+    if (item.type === 'lealdades_ocultas') return 'Mapeamento de Lealdades Ocultas';
+    if (item.type === 'diagnostico_posicional') return 'Diagnóstico de Posição';
     return 'Mapeamento Floral';
   };
 
@@ -3035,6 +3046,19 @@ const Diagnostico = () => {
   const generatePrescriptionPDF = (userName: string, itemOrFormula: any, documentType?: 'mapeamento_floral' | 'lealdades_ocultas' | 'diagnostico_posicional') => {
     const doc = new jsPDF();
     
+    // Helper para limpar emojis, aspas especiais e caracteres incompatíveis com o jsPDF Helvetica
+    const cleanPDFText = (txt: string): string => {
+      if (!txt) return '';
+      return txt
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/–/g, '-')
+        .replace(/—/g, '-')
+        .replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]/g, '') // remove emojis
+        .replace(/[^\x00-\x7F\u00C0-\u00FF]/g, '') // apenas caracteres ASCII + acentos em português compatíveis com WinAnsi
+        .trim();
+    };
+
     // Determine type
     const type = documentType || (itemOrFormula && typeof itemOrFormula === 'object' ? itemOrFormula.type : 'mapeamento_floral');
     
@@ -3055,7 +3079,7 @@ const Diagnostico = () => {
       doc.setFontSize(12);
       doc.setTextColor(60, 60, 60);
       
-      doc.text(`Cliente: ${userName}`, 20, 70);
+      doc.text(`Cliente: ${cleanPDFText(userName)}`, 20, 70);
       doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 80);
       
       doc.setFont("helvetica", "bold");
@@ -3063,7 +3087,7 @@ const Diagnostico = () => {
       
       doc.setFont("helvetica", "italic");
       doc.setFontSize(14);
-      doc.text(formula, 20, 115, { maxWidth: 170 });
+      doc.text(cleanPDFText(formula), 20, 115, { maxWidth: 170 });
       
       doc.setFontSize(10);
       doc.setTextColor(150, 150, 150);
@@ -3106,7 +3130,7 @@ const Diagnostico = () => {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(70, 70, 70);
-      doc.text(`Nome: ${userName}`, 25, 67);
+      doc.text(`Nome: ${cleanPDFText(userName)}`, 25, 67);
       doc.text(`Data do Diagnóstico: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 25, 73);
 
       // Seção 1: Seu Perfil de Posição
@@ -3122,13 +3146,13 @@ const Diagnostico = () => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(54, 45, 40);
-      doc.text(item.profile?.name || item.profileName || 'Caminhante em Reposicionamento', 20, 104);
+      doc.text(cleanPDFText(item.profile?.name || item.profileName || 'Caminhante em Reposicionamento'), 20, 104);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       const profileDesc = item.profile?.description || 'A sua jornada sistêmica revela uma combinação singular de sabedoria e desafios nos seus relacionamentos familiares e profissionais.';
-      const splitDesc = doc.splitTextToSize(profileDesc, 170);
+      const splitDesc = doc.splitTextToSize(cleanPDFText(profileDesc), 170);
       doc.text(splitDesc, 20, 111, { lineHeightFactor: 1.4 });
 
       // Seção 2: Índices Sistêmicos & Força de Mudança
@@ -3498,57 +3522,355 @@ const Diagnostico = () => {
       doc.save(`Lealdades_Sistemicas_${userName.replace(/\s+/g, '_')}.pdf`);
     } else {
       const item = itemOrFormula;
+      const archetype = item.archetype || item.emocao || 'Louco';
+      const mainArcano = ARCANOS_MATRIZ.find(a => a.arcano.toLowerCase() === archetype.toLowerCase()) || ARCANOS_MATRIZ[0];
+      const top3: string[] = item.top3Arcanos && item.top3Arcanos.length >= 3 
+        ? item.top3Arcanos 
+        : [mainArcano.arcano, 'Sacerdotisa', 'Imperatriz']; // fallback representative triad
+
+      // PAGE 1: HEADER & DOMINANT ARCHETYPE
+      doc.setFillColor(252, 250, 246);
+      doc.rect(0, 0, 210, 297, "F");
+
+      // Draw elegant gold accent bands
+      doc.setFillColor(197, 160, 40);
+      doc.rect(0, 0, 210, 5, "F");
+
+      // Title header
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(212, 175, 55);
-      doc.text("DIAGNÓSTICO DE POSICIONAMENTO SISTÊMICO", 105, 35, { align: "center" });
-      
-      doc.setDrawColor(212, 175, 55);
-      doc.setLineWidth(0.5);
-      doc.line(20, 40, 190, 40);
-      
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
-      
-      doc.text(`Cliente: ${userName}`, 20, 55);
-      doc.text(`Data: ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}`, 20, 63);
-      doc.text(`Arquétipo Dominante: ${item.archetype || item.emocao || ''}`, 20, 71);
-      
-      let y = 85;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(212, 175, 55);
-      doc.text("Diretrizes de Alinhamento e Florais:", 20, y);
-      y += 8;
+      doc.setTextColor(197, 160, 40);
+      doc.text("DIAGNÓSTICO DE POSIÇÃO", 105, 22, { align: "center" });
       
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(60, 60, 60);
-      doc.text(`Ferida Sistêmica Ativa: ${item.ferida || 'Identificada'}`, 20, y);
-      y += 6;
-      doc.text(`Fórmula Floral Recomendada: ${item.florais || 'Não especificada'}`, 20, y);
-      y += 6;
-      doc.text(`Direção de Equilíbrio: ${item.direcao || 'Siga seu posicionamento saudável'}`, 20, y);
-      y += 12;
+      doc.setFontSize(14);
+      doc.setTextColor(54, 45, 40);
+      doc.text("DIAGNÓSTICO DE POSIÇÃO", 105, 30, { align: "center" });
+
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.4);
+      doc.line(20, 36, 190, 36);
+
+      // Customer credentials box
+      doc.setFillColor(242, 238, 230);
+      doc.rect(20, 42, 170, 24, "F");
       
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(212, 175, 55);
-      doc.text("Afirmação e Reprogramação:", 20, y);
-      y += 8;
-      
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("CLIENTE:", 25, 49);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(54, 45, 40);
+      doc.text(cleanPDFText(userName), 45, 49);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("DATA:", 25, 59);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(54, 45, 40);
+      const dataStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+      doc.text(dataStr, 45, 59);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text("MÉTODO:", 120, 49);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(54, 45, 40);
+      doc.text("Diagnóstico de Posição", 140, 49);
+
+      // Section 1: Arquétipo Dominante
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("1. ARQUÉTIPO DOMINANTE ATIVO", 20, 80);
+      doc.line(20, 83, 190, 83);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.setTextColor(54, 45, 40);
+      // Main symbol and name of the archetype (Removed emoji symbol)
+      doc.text(cleanPDFText(mainArcano.arcano.toUpperCase()), 20, 95);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text(`CONEXÃO ENERGÉTICA E PSICOLÓGICA (ARCANO Nº ${mainArcano.numero})`, 20, 102);
+
+      // Description / Message
       doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      doc.setTextColor(70, 70, 70);
+      const cleanMsg = mainArcano.mensagem || item.mensagem || '';
+      const splitMsg = doc.splitTextToSize(`"${cleanPDFText(cleanMsg)}"`, 170);
+      doc.text(splitMsg, 20, 110, { lineHeightFactor: 1.35 });
+
+      let yOffsetDetail = 114 + (splitMsg.length * 6);
+
+      // Dom e Missão Box
+      doc.setFillColor(252, 249, 241);
+      doc.rect(20, yOffsetDetail, 170, 35, "F");
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(0.3);
+      doc.rect(20, yOffsetDetail, 170, 35, "D");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(197, 160, 40);
+      doc.text("O DOM E FORÇA DE LUZ:", 25, yOffsetDetail + 8);
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      const text = item.reprogramacao || 'Afirme o seu lugar correto perante o seu sistema familiar.';
-      const lines = doc.splitTextToSize(text, 170);
-      doc.text(lines, 20, y);
+      doc.setTextColor(54, 45, 40);
+      const mainDom = mainArcano.dom || item.dom || '';
+      const splitDom = doc.splitTextToSize(cleanPDFText(mainDom), 160);
+      doc.text(splitDom, 25, yOffsetDetail + 14, { lineHeightFactor: 1.3 });
+
+      yOffsetDetail += 42;
+
+      // Shadow Box
+      doc.setFillColor(253, 246, 246);
+      doc.rect(20, yOffsetDetail, 170, 38, "F");
+      doc.setDrawColor(220, 100, 100);
+      doc.setLineWidth(0.3);
+      doc.rect(20, yOffsetDetail, 170, 38, "D");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(190, 80, 80);
+      doc.text("A SOMBRA SISTÊMICA E PADRÃO ATIVO:", 25, yOffsetDetail + 8);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(70, 70, 70);
+      const splitFerida = doc.splitTextToSize(`Ferida Central: ${cleanPDFText(mainArcano.ferida || item.ferida || 'Identificada')}`, 160);
+      doc.text(splitFerida, 25, yOffsetDetail + 14, { lineHeightFactor: 1.3 });
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(190, 80, 80);
+      doc.text(`Padrões Ativos: `, 25, yOffsetDetail + 28);
+      doc.setFont("helvetica", "normal");
+      const cleanShadowList = (mainArcano.sombra || (typeof item.sombra === 'string' ? [item.sombra] : item.sombra) || []).join(', ').replace(/_/g, ' ');
+      doc.text(cleanPDFText(cleanShadowList), 55, yOffsetDetail + 28);
+
+      // Footer Page 1
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 1 de 3", 190, 282, { align: "right" });
+
+
+      // PAGE 2: THE TRIPTYCH READINGS (TRÍADE DE POSIÇÃO)
+      doc.addPage();
+      doc.setFillColor(252, 250, 246);
+      doc.rect(0, 0, 210, 297, "F");
+
+      doc.setFillColor(197, 160, 40);
+      doc.rect(0, 0, 210, 5, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(197, 160, 40);
+      doc.text("DIAGNÓSTICO DE POSIÇÃO", 20, 22);
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.4);
+      doc.line(20, 25, 190, 25);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("2. A TRÍADE DE POSIÇÃO (LEITURA INTEGRADA)", 20, 36);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Sua frequência e seus caminhos se desenham pela dança destes 3 Arcanos Maiores ativos:", 20, 42);
+
+      let triY = 50;
+      const labels = ["DOMINANTE (Força Principal)", "SECUNDÁRIO (Estratégia Emocional)", "TERCIÁRIO (Mecanismo de Bloqueio)"];
       
+      top3.forEach((nome, idx) => {
+        const arc = ARCANOS_MATRIZ.find(a => a.arcano.toLowerCase() === nome.toLowerCase());
+        if (!arc) return;
+
+        doc.setFillColor(254, 253, 250);
+        doc.rect(20, triY, 170, 64, "F");
+        doc.setDrawColor(212, 175, 55);
+        doc.setLineWidth(idx === 0 ? 0.4 : 0.2);
+        doc.rect(20, triY, 170, 64, "D");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(110, 110, 110);
+        doc.text(`ARCANO ${labels[idx]}`, 25, triY + 7);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.setTextColor(54, 45, 40);
+        doc.text(cleanPDFText(`${arc.arcano} (Nº ${arc.numero})`), 25, triY + 14);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(140, 120, 100);
+        doc.text("Luz e Potencial:", 25, triY + 22);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(70, 70, 70);
+        const splitArcDom = doc.splitTextToSize(cleanPDFText(arc.dom), 158);
+        doc.text(splitArcDom, 25, triY + 27, { lineHeightFactor: 1.2 });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(190, 100, 100);
+        doc.text("Dinâmica de Súplica / Sombra:", 25, triY + 44);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(70, 70, 70);
+        const splitArcSom = doc.splitTextToSize(cleanPDFText(arc.sombra.join(', ').replace(/_/g, ' ')), 158);
+        doc.text(splitArcSom, 25, triY + 49, { lineHeightFactor: 1.2 });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(197, 160, 40);
+        doc.text("Direção:", 25, triY + 58);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9.5);
+        doc.setTextColor(54, 45, 40);
+        doc.text(`"${cleanPDFText(arc.direcao)}"`, 40, triY + 58);
+
+        triY += 70;
+      });
+
+      // Footer Page 2
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 2 de 3", 190, 282, { align: "right" });
+
+
+      // PAGE 3: RECOMMENDATIONS, BACH FLOWERS & RESET DIRETIVES
+      doc.addPage();
+      doc.setFillColor(252, 250, 246);
+      doc.rect(0, 0, 210, 297, "F");
+
+      doc.setFillColor(197, 160, 40);
+      doc.rect(0, 0, 210, 5, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(197, 160, 40);
+      doc.text("DIAGNÓSTICO DE POSIÇÃO", 20, 22);
+      doc.setDrawColor(226, 220, 212);
+      doc.setLineWidth(0.4);
+      doc.line(20, 25, 190, 25);
+
+      // Section 3: Florais de Bach
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("3. FÓRMULA FLORAL SISTÊMICA PERSONALIZADA", 20, 36);
+      doc.line(20, 39, 190, 39);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Essências de Bach selecionadas para modular as desarmonias identificadas no seu arquétipo dominante:", 20, 45);
+
+      let flrY = 52;
+      const listFlorais: string[] = typeof mainArcano.florais === 'string' 
+        ? (mainArcano.florais as string).split(',').map((f: string) => f.trim()).filter(Boolean)
+        : (Array.isArray(mainArcano.florais) ? mainArcano.florais : (typeof item.florais === 'string' ? item.florais.split(',') : []));
+
+      listFlorais.forEach((flr) => {
+        doc.setFillColor(253, 253, 249);
+        doc.rect(20, flrY, 170, 12, "F");
+        doc.setDrawColor(226, 220, 212);
+        doc.setLineWidth(0.2);
+        doc.rect(20, flrY, 170, 12, "D");
+
+        // Small beautiful vector bullet style square in gold
+        doc.setFillColor(197, 160, 40);
+        doc.rect(24, flrY + 4.5, 3, 3, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(197, 160, 40);
+        doc.text(cleanPDFText(flr), 34, flrY + 8);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(110, 110, 110);
+        doc.text("Essência de alinhamento integrador", 100, flrY + 8);
+
+        flrY += 15;
+      });
+
+      // Section 4: Reprogramação / Reset de Posição
+      let rprY = flrY + 5;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(197, 160, 40);
+      doc.text("4. RESET DE POSIÇÃO & AFIRMAÇÃO DIÁRIA", 20, rprY);
+      doc.line(20, rprY + 3, 190, rprY + 3);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text("DIRETRIZ DE INTEGRATIVIDADE SISTÊMICA:", 20, rprY + 11);
+
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.setTextColor(150, 150, 150);
-      doc.text("Este relatório faz parte da sua jornada de reorganização com o Clube Clarear.", 105, 280, { align: "center" });
-      doc.save(`Diagnostico_Posicionamento_${userName.replace(/\s+/g, '_')}.pdf`);
+      doc.setTextColor(70, 70, 70);
+      const splitPathNow = doc.splitTextToSize(`Seu caminho agora: "${cleanPDFText(mainArcano.direcao || item.direcao || '')}"`, 170);
+      doc.text(splitPathNow, 20, rprY + 17, { lineHeightFactor: 1.35 });
+
+      let phraseY = rprY + 23 + (splitPathNow.length * 5.5);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text("DECRETO DE LIBERAÇÃO E REORGANIZAÇÃO:", 20, phraseY);
+
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11.5);
+      doc.setTextColor(197, 160, 40);
+      const finalRprPhrase = mainArcano.reprogramacao || item.reprogramacao || '';
+      const splitRpr = doc.splitTextToSize(`"${cleanPDFText(finalRprPhrase)}"`, 170);
+      doc.text(splitRpr, 20, phraseY + 7, { lineHeightFactor: 1.35 });
+
+      let evolY = phraseY + 13 + (splitRpr.length * 6);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(110, 110, 110);
+      doc.text("PRÓXIMOS DEGRAUS DE EVOLUÇÃO (ARQUÉTIPOS):", 20, evolY);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(70, 70, 70);
+      const splitEvolList = (mainArcano.evolucao || item.evolucao || []).join(', ');
+      doc.text(cleanPDFText(splitEvolList), 20, evolY + 6);
+
+      // Signature/Closing
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10.5);
+      doc.setTextColor(197, 160, 40);
+      doc.text("Andréia Preto", 105, 260, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(140, 140, 140);
+      doc.text("Terapeuta Sistêmica & Taróloga", 105, 265, { align: "center" });
+
+      // Footer Page 3
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(160, 160, 160);
+      doc.text("Este é um documento terapêutico do Clube Clarear.", 105, 282, { align: "center" });
+      doc.text("Página 3 de 3", 190, 282, { align: "right" });
+
+      doc.save(`Diagnostico_Posicao_${cleanPDFText(userName).replace(/\s+/g, '_')}.pdf`);
     }
   };
 
@@ -3585,60 +3907,40 @@ const Diagnostico = () => {
     }
   };
 
-  const showPage = (newPage: Page) => {
+  const showPage = (newPage: Page, saveToHistory = true) => {
+    let resolvedPage = newPage;
+
     if ((newPage === 'clube_clarear_info' || newPage === 'clube_clarear_content') && !isAdmin) {
       setNotification({ message: "O Clube Clarear está em construção. Acesso em breve!", type: 'info' });
       return;
     }
 
     if (newPage === 'reprogramacao_pessoal_info' && access?.reprogramacao_pessoal_comprada) {
-      setPage('reprogramacao_form');
-      return;
-    }
-
-    if (newPage === 'reprogramar_eu_info' && access?.reprogramar_eu_comprado) {
-      setPage('reprogramacao_form');
-      return;
-    }
-
-    const publicPages: Page[] = [
-      'home', 
-      'auth', 
-      'diagnostico_info', 
-      'reprogramacao_pessoal_info', 
-      'clube_clarear_info', 
-      'reprogramar_eu_info', 
-      'clube_taro_info',
-      'clube_clarear_content',
-      'clube_taro_content',
-      'checkout',
-      'mapeamento_intro',
-      'lealdades_intro',
-      'reprogramacao_form'
-    ];
-    
-    if (!user && !auth.currentUser && !publicPages.includes(newPage)) {
+      resolvedPage = 'reprogramacao_form';
+    } else if (newPage === 'reprogramar_eu_info' && access?.reprogramar_eu_comprado) {
+      resolvedPage = 'reprogramacao_form';
+    } else if (!user && !auth.currentUser && ![
+      'home', 'auth', 'diagnostico_info', 'reprogramacao_pessoal_info', 
+      'clube_clarear_info', 'reprogramar_eu_info', 'clube_taro_info',
+      'clube_clarear_content', 'clube_taro_content', 'checkout',
+      'mapeamento_intro', 'lealdades_intro', 'reprogramacao_form'
+    ].includes(newPage)) {
       setIntendedPage(newPage);
-      setPage('auth');
-      return;
+      resolvedPage = 'auth';
+    } else if (newPage === 'admin_dashboard' && !isAdmin) {
+      resolvedPage = 'home';
+    } else if (newPage === 'mapeamento_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
+      resolvedPage = 'mapeamento_intro';
+    } else if (newPage === 'lealdades_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
+      resolvedPage = 'lealdades_intro';
     }
 
-    if (newPage === 'admin_dashboard' && !isAdmin) {
-      setPage('home');
-      return;
+    const nonHistoryPages = ['auth', 'analysis', 'mapeamento_analysis', 'lealdades_analysis'];
+    if (saveToHistory && page !== resolvedPage && !nonHistoryPages.includes(page)) {
+      setPageHistory(prev => [...prev, page]);
     }
 
-    if (newPage === 'mapeamento_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
-      setPage('mapeamento_intro');
-      return;
-    }
-
-    if (newPage === 'lealdades_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
-      setPage('lealdades_intro');
-      return;
-    }
-
-    setPage(newPage);
+    setPage(resolvedPage);
   };
 
   const handleCompleteLealdades = async (finalAnswers: number[]) => {
@@ -4098,6 +4400,29 @@ const Diagnostico = () => {
     }
   };
 
+  const handleQuizBack = () => {
+    if (currentIndex > 0) {
+      const prevAnswerStr = answers[currentIndex - 1];
+      if (prevAnswerStr !== undefined) {
+        const optionIdx = parseInt(prevAnswerStr);
+        const prevQuestion = questions[currentIndex - 1];
+        const selectedOption = prevQuestion.options[optionIdx];
+        
+        // Desfazer o último score acumulado de forma segura
+        const revertedScores = { ...arcanoScores };
+        selectedOption.arcanos.forEach(({ nome, peso }) => {
+          const cleanName = nome.trim();
+          revertedScores[cleanName] = Math.max(0, (revertedScores[cleanName] || 0) - peso);
+        });
+        setArcanoScores(revertedScores);
+      }
+      setAnswers(answers.slice(0, -1)); // Slice off the last added answer
+      setCurrentIndex(currentIndex - 1);
+    } else {
+      showPage('diagnostico_quiz_intro');
+    }
+  };
+
   const handleTriageAnswer = (index: number) => {
     const letters = ["A", "B", "C", "D"];
     const newAnswers = [...triageAnswers, letters[index]];
@@ -4539,13 +4864,13 @@ const Diagnostico = () => {
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.5em] block font-bold mb-6">Orientação</span>
                   <h2 className="serif text-4xl text-gold-light mb-6">Não sabe por onde começar?</h2>
                   <p className="text-white/40 text-sm font-light leading-relaxed mb-10 max-w-xl mx-auto">
-                    Faça o teste rápido de 15 perguntas para identificar sua necessidade imediata e descobrir qual caminho do POSIÇÃO é o mais indicado para o seu momento atual.
+                    Faça o teste rápido de 10 perguntas para identificar suas necessidades imediatas e descobrir qual a melhor Experiência POSIÇÃO para você seguir neste momento.
                   </p>
                   <button 
                     onClick={startTriage}
                     className="button px-12"
                   >
-                    Descobrir meu Caminho
+                    Iniciar
                   </button>
                 </div>
 
@@ -4589,7 +4914,7 @@ const Diagnostico = () => {
                       },
                       {
                         id: 'lealdades_intro',
-                        title: 'Mapeamento de Lealdades',
+                        title: 'Mapeamento de Lealdades Ocultas',
                         desc: 'Revele padrões emocionais, vínculos inconscientes e seu perfil de lealdades profundas.',
                         tag: 'Lealdades',
                         cta: 'Identificar Lealdades',
@@ -5072,10 +5397,10 @@ const Diagnostico = () => {
             >
               <div className="back" onClick={() => setPage('home')}>← Voltar</div>
               <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium">
-                Início → Mapeamento de Lealdades
+                Início → Mapeamento de Lealdades Ocultas
               </p>
-              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapeamento de Lealdades</span>
-              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Lealdades Ocultas</h2>
+              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapeamento de Lealdades Ocultas</span>
+              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Mapeamento de Lealdades Ocultas</h2>
               
               <div className="glass-card p-6 md:p-10 text-left mb-12">
                 <p className="text-white/80 mb-6 leading-relaxed text-lg font-light">
@@ -5118,7 +5443,7 @@ const Diagnostico = () => {
                         }}
                         className="button w-full animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.15)]"
                       >
-                        Iniciar diagnóstico de lealdades
+                        Iniciar diagnóstico de lealdades ocultas
                       </button>
                     </div>
                   ) : (
@@ -5126,11 +5451,11 @@ const Diagnostico = () => {
                       <button 
                         type="button"
                         onClick={() => {
-                          handleCheckout('Mapeamento de Lealdades', 'R$ 33');
+                          handleCheckout('Mapeamento de Lealdades Ocultas', 'R$ 33');
                         }}
                         className="button w-full"
                       >
-                        👉 Adquirir meu diagnóstico de lealdades
+                        👉 Adquirir meu diagnóstico de lealdades ocultas
                       </button>
                     </div>
                   )}
@@ -5179,7 +5504,7 @@ const Diagnostico = () => {
               
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapeamento de Lealdades</span>
+                  <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-2 block font-medium">Mapeamento de Lealdades Ocultas</span>
                   <h2 className="serif text-3xl text-gold-light">Pergunta {currentLealdadesStep + 1} de {lealdadesQuestions.length}</h2>
                 </div>
                 <div className="text-right">
@@ -5247,7 +5572,7 @@ const Diagnostico = () => {
               {/* Main Banner */}
               <div className="text-center md:text-left space-y-4">
                 <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block animate-fade-in">Resultado Consolidado</span>
-                <h2 className="serif text-5xl md:text-6xl text-gold-light font-light leading-tight">Seu Mapa de Posição</h2>
+                <h2 className="serif text-5xl md:text-6xl text-gold-light font-light leading-tight">Seu Mapa de Lealdades Ocultas</h2>
                 <p className="text-white/60 font-light text-lg max-w-2xl leading-relaxed">
                   Este diagnóstico mapeia as dinâmicas de sobrevivência inconscientes criadas ao longo da sua história. Compreender sua posição é o primeiro passo para o verdadeiro reposicionamento sistêmico.
                 </p>
@@ -5441,15 +5766,21 @@ const Diagnostico = () => {
                       👉 Agendar Mentoria de Reposicionamento
                     </button>
                     <button 
-                      onClick={() => showPage('jornada_emocional')}
+                      onClick={() => {
+                        setMemberTab('mappings');
+                        showPage('jornada_emocional');
+                      }}
                       className="button-outline"
                     >
                       Ver meu histórico completo
                     </button>
                     <button 
                       onClick={() => {
-                        const reportText = `Relatório Posição: Dominante - ${lealdadesResult.axisDominantDetails.label}, Secundário - ${lealdadesResult.axisSecondaryDetails.label}`;
-                        generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', reportText);
+                        generatePrescriptionPDF(
+                          userData?.name || user?.displayName || 'Cliente', 
+                          lealdadesResult, 
+                          'lealdades_ocultas'
+                        );
                       }}
                       className="button-outline flex items-center gap-2 justify-center"
                     >
@@ -5547,7 +5878,10 @@ const Diagnostico = () => {
                     👉 Agendar Mentoria de Integração
                   </button>
                   <button 
-                    onClick={() => showPage('jornada_emocional')}
+                    onClick={() => {
+                      setMemberTab('mappings');
+                      showPage('jornada_emocional');
+                    }}
                     className="button-outline"
                   >
                     Ver meu histórico completo
@@ -5574,7 +5908,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={() => showPage('home')}>← Voltar</div>
+              <div className="back" onClick={goBack}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
                 Início → Diagnóstico POSIÇÃO
               </p>
@@ -5586,19 +5920,21 @@ const Diagnostico = () => {
                 <div className="price mb-8 md:mb-10">R$ 69</div>
                 
                 <p className="text-white/40 mb-8 md:mb-12 leading-relaxed text-base md:text-lg font-light">
-                  Uma jornada profunda para identificar os padrões invisíveis que moldam sua realidade e descobrir o caminho para o seu alinhamento essencial.
+                  31 perguntas estruturadas para revelar seu arquétipo dominante, sua sombra ativa, seus florais de suporte e o caminho exato para o seu alinhamento. Tempo estimado: <span className="text-white/60">~10 minutos</span>.
                 </p>
                 
-                <div className="space-y-6 mb-16">
+                <div className="space-y-4 mb-16">
                   {[
-                    'Acesso vitalício ao questionário estruturado',
-                    'Análise personalizada via áudio de frequência',
-                    'Mapa de posicionamento interno exclusivo',
-                    'Suporte prioritário para dúvidas'
+                    { icon: '🃏', label: 'Arquétipo dominante identificado entre os 22 Arcanos Maiores' },
+                    { icon: '🔮', label: 'Tríade de Posição com leitura integrada dos 3 arcanos mais ativos em você' },
+                    { icon: '🌱', label: 'Indicação de Florais de Bach personalizados para o seu padrão de dor' },
+                    { icon: '🌿', label: 'Direção e mentoria concreta para o seu momento de vida atual' },
+                    { icon: '🪐', label: 'Sugestão e mentalização de Reset de Posição alinhada ao seu arquétipo' },
+                    { icon: '📄', label: 'Relatório em PDF completo disponível para download imediato' },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-4 text-white/60 text-sm font-light">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
-                      {item}
+                    <div key={i} className="flex items-start gap-4 text-white/60 text-sm font-light">
+                      <span className="text-base shrink-0 mt-0.5">{item.icon}</span>
+                      <span>{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -5646,7 +5982,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={() => showPage('home')}>← Voltar</div>
+              <div className="back" onClick={goBack}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
                 Início → Reset de Posição
               </p>
@@ -6380,7 +6716,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={() => showPage('home')}>← Início</div>
+              <div className="back" onClick={goBack}>← Voltar</div>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12">
                 <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold mb-4">Personalização</span>
                 <h2 className="serif text-4xl text-gold-light mb-8">Sua Frequência Pessoal</h2>
@@ -6449,7 +6785,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={() => showPage('reprogramacao_form')}>← Voltar</div>
+              <div className="back" onClick={goBack}>← Voltar</div>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12">
                 <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold mb-4">Agendamento</span>
                 <h2 className="serif text-4xl text-gold-light mb-8">Escolha sua Sessão</h2>
@@ -6607,7 +6943,7 @@ const Diagnostico = () => {
                         <div className="flex flex-col md:flex-row justify-between items-start gap-4 pb-6 border-b border-white/5">
                           <div>
                             <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block mb-2 font-bold">Relatório Completo</span>
-                            <h2 className="serif text-3xl text-gold-light">Mapeamento de Lealdades</h2>
+                            <h2 className="serif text-3xl text-gold-light">Mapeamento de Lealdades Ocultas</h2>
                             <p className="text-white/40 text-sm mt-1">{new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
                           </div>
                           <div className="md:text-right">
@@ -6973,7 +7309,7 @@ const Diagnostico = () => {
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access?.mappingCredits || 0} ${access?.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
                                     </span>
                                   </div>
-                                  <h4 className="serif text-xl text-gold-light mb-2">Mapeamento de Lealdades</h4>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Mapeamento de Lealdades Ocultas</h4>
                                   <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
                                     Revele os padrões inconscientes, vínculos profundos, estratégias de proteção e seu perfil de lealdades sistêmicas.
                                   </p>
@@ -6982,7 +7318,7 @@ const Diagnostico = () => {
                                   onClick={() => showPage('lealdades_intro')}
                                   className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
                                 >
-                                  Mapear Lealdades
+                                  Mapear Lealdades Ocultas
                                 </button>
                               </div>
                             )}
@@ -7998,6 +8334,10 @@ const Diagnostico = () => {
                 </div>
               )}
 
+              <div className="back" onClick={handleQuizBack}>
+                ← {currentIndex > 0 ? 'Voltar Pergunta' : 'Sair'}
+              </div>
+
               <div className="mb-12 flex justify-between items-center">
                 <div className="flex-1 mr-8">
                   <div className="flex justify-between items-center mb-4 text-[10px] uppercase tracking-[0.3em] text-white/20 font-bold">
@@ -8070,7 +8410,36 @@ const Diagnostico = () => {
               className="animate-screen text-left max-w-2xl mx-auto"
             >
               <div className="glass-card p-6 md:p-12 border-gold-main/20 bg-gold-main/[0.01]">
-                <h2 className="serif text-5xl text-gold-light mb-12 text-center">Seu Diagnóstico</h2>
+                <h2 className="serif text-5xl text-gold-light mb-6 text-center">Seu Diagnóstico</h2>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10 pb-6 border-b border-white/5">
+                  <button
+                    onClick={() => {
+                      if (!selectedArcano) return;
+                      const pdfItem = {
+                        archetype: selectedArcano.arcano,
+                        top3Arcanos: top3Arcanos,
+                        ferida: selectedArcano.ferida,
+                        direcao: selectedArcano.direcao,
+                        florais: selectedArcano.florais,
+                        reprogramacao: selectedArcano.reprogramacao,
+                        evolucao: selectedArcano.evolucao,
+                        mensagem: selectedArcano.mensagem,
+                        dom: selectedArcano.dom,
+                        sombra: selectedArcano.sombra
+                      };
+                      generatePrescriptionPDF(
+                        userData?.name || user?.displayName || 'Cliente', 
+                        pdfItem, 
+                        'diagnostico_posicional'
+                      );
+                    }}
+                    className="button w-full sm:w-auto flex items-center justify-center gap-2 bg-gold-main/20 hover:bg-gold-main/30 border border-gold-main/30 text-gold-light font-bold"
+                  >
+                    <FileText size={18} />
+                    Baixar Relatório Completo em PDF
+                  </button>
+                </div>
                 
                 {selectedArcano && (
                   <div className="space-y-10 mb-12">
@@ -8234,10 +8603,16 @@ const Diagnostico = () => {
                 </div>
                 
                 <button 
-                  onClick={() => navigate('/')}
-                  className="button w-full"
+                  onClick={() => {
+                    setNotification({
+                      message: "Agradecemos por concluir sua jornada de diagnóstico! Aguarde: em no máximo 48h, a terapeuta Andréia Preto responderá você diretamente no WhatsApp com os seus próximos passos e orientações.",
+                      type: 'success'
+                    });
+                    showPage('home');
+                  }}
+                  className="button w-full font-bold uppercase tracking-wider text-xs"
                 >
-                  Concluir Jornada
+                  Concluir Jornada & Receber Devolutiva
                 </button>
               </div>
             </motion.div>
