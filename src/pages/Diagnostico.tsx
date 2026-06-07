@@ -2333,7 +2333,7 @@ const Diagnostico = () => {
         setNotifications(notifs);
         setUnreadNotificationsCount(notifs.filter((n: any) => n.status === 'unread').length);
 
-        setNotification({ message: 'Agendamento concluído! Confirmação enviada por e-mail.', type: 'success' });
+        setNotification({ message: `✅ Sessão agendada para ${formattedDate} às ${selectedTime}h! Você receberá a confirmação no seu e-mail. O áudio chegará em até 48h após a sessão.`, type: 'success' });
         
         // Go straight to the Member Panel (jornada_emocional) on "appointments" or "notifications" tab so they see what they scheduled!
         setMemberTab('appointments');
@@ -3908,6 +3908,12 @@ const Diagnostico = () => {
   };
 
   const showPage = (newPage: Page, saveToHistory = true) => {
+    // Guard: proteger o formulário de Reset de Posição
+    if (newPage === 'reprogramacao_form' && !isAdmin && !access?.reprogramacao_pessoal_comprada) {
+      setPage('reprogramacao_pessoal_info');
+      return;
+    }
+
     let resolvedPage = newPage;
 
     if ((newPage === 'clube_clarear_info' || newPage === 'clube_clarear_content') && !isAdmin) {
@@ -5838,22 +5844,67 @@ const Diagnostico = () => {
                 </div>
               )}
 
-              {currentFlorais && currentFlorais.length > 0 && (
-                <div className="glass-card p-8 border-gold-main/20 bg-gold-main/[0.02] space-y-6">
-                  <h3 className="serif text-2xl text-gold-light">Sua Fórmula Floral Recomendada</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(typeof currentFlorais === 'string' ? currentFlorais.split(',').map(f => f.trim()).filter(Boolean) : (Array.isArray(currentFlorais) ? currentFlorais : [])).map((floral, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-start gap-4 hover:border-gold-main/30 hover:bg-gold-main/[0.02] transition-all">
-                        <span className="w-8 h-8 rounded-full bg-gold-main/10 border border-gold-main/30 flex items-center justify-center text-gold-main text-sm font-bold shrink-0">🌸</span>
-                        <div>
-                          <h4 className="serif text-lg text-gold-light font-bold">{floral}</h4>
-                          <p className="text-white/40 text-[11px] mt-1">Frequência vibracional integrada à sua fórmula.</p>
+              {currentFlorais && currentFlorais.length > 0 && (() => {
+                const FLORAL_DESC: Record<string, string> = {
+                  'Aspen': 'Medos vagos e presentimentos sem causa definida',
+                  'Mimulus': 'Medos conhecidos — timidez, medo de errar ou de julgamento',
+                  'Rock Rose': 'Pânico, terror e medo intenso paralisante',
+                  'White Chestnut': 'Pensamentos repetitivos que não saem da mente',
+                  'Cherry Plum': 'Medo de perder o controle da mente ou das ações',
+                  'Red Chestnut': 'Preocupação excessiva com o bem-estar de quem ama',
+                  'Olive': 'Esgotamento total — físico e mental',
+                  'Elm': 'Sobrecarga de responsabilidades',
+                  'Oak': 'Persistência além do limite — dificuldade de parar',
+                  'Hornbeam': 'Cansaço de segunda-feira — falta de energia para começar',
+                  'Wild Rose': 'Resignação, apatia e falta de vontade de mudar',
+                  'Clematis': 'Sonhos distantes, falta de foco e presença no agora',
+                  'Impatiens': 'Impaciência, irritação e tensionamento com o próprio ritmo',
+                  'Vervain': 'Entusiasmo extremo, perfeccionismo e rigidez de ideias',
+                  'Holly': 'Raiva, ciúme, inveja e desconfiança',
+                  'Willow': 'Ressentimento e sensação de injustiça',
+                  'Mustard': 'Tristeza profunda sem motivo aparente',
+                  'Sweet Chestnut': 'Desespero e dor interior extrema',
+                  'Larch': 'Falta de confiança no próprio potencial',
+                  'Pine': 'Culpa e autocrítica excessiva',
+                  'Rock Water': 'Autoexigência rígida e inflexibilidade',
+                  'Centaury': 'Dificuldade de dizer não e de estabelecer limites',
+                  'Cerato': 'Dúvida sobre as próprias percepções e intuições',
+                  'Scleranthus': 'Indecisão entre duas opções — inconstância',
+                  'Wild Oat': 'Indefinição sobre propósito e direção de vida',
+                  'Gentian': 'Desânimo após dificuldades — dúvida sobre continuar',
+                  'Agrimony': 'Angústia escondida por trás de aparência alegre',
+                  'Water Violet': 'Isolamento emocional e orgulho que afasta conexão',
+                  'Heather': 'Necessidade excessiva de atenção e companhia',
+                  'Chicory': 'Apego emocional e possessiveness nas relações',
+                  'Honeysuckle': 'Apego ao passado — saudade que impede o presente',
+                  'Star of Bethlehem': 'Choques emocionais e traumas não processados',
+                  'Rescue Remedy': 'Emergências emocionais e estresse agudo',
+                };
+                const floralList = typeof currentFlorais === 'string'
+                  ? currentFlorais.split(',').map((f: string) => f.trim()).filter(Boolean)
+                  : (Array.isArray(currentFlorais) ? currentFlorais : []);
+                return (
+                  <div className="glass-card p-8 border-gold-main/20 bg-gold-main/[0.02] space-y-6">
+                    <div>
+                      <h3 className="serif text-2xl text-gold-light mb-1">Sua Fórmula Floral Recomendada</h3>
+                      <p className="text-white/30 text-xs font-light">4 gotas, 4 vezes ao dia · Percepções em 3–7 dias · Ajustes profundos em 21 dias</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {floralList.map((floral: string, idx: number) => (
+                        <div key={idx} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-start gap-4 hover:border-gold-main/30 hover:bg-gold-main/[0.02] transition-all">
+                          <span className="w-8 h-8 rounded-full bg-gold-main/10 border border-gold-main/30 flex items-center justify-center text-gold-main text-sm font-bold shrink-0">🌸</span>
+                          <div>
+                            <h4 className="serif text-lg text-gold-light font-bold">{floral}</h4>
+                            <p className="text-white/40 text-[11px] mt-1 leading-relaxed">
+                              {FLORAL_DESC[floral] || 'Frequência vibracional selecionada para o seu padrão emocional atual.'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {mapeamentoResult && (
                 <div className="glass-card p-8 md:p-12 space-y-8 border-white/5 bg-white/[0.005]">
@@ -5982,7 +6033,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={goBack}>← Voltar</div>
+              <div className="back" onClick={() => showPage('home')}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
                 Início → Reset de Posição
               </p>
@@ -5993,22 +6044,32 @@ const Diagnostico = () => {
                 <h2 className="serif text-5xl text-gold-light mb-6">Reset de Posição</h2>
                 <div className="price mb-10">R$ 129</div>
                 
-                <p className="text-white/40 mb-12 leading-relaxed text-lg font-light">
-                  Um áudio de frequência exclusiva, desenhado para dissolver crenças limitantes e reorganizar sua base vibracional interna.
+                <p className="text-white/40 mb-8 leading-relaxed text-lg font-light">
+                  Uma sessão individual 1:1 online combinada com um áudio de frequência exclusivo, criado especificamente para o seu padrão e momento atual — para dissolver crenças limitantes e reorganizar sua base vibracional interna.
                 </p>
-                
-                <div className="space-y-6 mb-16">
+
+                <div className="space-y-3 mb-10 border border-white/5 rounded-2xl p-5 bg-white/[0.01]">
+                  <p className="text-[9px] uppercase tracking-widest text-[#d4af37]/45 font-bold mb-4 font-sans">O que está incluído</p>
                   {[
-                    'Diagnóstico profundo de padrões limitantes',
-                    'Frequências sonoras de alinhamento específico',
-                    'Sugestões subliminares personalizadas',
-                    'Guia prático de escuta e integração'
+                    { icon: '🎙️', label: 'Sessão online individual de 1h (Google Meet, seg–sex, 9h–17h)' },
+                    { icon: '🎧', label: 'Áudio de frequência exclusivo criado após a sessão' },
+                    { icon: '🧠', label: 'Diagnóstico profundo de padrões e crenças limitantes' },
+                    { icon: '🔊', label: 'Frequências sonoras de alinhamento específico ao seu momento' },
+                    { icon: '💬', label: 'Sugestões subliminares personalizadas para o seu objetivo' },
+                    { icon: '📋', label: 'Guia prático de escuta e integração do áudio' },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-4 text-white/60 text-sm font-light">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gold-main/40" />
-                      {item}
+                    <div key={i} className="flex items-start gap-4 text-white/55 text-sm font-light">
+                      <span className="shrink-0 mt-0.5">{item.icon}</span>
+                      <span>{item.label}</span>
                     </div>
                   ))}
+                </div>
+
+                <div className="mb-10 p-4 rounded-xl border border-gold-main/10 bg-gold-main/[0.02] flex items-start gap-3">
+                  <span className="text-gold-main text-base shrink-0 mt-0.5">⏱️</span>
+                  <p className="text-white/40 text-sm font-light leading-relaxed">
+                    <strong className="text-white/60">Prazo de entrega do áudio:</strong> até 48h após a sessão, enviado para o seu e-mail e WhatsApp cadastrados.
+                  </p>
                 </div>
 
                 {access?.reprogramacao_pessoal_comprada ? (
@@ -6635,6 +6696,7 @@ const Diagnostico = () => {
               </div>
             </motion.div>
           )}
+
           {page === 'confirmation' && (
             <motion.div
               key="confirmation"
@@ -6682,7 +6744,7 @@ const Diagnostico = () => {
                   <div className="flex gap-3">
                     <span className="text-emerald-400 text-sm font-sans mt-0.5">✓</span>
                     <p className="text-white/60 text-xs leading-relaxed font-semibold">
-                      Assim que confirmado, você receberá uma notificação e seu acesso será liberado instantaneamente.
+                      Assim que confirmado, você receberá a notificação e seu acesso será liberado instantaneamente.
                     </p>
                   </div>
                 </div>
@@ -6716,45 +6778,55 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={goBack}>← Voltar</div>
+              <div className="back" onClick={() => showPage('reprogramacao_pessoal_info')}>← Voltar</div>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12">
                 <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold mb-4">Personalização</span>
                 <h2 className="serif text-4xl text-gold-light mb-8">Sua Frequência Pessoal</h2>
                 
-                <p className="text-white/40 mb-10 font-light leading-relaxed">
-                  Para criarmos seu áudio de reprogramação exclusivo, precisamos entender seu momento atual e seus objetivos.
+                <p className="text-white/40 mb-4 font-light leading-relaxed">
+                  Estas informações guiam a criação do seu áudio de frequência exclusivo e preparam nossa sessão individual. Quanto mais honesta e detalhada for sua resposta, mais preciso será o resultado.
+                </p>
+                <p className="text-white/25 mb-10 text-xs font-light italic">
+                  Suas respostas são confidenciais e acessadas apenas por Andréia.
                 </p>
 
                 <form onSubmit={handleReprogramacaoSubmit} className="space-y-8">
                   <div className="space-y-3">
-                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Como você se sente emocionalmente hoje?</label>
+                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
+                      O que está pesando mais em você agora? *
+                    </label>
+                    <p className="text-white/25 text-xs font-light -mt-1">Descreva o estado emocional, a situação ou o padrão que mais está te afetando no momento.</p>
                     <textarea 
                       required
                       value={reprogramacaoData.estadoEmocional}
                       onChange={(e) => setReprogramacaoData({...reprogramacaoData, estadoEmocional: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[120px]"
-                      placeholder="Descreva seu estado emocional atual..."
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[120px] resize-none"
+                      placeholder="Ex: Sinto um cansaço profundo e uma sensação de que não tenho saída. Tudo parece pesado e difícil de mover..."
                     />
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Qual seu principal objetivo com este áudio?</label>
+                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
+                      O que você quer sentir — ou deixar de sentir — ao final deste processo? *
+                    </label>
+                    <p className="text-white/25 text-xs font-light -mt-1">Descreva sua intenção de transformação. Pode ser um sentimento, um padrão que quer soltar ou uma nova forma de se sentir.</p>
                     <textarea 
                       required
                       value={reprogramacaoData.objetivo}
                       onChange={(e) => setReprogramacaoData({...reprogramacaoData, objetivo: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[120px]"
-                      placeholder="O que você deseja reprogramar ou alcançar?"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[120px] resize-none"
+                      placeholder="Ex: Quero parar de me sabotar quando algo bom está chegando. Quero me sentir merecedora e capaz de receber..."
                     />
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Observações Adicionais (Opcional)</label>
+                    <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Contexto ou observações adicionais (opcional)</label>
+                    <p className="text-white/25 text-xs font-light -mt-1">Algo sobre sua história, gatilhos recentes, ou qualquer contexto que ajude a personalizar sua frequência.</p>
                     <textarea 
                       value={reprogramacaoData.observacoes}
                       onChange={(e) => setReprogramacaoData({...reprogramacaoData, observacoes: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[80px]"
-                      placeholder="Algo mais que gostaria de compartilhar?"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-gold-main/30 min-h-[80px] resize-none"
+                      placeholder="Ex: Perdi um emprego há 2 meses e desde então fico em loop de medo e ansiedade..."
                     />
                   </div>
 
@@ -6785,7 +6857,7 @@ const Diagnostico = () => {
               exit={{ opacity: 0, y: -20 }}
               className="animate-screen text-left max-w-2xl mx-auto"
             >
-              <div className="back" onClick={goBack}>← Voltar</div>
+              <div className="back" onClick={() => showPage('reprogramacao_form')}>← Voltar</div>
               <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12">
                 <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold mb-4">Agendamento</span>
                 <h2 className="serif text-4xl text-gold-light mb-8">Escolha sua Sessão</h2>
@@ -6797,21 +6869,53 @@ const Diagnostico = () => {
                 <div className="space-y-8">
                   <div className="space-y-3">
                     <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">Data da Sessão</label>
-                    <input 
-                      type="date" 
-                      min={new Date().toISOString().split('T')[0]}
-                      value={selectedDate}
-                      onChange={(e) => {
-                        const date = new Date(e.target.value);
-                        const day = date.getUTCDay();
-                        if (day === 0 || day === 6) {
-                          setNotification({ message: 'Sessões disponíveis apenas de segunda a sexta.', type: 'info' });
-                          return;
+                    <p className="text-white/25 text-xs font-light">Segunda a sexta-feira · 09h às 17h (Horário de Brasília)</p>
+                    {(() => {
+                      // Generate next 30 weekdays starting from tomorrow
+                      const weekdays: string[] = [];
+                      const today = new Date();
+                      today.setHours(0,0,0,0);
+                      let cursor = new Date(today);
+                      cursor.setDate(cursor.getDate() + 1);
+                      while (weekdays.length < 30) {
+                        const day = cursor.getDay();
+                        if (day !== 0 && day !== 6) {
+                          weekdays.push(cursor.toISOString().split('T')[0]);
                         }
-                        setSelectedDate(e.target.value);
-                      }}
-                      className="input w-full"
-                    />
+                        cursor.setDate(cursor.getDate() + 1);
+                      }
+                      const months: Record<string, string> = {
+                        '01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun',
+                        '07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez'
+                      };
+                      const days: Record<string, string> = { '1':'Seg','2':'Ter','3':'Qua','4':'Qui','5':'Sex' };
+                      return (
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                          {weekdays.slice(0, 20).map((d) => {
+                            const dt = new Date(d + 'T12:00:00');
+                            const dayName = days[String(dt.getDay())];
+                            const [y, m, day] = d.split('-');
+                            const label = `${day}/${months[m]}`;
+                            const isSelected = selectedDate === d;
+                            return (
+                              <button
+                                key={d}
+                                type="button"
+                                onClick={() => setSelectedDate(d)}
+                                className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border text-[10px] font-bold transition-all ${
+                                  isSelected
+                                    ? 'bg-gold-main text-black border-gold-main'
+                                    : 'bg-white/[0.02] text-white/40 border-white/5 hover:border-gold-main/30 hover:text-white/70'
+                                }`}
+                              >
+                                <span className="uppercase tracking-wider mb-0.5 opacity-60">{dayName}</span>
+                                <span>{label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {selectedDate && (

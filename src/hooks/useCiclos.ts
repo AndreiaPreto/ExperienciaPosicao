@@ -31,7 +31,7 @@ export const fallbackJunho2026: Ciclo[] = [
     data_exibir: "03 de Junho",
     mes_ano:     "2026-06",
     descricao:   "Ritual de reconhecimento e liberação na lua cheia de junho. Honre tudo que floresceu neste ciclo, libere o que já cumpriu seu papel e equilibre as emoções intensas que a lua amplifica.",
-    importancia: "A lua cheia amplifica tudo que está ativo em você — intenções, emoções e padrões. Este ritual transforma essa amplitude em consciência.",
+    importancia: "A lua cheia amplifica tudo que está ativo in você — intenções, emoções e padrões. Este ritual transforma essa amplitude em consciência.",
     beneficios:  ["Clareza emocional", "Liberação energética", "Expansão espiritual"],
     preco:       "R$ 9",
     ativo:       true,
@@ -119,10 +119,12 @@ export const fallbackJunho2026: Ciclo[] = [
   },
 ];
 
-// Retorna o mes_ano atual no formato "2026-06"
+// Retorna o mes_ano atual no formato "YYYY-MM" dinamicamente
 const getMesAnoAtual = (): string => {
-  // Padrão para Junho de 2026 já que é a agenda ativa da aplicação
-  return "2026-06";
+  const now = new Date();
+  const ano = now.getFullYear();
+  const mes = String(now.getMonth() + 1).padStart(2, '0');
+  return `${ano}-${mes}`;
 };
 
 // Retorna "Junho 2026" a partir de "2026-06"
@@ -163,14 +165,19 @@ export const useCiclos = (mesAnoOverride?: string) => {
         const snap = await getDocs(q);
         const fbCiclos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ciclo));
         
-        if (fbCiclos.length === 0 && mesAno === "2026-06") {
-          setCiclos(fallbackJunho2026);
+        if (fbCiclos.length === 0) {
+          // Fallback para junho 2026 apenas se for o mês correto
+          const [ano, mes] = mesAno.split('-');
+          if (mesAno === "2026-06") {
+            setCiclos(fallbackJunho2026);
+          } else {
+            setCiclos([]); // Mês sem rituais cadastrados — mostra estado vazio
+          }
         } else {
           setCiclos(fbCiclos);
         }
       } catch (err) {
         console.error('Erro ao buscar ciclos:', err);
-        // Fallback local se der erro de conexão/permissões antes do Firestore inicializar
         if (mesAno === "2026-06") {
           setCiclos(fallbackJunho2026);
         } else {
