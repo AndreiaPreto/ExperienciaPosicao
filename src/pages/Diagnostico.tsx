@@ -8072,7 +8072,7 @@ const Diagnostico = () => {
                   )}
 
                   {adminTab === 'ciclos' && (
-                    <AdminCiclosTab />
+                    <AdminCiclosTab setNotification={setNotification} />
                   )}
 
                   {adminTab === 'sessions' && (
