@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ARCANOS_MATRIZ, ArcanoData } from '../constants/arcanos';
 import { questions } from '../data/questions';
@@ -2106,8 +2106,49 @@ const msgCartao = (produto: string, preco: string) =>
 
 const Diagnostico = () => {
   const { access, refreshAccess } = useAccess();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [page, setPage] = useState<Page>('home');
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
+
+  // On mount and URL path changes, update page state if path matches a known page
+  useEffect(() => {
+    const path = location.pathname;
+    const pathToPageMap: Record<string, Page> = {
+      '/': 'home',
+      '/diagnostico': 'diagnostico_info',
+      '/mapafloral': 'mapeamento_intro',
+      '/mapa-floral': 'mapeamento_intro',
+      '/lealdades': 'lealdades_intro',
+      '/lealdades-ocultas': 'lealdades_intro',
+      '/reset': 'reprogramacao_pessoal_info',
+      '/reset-posicao': 'reprogramacao_pessoal_info',
+      '/clube-posicao': 'clube_posicao_info',
+      '/ciclos': 'rituais_mes_info',
+      '/rituais': 'rituais_mes_info',
+    };
+    const targetPage = pathToPageMap[path];
+    if (targetPage && targetPage !== page) {
+      setPage(targetPage);
+    }
+  }, [location.pathname]);
+
+  // When page state changes, update the browser URL path so users can copy/share it directly!
+  useEffect(() => {
+    const pageToPathMap: Partial<Record<Page, string>> = {
+      'home': '/',
+      'diagnostico_info': '/diagnostico',
+      'mapeamento_intro': '/mapafloral',
+      'lealdades_intro': '/lealdades',
+      'reprogramacao_pessoal_info': '/reset',
+      'clube_posicao_info': '/clube-posicao',
+      'rituais_mes_info': '/ciclos',
+    };
+    const targetPath = pageToPathMap[page];
+    if (targetPath && targetPath !== location.pathname) {
+      navigate(targetPath, { replace: page === 'home' });
+    }
+  }, [page, navigate, location.pathname]);
 
   const goBack = () => {
     if (pageHistory.length > 0) {
@@ -2490,7 +2531,6 @@ const Diagnostico = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [arcanoScores, setArcanoScores] = useState<Record<string, number>>({});
   const [analysisText, setAnalysisText] = useState("Observando padrões de posicionamento...");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -3928,8 +3968,8 @@ const Diagnostico = () => {
     } else if (!user && !auth.currentUser && ![
       'home', 'auth', 'diagnostico_info', 'reprogramacao_pessoal_info', 
       'clube_clarear_info', 'reprogramar_eu_info', 'clube_taro_info',
-      'clube_clarear_content', 'clube_taro_content', 'checkout',
-      'mapeamento_intro', 'lealdades_intro', 'reprogramacao_form'
+      'clube_posicao_info', 'rituais_mes_info', 'lista_espera_clarear',
+      'mapeamento_intro', 'lealdades_intro', 'triage_quiz', 'triage_result'
     ].includes(newPage)) {
       setIntendedPage(newPage);
       resolvedPage = 'auth';

@@ -39,6 +39,17 @@ export default function App() {
           <Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={<Diagnostico />} />
+              <Route path="/diagnostico" element={<Diagnostico />} />
+              <Route path="/mapafloral" element={<Diagnostico />} />
+              <Route path="/mapa-floral" element={<Diagnostico />} />
+              <Route path="/lealdades" element={<Diagnostico />} />
+              <Route path="/lealdades-ocultas" element={<Diagnostico />} />
+              <Route path="/reset" element={<Diagnostico />} />
+              <Route path="/reset-posicao" element={<Diagnostico />} />
+              <Route path="/clube-posicao" element={<Diagnostico />} />
+              <Route path="/ciclos" element={<Diagnostico />} />
+              <Route path="/rituais" element={<Diagnostico />} />
+              
               <Route path="/compra-diagnostico" element={<CompraDiagnostico />} />
               <Route path="/assinatura-clube" element={<AssinaturaClube />} />
               
