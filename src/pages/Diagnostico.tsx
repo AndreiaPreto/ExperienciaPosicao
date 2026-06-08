@@ -690,7 +690,7 @@ const AdminProductsTab = () => (
   </div>
 );
 
-const AdminCiclosTab = () => {
+const AdminCiclosTab = ({ setNotification }: { setNotification?: (n: any) => void }) => {
   const [ciclos, setCiclos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCiclo, setEditingCiclo] = useState<any | null>(null);

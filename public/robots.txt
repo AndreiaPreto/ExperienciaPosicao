@@ -1,0 +1,10 @@
+# Experiência Posição — robots.txt
+User-agent: *
+Allow: /
+
+# Bloquear rotas de admin e autenticação
+Disallow: /admin
+Disallow: /auth
+Disallow: /api/
+
+Sitemap: https://www.experienciaposicao.com/sitemap.xml
