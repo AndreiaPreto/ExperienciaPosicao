@@ -661,7 +661,7 @@ const AdminProductsTab = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[
         { name: 'Diagnóstico de Posição', price: 'Gratuito/R$ 21', sales: 1240, status: 'Ativo' },
-        { name: 'Mapa de Posição: Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
+        { name: 'Mapa Floral', price: 'R$ 9', sales: 452, status: 'Ativo' },
         { name: 'Mapeamento de Lealdades Ocultas', price: 'R$ 33', sales: 184, status: 'Ativo' },
         { name: 'Reset de Posição', price: 'R$ 129', sales: 157, status: 'Ativo' },
         { name: 'Clube Posição: Núcleo Tarô', price: 'R$ 117/mês', sales: 156, status: 'Ativo' },
@@ -2906,7 +2906,7 @@ const Diagnostico = () => {
                 whatsapp: (data.whatsapp || '').trim(),
                 role: 'user',
                 paidStatus: true,
-                mappingCredits: increment((product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapeamento Emocional Floral') ? 1 : 0),
+                mappingCredits: increment((product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral') ? 1 : 0),
                 clube_ativo: product.name.includes('Clube'),
                 lastPurchase: product.name,
                 updatedAt: new Date().toISOString()
@@ -2920,7 +2920,7 @@ const Diagnostico = () => {
               await refreshAccess(currentUser.uid);
               
               console.log("🚀 Redirecting to correct page...");
-              if (product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapeamento Emocional Floral') {
+              if (product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral') {
                 showPage('mapeamento_form');
               } else {
                 showPage('confirmation');
@@ -4172,7 +4172,7 @@ const Diagnostico = () => {
         defesa: finalAnswers.find(a => a.tipo === 'defesa')?.texto || '',
         ferida: finalAnswers.find(a => a.tipo === 'ferida')?.texto || '',
         desejo: finalAnswers.find(a => a.tipo === 'expansao')?.texto || '',
-        arquetipo: 'Calculado pela IA'
+        arquetipo: 'Método Posição'
       };
       setMapeamentoData(derivedData);
 
@@ -4880,11 +4880,24 @@ const Diagnostico = () => {
               className="animate-screen max-w-5xl mx-auto"
             >
                <motion.header variants={itemVariants} className="mb-16 md:mb-24 flex flex-col md:flex-row justify-between items-center md:items-start text-center md:text-left gap-8">
-                 <div className="max-w-xl">
-                   <h1 className="serif text-4xl md:text-5xl lg:text-6xl text-gold-light mb-4 font-serif">Experiência Posição</h1>
-                   <p className="text-white/60 font-light text-sm md:text-base leading-relaxed tracking-wide">
-                     Um ecossistema de clareza, reorganização interna e direção consciente para você ocupar seu lugar com mais presença, estratégia e verdade.
+                 <div className="max-w-2xl text-left">
+                   <div className="text-gold-main/60 uppercase tracking-[0.25em] text-xs font-semibold mb-3">Experiência Posição</div>
+                   <h1 className="serif text-4xl md:text-5xl lg:text-5xl text-gold-light mb-4 font-serif font-semibold leading-tight">
+                     Clareza, equilíbrio e cura para a sua jornada
+                   </h1>
+                   <p className="text-white/70 font-light text-sm md:text-base leading-relaxed tracking-wide mb-8 max-w-xl">
+                     Atendimentos terapêuticos integrativos através do Tarô, Florais e Terapias Holísticas. Um espaço seguro para você resgatar seu bem-estar, alinhar sua energia e expandir sua consciência.
                    </p>
+                   <div className="hidden">
+                     <a 
+                        
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       
+                     >
+                       
+                     </a>
+                   </div>
                  </div>
                  <div className="flex flex-row md:flex-col gap-4 md:gap-6 items-center md:items-end self-center md:self-start">
                    {isAdmin && (
@@ -4956,7 +4969,7 @@ const Diagnostico = () => {
                         title: 'Mapa Floral',
                         desc: 'Descubra sua emoção dominante, seu arquétipo ativo e obtenha sua fórmula de floral personalizada.',
                         tag: 'Mapeamento',
-                        cta: 'Descobrir meu padrão',
+                        cta: 'Acessar Mapa Floral',
                       },
                       {
                         id: 'lealdades_intro',
@@ -5241,23 +5254,31 @@ const Diagnostico = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="animate-screen text-center max-w-2xl mx-auto"
+              className="animate-screen max-w-2xl mx-auto"
             >
-              <div className="back" onClick={() => setPage('home')}>← Voltar</div>
-              <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium">
+              <div className="back text-center" onClick={() => setPage('home')}>← Voltar</div>
+              <p className="text-[9px] text-white/15 uppercase tracking-widest mb-6 font-medium text-center">
                 Início → Mapa Floral
               </p>
-              <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapa Floral</span>
-              <h2 className="serif text-5xl md:text-6xl text-gold-light mb-12">Mapa de Posição: Floral</h2>
-              
+
               <div className="glass-card p-6 md:p-10 text-left mb-12">
+                <span className="text-[9px] uppercase tracking-[0.4em] text-gold-main/30 font-sans mb-6 block font-medium">✨ Mapa Floral</span>
+                <h2 className="serif text-3xl md:text-3xl text-gold-light mb-6 font-serif font-semibold">
+                  Mapa Floral: Sua Jornada de Equilíbrio Emocional
+                </h2>
+                
                 <p className="text-white/80 mb-6 leading-relaxed text-lg font-light">
-                  Descubra sua emoção dominante, seu arquétipo ativo e obtenha sua fórmula de floral personalizada com o poder da Inteligência Artificial.
+                  A sinergia floral é desenvolvida com precisão a partir do seu formulário online. Através deste questionário guiado de autopercepção, identificamos os desequilíbrios emocionais e os seus principais gatilhos para direcionar a fórmula ideal para o seu momento de vida.
                 </p>
-                <p className="text-white/60 mb-6 leading-relaxed text-base font-light">
-                  A terapia floral ajuda a harmonizar padrões de pensamentos e sentimentos, trazendo clareza e autorregulação profunda para as dores do dia a dia.
-                </p>
-                <p className="text-white/40 mb-10 leading-relaxed text-sm font-light italic">
+
+                <h3 className="serif text-lg font-medium text-gold-light mt-8 mb-4">Como funciona o Mapa Floral?</h3>
+                <ul className="produto-beneficios">
+                  <li><strong>Análise Consciencial:</strong> Identificação dos desequilíbrios, gatilhos emocionais e padrões repetitivos que geram ansiedade e estagnação.</li>
+                  <li><strong>Sinergia Vibracional:</strong> Seleção precisa das essências de Bach adequadas para a sua estrutura energética e mental atual.</li>
+                  <li><strong>Direcionamento Terapêutico:</strong> Você recebe o seu direcionamento personalizado de forma prática, com a posologia exata e o plano de cuidado integral.</li>
+                </ul>
+
+                <p className="text-white/45 mb-8 leading-relaxed text-sm font-light italic">
                   Responda com sinceridade às 11 perguntas curtas. A sua honestidade guia a assertividade do seu mapeamento floral.
                 </p>
 
@@ -5299,7 +5320,7 @@ const Diagnostico = () => {
                       <button 
                         type="button"
                         onClick={() => {
-                          handleCheckout('Mapa de Posição', 'R$ 9');
+                          handleCheckout('Mapa Floral', 'R$ 9');
                         }}
                         className="button w-full"
                       >
@@ -5948,7 +5969,7 @@ const Diagnostico = () => {
 
               {mapeamentoResult && (
                 <div className="glass-card p-8 md:p-12 space-y-8 border-white/5 bg-white/[0.005]">
-                  <h3 className="serif text-2xl text-gold-light border-b border-white/5 pb-4">Análise Terapêutica Descritiva (IA)</h3>
+                  <h3 className="serif text-2xl text-gold-light border-b border-white/5 pb-4">Análise Terapêutica Descritiva</h3>
                   
                   <div className="markdown-body text-white/80 space-y-4 font-light leading-relaxed prose prose-invert max-w-none">
                     <ReactMarkdown>{mapeamentoResult}</ReactMarkdown>
@@ -7429,16 +7450,16 @@ const Diagnostico = () => {
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {isAdmin ? "Crédito Ilimitado" : `${access?.mappingCredits || 0} ${access?.mappingCredits === 1 ? 'Crédito' : 'Créditos'}`}
                                     </span>
                                   </div>
-                                  <h4 className="serif text-xl text-gold-light mb-2">Mapa de Posição - Floral</h4>
+                                  <h4 className="serif text-xl text-gold-light mb-2">Mapa Floral</h4>
                                   <p className="text-white/40 text-xs leading-relaxed mb-6 font-light font-sans">
-                                    Identifique sua emoção dominante e receba sua recomendação de fórmula floral personalizada na hora via IA.
+                                    Identifique sua emoção dominante e receba sua recomendação de fórmula floral personalizada na hora.
                                   </p>
                                 </div>
                                 <button 
                                   onClick={() => showPage('mapeamento_intro')}
                                   className="w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-bold bg-[#d4af37] text-black hover:bg-[#c5a880] transition-all duration-300 animate-pulse"
                                 >
-                                  Iniciar Mapeamento Floral
+                                  Iniciar Mapa Floral
                                 </button>
                               </div>
                             )}

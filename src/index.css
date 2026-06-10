@@ -221,3 +221,105 @@
     radial-gradient(ellipse 70% 90% at 85% 50%, rgba(201,160,74,.05) 0%, transparent 60%),
     radial-gradient(ellipse 50% 60% at 10% 80%, rgba(201,160,74,.03) 0%, transparent 50%);
 }
+
+/* Subtítulo Terapêutico - Leve, legível e centralizado */
+.subtitulo-terapeutico {
+    font-size: 1.2rem;
+    line-height: 1.7;
+    color: #e2e2e2; /* Adjusted to a lighter soft text color that coordinates better with our dark midnight background style */
+    max-width: 700px;
+    margin: 1.5rem auto 2.5rem auto;
+    font-weight: 400;
+}
+
+/* Botão de Contato - Sofisticado, minimalista e acolhedor */
+.btn-contato {
+    display: inline-block;
+    background-color: #6a6a6a; /* Tom cinza neutro e sofisticado para os botões da interface */
+    color: #ffffff;
+    padding: 0.9rem 2.2rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 4px; /* Cantos retos com leve suavização, transmitindo firmeza e seriedade */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.btn-contato:hover {
+    background-color: #4a4a4a;
+    transform: translateY(-1px);
+}
+
+/* Configuração da Seção do Produto */
+.produto-section {
+    padding: 3rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.02); /* Using a translucent glass background that matches the dark slate theme beautifully while creating soft distinction */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.produto-section h2 {
+    font-size: 2rem;
+    color: #f3f4f6; /* Soft light grey that fits the ambient palette */
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+.produto-info h3 {
+    font-size: 1.3rem;
+    color: #e5e7eb;
+    margin: 2rem 0 1rem 0;
+    font-weight: 500;
+}
+
+.introducao-produto {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #d1d5db; /* Clean light-grey for readability */
+    margin-bottom: 1.5rem;
+}
+
+/* Lista de Benefícios - Limpa e Espaçada */
+.produto-beneficios {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2.5rem;
+}
+
+.produto-beneficios li {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #d1d5db;
+    margin-bottom: 0.8rem;
+    position: relative;
+    padding-left: 1.5rem;
+    text-align: left;
+}
+
+/* Indicador minimalista na lista em vez de bullets genéricos */
+.produto-beneficios li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: #9ca3af;
+}
+
+/* Botão Cinza Clássico de Interface Terapêutica */
+.btn-produto-cinza {
+    display: inline-block;
+    background-color: #555555; /* Cinza sóbrio para manter a neutralidade e sofisticação */
+    color: #ffffff;
+    padding: 0.9rem 2.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-produto-cinza:hover {
+    background-color: #333333;
+    transform: translateY(-1px);
+}
+
+
