@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ARCANOS_MATRIZ, ArcanoData } from '../constants/arcanos';
 import { questions } from '../data/questions';
 import { triageQuestions } from '../data/triageQuestions';
-import { mapeamentoQuestions } from '../data/mapeamentoQuestions';
+import { mapeamentoQuestions, selectFloraisByWeight } from '../data/mapeamentoQuestions';
 import { lealdadesQuestions, axisData, areaLabels, getProfile, getConsciousnessLevel, getReadinessLevel } from '../data/lealdadesQuestions';
 import { auth, db } from '../services/firebase';
 import ReactMarkdown from 'react-markdown';
@@ -25,6 +25,7 @@ import { useAccess } from '../context/AccessContext';
 import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag, Search, Star } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
+import { MapaNumerologico } from '../components/MapaNumerologico';
 
 interface AppUser {
   id: string;
@@ -62,7 +63,7 @@ const meditations = [
 
 import { useCiclos, formatarMesAno, diasParaRitual } from '../hooks/useCiclos';
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -2121,6 +2122,7 @@ const Diagnostico = () => {
       '/mapa-floral': 'mapeamento_intro',
       '/lealdades': 'lealdades_intro',
       '/lealdades-ocultas': 'lealdades_intro',
+      '/numerologia': 'numerologia_intro',
       '/reset': 'reprogramacao_pessoal_info',
       '/reset-posicao': 'reprogramacao_pessoal_info',
       '/clube-posicao': 'clube_posicao_info',
@@ -2140,6 +2142,7 @@ const Diagnostico = () => {
       'diagnostico_info': '/diagnostico',
       'mapeamento_intro': '/mapafloral',
       'lealdades_intro': '/lealdades',
+      'numerologia_intro': '/numerologia',
       'reprogramacao_pessoal_info': '/reset',
       'clube_posicao_info': '/clube-posicao',
       'rituais_mes_info': '/ciclos',
@@ -2657,6 +2660,7 @@ const Diagnostico = () => {
     if (!item) return 'Mapeamento';
     if (item.type === 'lealdades_ocultas') return 'Mapeamento de Lealdades Ocultas';
     if (item.type === 'diagnostico_posicional') return 'Diagnóstico de Posição';
+    if (item.type === 'mapa_numerologico_posicao') return 'Mapa Numerológico de Posição';
     return 'Mapeamento Floral';
   };
 
@@ -2906,7 +2910,7 @@ const Diagnostico = () => {
                 whatsapp: (data.whatsapp || '').trim(),
                 role: 'user',
                 paidStatus: true,
-                mappingCredits: increment((product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral') ? 1 : 0),
+                mappingCredits: increment((product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral' || product.name === 'Mapa Numerológico de Posição') ? 1 : 0),
                 clube_ativo: product.name.includes('Clube'),
                 lastPurchase: product.name,
                 updatedAt: new Date().toISOString()
@@ -2922,6 +2926,8 @@ const Diagnostico = () => {
               console.log("🚀 Redirecting to correct page...");
               if (product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral') {
                 showPage('mapeamento_form');
+              } else if (product.name === 'Mapa Numerológico de Posição') {
+                showPage('numerologia_intro');
               } else {
                 showPage('confirmation');
               }
@@ -3969,7 +3975,8 @@ const Diagnostico = () => {
       'home', 'auth', 'diagnostico_info', 'reprogramacao_pessoal_info', 
       'clube_clarear_info', 'reprogramar_eu_info', 'clube_taro_info',
       'clube_posicao_info', 'rituais_mes_info', 'lista_espera_clarear',
-      'mapeamento_intro', 'lealdades_intro', 'triage_quiz', 'triage_result'
+      'mapeamento_intro', 'lealdades_intro', 'triage_quiz', 'triage_result',
+      'numerologia_intro'
     ].includes(newPage)) {
       setIntendedPage(newPage);
       resolvedPage = 'auth';
@@ -4164,14 +4171,14 @@ const Diagnostico = () => {
     setPage('mapeamento_analysis');
     try {
       const quizContext = finalAnswers.map(a => `- ${a.tipo}: ${a.texto} (Emoção: ${a.emocao})`).join('\n');
-      const suggestedFlorais = Array.from(new Set(finalAnswers.flatMap(a => a.florais))).join(', ');
+      const suggestedFlorais = selectFloraisByWeight(finalAnswers, 7);
       
       const derivedData = {
-        emocao: finalAnswers.find(a => a.tipo === 'emocao')?.texto || '',
-        padrao: finalAnswers.find(a => a.tipo === 'padrao')?.texto || '',
-        defesa: finalAnswers.find(a => a.tipo === 'defesa')?.texto || '',
-        ferida: finalAnswers.find(a => a.tipo === 'ferida')?.texto || '',
-        desejo: finalAnswers.find(a => a.tipo === 'expansao')?.texto || '',
+        emocao: (finalAnswers.find(a => a.tipo === 'abertura') || finalAnswers.find(a => a.tipo === 'emocao'))?.texto || '',
+        padrao: (finalAnswers.find(a => a.tipo === 'padrao'))?.texto || '',
+        defesa: (finalAnswers.find(a => a.tipo === 'sombra') || finalAnswers.find(a => a.tipo === 'defesa'))?.texto || '',
+        ferida: (finalAnswers.find(a => a.tipo === 'feridas') || finalAnswers.find(a => a.tipo === 'ferida'))?.texto || '',
+        desejo: (finalAnswers.find(a => a.tipo === 'urgencia') || finalAnswers.find(a => a.tipo === 'expansao'))?.texto || '',
         arquetipo: 'Método Posição'
       };
       setMapeamentoData(derivedData);
@@ -4257,6 +4264,35 @@ const Diagnostico = () => {
   const handleCheckout = (productName: string, price: string) => {
     setSelectedProduct({ name: productName, price });
     showPage('checkout');
+  };
+
+  const handleSaveNumerologia = async (mapResult: any) => {
+    if (user) {
+      try {
+        await addDoc(collection(db, 'mappings'), {
+          userId: user.uid,
+          userEmail: user.email,
+          ...mapResult
+        });
+        
+        // Decrement mapping credit if not admin
+        if (!isAdmin && access?.mappingCredits > 0) {
+          await updateDoc(doc(db, 'users', user.uid), {
+            mappingCredits: increment(-1)
+          });
+          await updateDoc(doc(db, 'user_access', user.uid), {
+            mappingCredits: increment(-1)
+          });
+          // Refresh access
+          await refreshAccess(user.uid);
+        }
+        
+        // Fetch history again to show it in Jornada Emocional
+        await fetchAndMergeHistory(user.uid);
+      } catch (err) {
+        console.error("Error saving numerologia mapping:", err);
+      }
+    }
   };
 
   const salvarPedidoPendente = async (metodo: 'pix' | 'cartao') => {
@@ -4979,6 +5015,13 @@ const Diagnostico = () => {
                         cta: 'Identificar Lealdades',
                       },
                       {
+                        id: 'numerologia_intro',
+                        title: 'Mapa Numerológico de Posição',
+                        desc: 'Uma leitura simbólica profunda do nome, arcanos e sequências que revelam pontos práticos de tensão e desenvolvimento.',
+                        tag: 'Numerologia',
+                        cta: 'Acessar Mapa Numerológico',
+                      },
+                      {
                         id: 'reprogramacao_pessoal_info',
                         title: 'Reset de Posição',
                         desc: 'Reorganize padrões, solte crenças e sintonize seu áudio de frequência personalizada.',
@@ -5248,6 +5291,24 @@ const Diagnostico = () => {
             </motion.div>
           )}
 
+          {page === 'numerologia_intro' && (
+            <motion.div 
+              key="numerologia_intro"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen max-w-4xl mx-auto"
+            >
+              <MapaNumerologico 
+                isAdmin={isAdmin}
+                access={access}
+                handleCheckout={handleCheckout}
+                onSaveResult={handleSaveNumerologia}
+                onGoBack={() => setPage('home')}
+              />
+            </motion.div>
+          )}
+
           {page === 'mapeamento_intro' && (
             <motion.div 
               key="mapeamento_intro"
@@ -5359,7 +5420,7 @@ const Diagnostico = () => {
                           emocao: randomOpt.emocao,
                           peso: randomOpt.peso,
                           florais: randomOpt.florais,
-                          tipo: question.tipo
+                          tipo: question.grupo || (question as any).tipo
                         });
                       }
                       setMapeamentoAnswers(simAnswers);
@@ -5415,7 +5476,7 @@ const Diagnostico = () => {
                           emocao: opcao.emocao,
                           peso: opcao.peso,
                           florais: opcao.florais,
-                          tipo: mapeamentoQuestions[currentMapeamentoStep].tipo
+                          tipo: mapeamentoQuestions[currentMapeamentoStep].grupo || (mapeamentoQuestions[currentMapeamentoStep] as any).tipo
                         };
                         setMapeamentoAnswers(newAnswers);
 
@@ -7327,6 +7388,210 @@ const Diagnostico = () => {
                           <button onClick={() => generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', selectedMapping, 'diagnostico_posicional')} className="button bg-gold-main/20 border-gold-main/40 text-gold-main hover:bg-gold-main/30 flex items-center gap-2 justify-center">
                             <FileText size={18} /> Abrir Relatório (PDF)
                           </button>
+                        </div>
+                      </div>
+                    );
+                  })() : selectedMapping.type === 'mapa_numerologico_posicao' ? (() => {
+                    const originalKarmicas = selectedMapping.sequenciasKarmicas || [];
+                    const uniqueKarmicas = Array.from(new Set(originalKarmicas));
+                    
+                    const originalRepetidas = selectedMapping.sequenciasRepetidas || [];
+                    const uniqueRepetidas = Array.from(new Set(originalRepetidas));
+
+                    const hasRepetidas = uniqueRepetidas.length > 0;
+                    const hasKarmicas = uniqueKarmicas.length > 0;
+
+                    // Dynamic calculation of Chaves Vibracionais (Motivation, Impression, Expression) on-the-fly
+                    const VOWELS_SET = new Set(['A', 'E', 'I', 'O', 'U', 'Y']);
+                    const CABALA_MAP_LOCAL: Record<string, number> = {
+                      A: 1, I: 1, J: 1, Q: 1, Y: 1,
+                      B: 2, K: 2, R: 2,
+                      C: 3, G: 3, L: 3, S: 3,
+                      D: 4, M: 4, T: 4,
+                      E: 5, H: 5, N: 5, X: 5,
+                      U: 6, V: 6, W: 6,
+                      O: 7, Z: 7,
+                      F: 8, P: 8
+                    };
+
+                    const nomeLimpo = (selectedMapping.nome || '')
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .replace(/Ç/g, "C")
+                      .replace(/ç/g, "C")
+                      .toUpperCase()
+                      .replace(/[^A-Z]/g, "");
+
+                    const letrasArray = nomeLimpo.split("");
+
+                    const red9 = (num: number): number => {
+                      let n = num;
+                      while (n > 9) {
+                        n = String(n).split("").reduce((acc, digit) => acc + Number(digit), 0);
+                      }
+                      return n;
+                    };
+
+                    const getRedPath = (num: number): number[] => {
+                      const path = [num];
+                      let current = num;
+                      while (current > 9) {
+                        current = String(current).split("").reduce((acc, d) => acc + Number(d), 0);
+                        path.push(current);
+                      }
+                      return path;
+                    };
+
+                    const vogais = letrasArray.filter(l => VOWELS_SET.has(l));
+                    const sumVows = vogais.reduce((acc, l) => acc + (CABALA_MAP_LOCAL[l] || 0), 0);
+                    const motVal = red9(sumVows);
+                    const motPath = getRedPath(sumVows);
+
+                    const consoantes = letrasArray.filter(l => !VOWELS_SET.has(l) && l >= 'A' && l <= 'Z');
+                    const sumCons = consoantes.reduce((acc, l) => acc + (CABALA_MAP_LOCAL[l] || 0), 0);
+                    const impVal = red9(sumCons);
+                    const impPath = getRedPath(sumCons);
+
+                    const sumTot = letrasArray.reduce((acc, l) => acc + (CABALA_MAP_LOCAL[l] || 0), 0);
+                    const expVal = red9(sumTot);
+                    const expPath = getRedPath(sumTot);
+
+                    return (
+                       <div className="space-y-12 text-left">
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-4 pb-6 border-b border-white/5">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-[0.4em] text-gold-main/40 font-mono block mb-2 font-bold">Relatório Completo</span>
+                            <h2 className="serif text-3xl text-gold-light">Mapa Numerológico de Posição</h2>
+                            <p className="text-white/40 text-sm mt-1">Nome Analisado: <strong>{selectedMapping.nome}</strong></p>
+                            <p className="text-white/30 text-xs font-mono mt-1">Calculado em {new Date(selectedMapping.createdAt).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                          <div className="md:text-right">
+                            <span className="text-gold-main/30 text-[9px] uppercase tracking-widest block mb-1 font-bold">Arcano Regente</span>
+                            <span className="text-gold-main text-sm font-semibold">{selectedMapping.arcanoNome || 'Chave Ativa'}</span>
+                          </div>
+                        </div>
+
+                        {/* Triângulo Core KPIs */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="glass-card border-gold-main/20 bg-gold-main/[0.03] p-5">
+                            <span className="text-[8px] uppercase tracking-widest text-gold-light block mb-2 font-bold font-mono">Chave de Expressão</span>
+                            <h3 className="serif text-3xl text-gold-light font-bold mb-1">{selectedMapping.expressao}</h3>
+                            <p className="text-white/40 text-[11px] font-light leading-relaxed">Forma como emite e lida estruturalmente com as ações no plano externo.</p>
+                          </div>
+
+                          <div className="glass-card border-white/5 bg-white/[0.01] p-5">
+                            <span className="text-[8px] uppercase tracking-widest text-white/40 block mb-2 font-bold font-mono">Bases do Triângulo</span>
+                            <h3 className="serif text-3xl text-gold-light font-bold mb-1">{selectedMapping.raiz}</h3>
+                            <p className="text-white/40 text-[11px] font-light leading-relaxed font-sans font-light">O ponto de apoio e lição cármica-evolutiva oculta nas raízes do Triângulo Invertido.</p>
+                          </div>
+
+                          <div className="glass-card border-white/5 bg-white/[0.01] p-5">
+                            <span className="text-[8px] uppercase tracking-widest text-white/40 block mb-2 font-bold font-mono">Arcano Ciclo</span>
+                            <h3 className="serif text-3xl text-gold-light font-bold mb-1">{selectedMapping.arcano}</h3>
+                            <p className="text-white/40 text-[11px] font-light leading-relaxed font-sans font-light">O regente simbólico ativo vibrando temas importantes para o momento anual.</p>
+                          </div>
+                        </div>
+
+                        {/* Chaves Vibracionais Detalhadas do Nome */}
+                        <div className="space-y-4">
+                          <h4 className="serif text-xl text-gold-light border-b border-white/5 pb-2">Chaves Vibracionais do Nome</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* 1. Motivação */}
+                            <div className="glass-card border-white/5 bg-white/[0.01] p-5 space-y-2">
+                              <span className="text-[8px] uppercase tracking-widest text-[#E5D5C5] block font-bold font-mono">
+                                Soma das Vogais (Motivação)
+                              </span>
+                              <h3 className="serif text-3xl text-gold-light font-bold">
+                                {motVal} <span className="text-xs font-normal font-mono text-white/40">({sumVows})</span>
+                              </h3>
+                              <p className="text-white/60 text-[11px] leading-relaxed font-sans font-light">
+                                <strong>Significado:</strong> Revela seus desejos íntimos, aspirações, estrutura de pensamento e o que move o seu coração.
+                              </p>
+                              <p className="text-[#E5D5C5]/40 text-[9px] font-mono">
+                                Redução: {motPath.join(" → ")}
+                              </p>
+                            </div>
+
+                            {/* 2. Impressão */}
+                            <div className="glass-card border-white/5 bg-white/[0.01] p-5 space-y-2">
+                              <span className="text-[8px] uppercase tracking-widest text-[#E5D5C5] block font-bold font-mono">
+                                Soma das Consoantes (Impressão)
+                              </span>
+                              <h3 className="serif text-3xl text-gold-light font-bold">
+                                {impVal} <span className="text-xs font-normal font-mono text-white/40 font-bold">({sumCons})</span>
+                              </h3>
+                              <p className="text-white/60 text-[11px] leading-relaxed font-sans font-light">
+                                <strong>Significado:</strong> Mostra como você age no mundo, a imagem que transmite aos outros e a forma como é percebido.
+                              </p>
+                              <p className="text-[#E5D5C5]/40 text-[9px] font-mono">
+                                Redução: {impPath.join(" → ")}
+                              </p>
+                            </div>
+
+                            {/* 3. Expressão */}
+                            <div className="glass-card border-gold-main/20 bg-gold-main/[0.03] p-5 space-y-2">
+                              <span className="text-[8px] uppercase tracking-widest text-[#E5D5C5] block font-bold font-mono">
+                                Soma de Vogais + Consoantes (Expressão)
+                              </span>
+                              <h3 className="serif text-3xl text-gold-light font-semibold font-bold">
+                                {expVal} <span className="text-xs font-normal font-mono text-white/45 font-bold">({sumTot})</span>
+                              </h3>
+                              <p className="text-white/60 text-[11px] leading-relaxed font-sans font-light">
+                                <strong>Significado:</strong> Representa o seu potencial, seus talentos natos e a maneira como você se manifesta e interage com o universo.
+                              </p>
+                              <p className="text-gold-light/40 text-[9px] font-mono">
+                                Redução: {expPath.join(" → ")}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Detailed alert items */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold block">🚨 Correntes Repetitivas (Bloqueios)</span>
+                            {!hasRepetidas ? (
+                              <p className="text-xs text-white/40 italic">Nenhum acúmulo de sequência agressiva detectada.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {uniqueRepetidas.map((seq: string) => (
+                                  <div key={seq} className="p-3.5 bg-red-500/[0.02] border border-red-500/10 rounded-lg text-xs font-sans font-light">
+                                    <span className="font-mono text-red-400 font-bold">Sequência {seq}:</span> Ativa distorções comportamentais repetitivas que demandam atenção terapêutica e atenção ao fluxo energético.
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            <span className="text-[10px] uppercase tracking-wider text-gold-main font-bold block">✨ Vetores de Sabedoria Cármica</span>
+                            {!hasKarmicas ? (
+                              <p className="text-xs text-white/40 italic">Nenhum desvio crítico de aprendizado moral pendente.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {uniqueKarmicas.map((seq: number) => (
+                                  <div key={seq} className="p-3.5 bg-gold-main/[0.02] border border-gold-main/10 rounded-lg text-xs font-sans font-light">
+                                    <span className="font-mono text-gold-main font-bold">Vetor {seq}:</span> Aponta aprendizados morais, paciência cósmica e realinhamento consciencial profundo.
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Analysis Synthesis */}
+                        <div className="space-y-4">
+                          <h4 className="serif text-lg text-gold-light font-serif">Leitura Integrada Psicoterapêutica</h4>
+                          <div className="p-5 bg-gold-main/[0.02] border-l border-gold-main text-white/80 text-sm font-light leading-relaxed italic rounded-r-xl">
+                            "{selectedMapping.leituraIntegrada}"
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="pt-8 border-t border-white/5 flex gap-4 justify-center">
+                          <button onClick={() => setSelectedMapping(null)} className="button">Voltar para Lista</button>
                         </div>
                       </div>
                     );

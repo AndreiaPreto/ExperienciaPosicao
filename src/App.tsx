@@ -44,6 +44,7 @@ export default function App() {
               <Route path="/mapa-floral" element={<Diagnostico />} />
               <Route path="/lealdades" element={<Diagnostico />} />
               <Route path="/lealdades-ocultas" element={<Diagnostico />} />
+              <Route path="/numerologia" element={<Diagnostico />} />
               <Route path="/reset" element={<Diagnostico />} />
               <Route path="/reset-posicao" element={<Diagnostico />} />
               <Route path="/clube-posicao" element={<Diagnostico />} />
