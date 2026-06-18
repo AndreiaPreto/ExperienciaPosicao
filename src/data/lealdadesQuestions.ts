@@ -559,11 +559,7 @@ export const axisData: { [key: string]: AxisDetail } = {
     phrase: "Eu ainda não tenho permissão para ser tudo o que sou.",
     liberation: "Eu posso ocupar meu lugar com amor e firmeza.",
     practice: "Durante 7 dias, tome uma pequena decisão por dia sem buscar validação externa. Depois diga: eu sustento minha escolha com presença.",
-    description: "A resistência de crescer emocionalmente e se colocar na cadeira de motorista do próprio destino, delegando a aprovação das suas decisões importantes a instâncias de validação externas.",
-    unconsciousPhrase: "Eu me mantenho infante e hesitante para não perder a aprovação rítmica e a guarda do meu clã.",
-    repositioningMovement: "Eu me auto-autorizo a agir, assumo a rédea do meu destino e sou soberana sobre as minhas direções.",
-    reflexiveQuestion: "Qual autorização fantasiada ou bênção mágica eu sinto que deverei obter antes de poder crescer?",
-    dayPractice: {
+    description: "A resistência de crescer emocionalmente e se colocar na cadeira de motorista do pr�    dayPractice: {
       name: "Prática dos 7 Dias: Soberania e Tomada de Decisão",
       steps: [
         "Selecione uma decisão ou ação relevante que você suspendeu aguardando a opinião de terceiros.",
@@ -591,7 +587,7 @@ export const getProfile = (dominant: string, secondary: string) => {
   const pair = [dominant, secondary].sort().join("+");
 
   const profiles: { [key: string]: { name: string; description: string } } = {
-    // ── Perfis originais ──
+    // Perfis originais
     "pertencimento+sacrificio": {
       name: "Guardião Sobrecarregado",
       description: "Você pode ter aprendido a proteger vínculos assumindo responsabilidades excessivas. Cuidar dos outros tornou-se a forma mais segura de garantir que você continua pertencendo."
@@ -602,7 +598,7 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "compensacao+culpa": {
       name: "Reparador Sistêmico",
-      description: "Você pode estar tentando equilibrar histórias, dores ou responsabilidades que não começaram em você. Carregar o peso do clã virou uma forma de se sentir útil e pertencente."
+      description: "Você pode estar tentando equilibrar histórias, dores ou responsabilidades que não começaram in você. Carregar o peso do clã virou uma forma de se sentir útil e pertencente."
     },
     "invisibilidade+pertencimento": {
       name: "Invisível Estratégico",
@@ -614,10 +610,10 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "escassez+poderPessoal": {
       name: "Construtor Resiliente",
-      description: "Você possui força de realização, mas pode agir a partir da sobrevivência mais do que da confiança. Seu power pessoal existe — mas ainda espera por uma segurança que talvez nunca chegue do lado de fora."
+      description: "Você possui força de realização, mas pode agir a partir da sobrevivência mais do que da confiança. Seu power pessoal existe, mas ainda espera por uma segurança que talvez nunca chegue do lado de fora."
     },
 
-    // ── Perfis expandidos — 15 combinações adicionais ──
+    // Perfis expandidos, 15 combinações adicionais
     "culpa+pertencimento": {
       name: "Devedor do Clã",
       description: "Você pode carregar a crença de que crescer, prosperar ou se diferenciar representa uma traição àqueles que ama. Pertencer parece exigir que você não ultrapasse certos limites invisíveis do seu sistema familiar."
@@ -628,7 +624,7 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "escassez+pertencimento": {
       name: "Sobrevivente Vinculado",
-      description: "Você pode ter aprendido que recursos — tempo, dinheiro, amor — são escassos e que manter vínculos é a única forma segura de garantir que você não ficará sozinha. O medo de faltar e o medo de ser excluída caminham juntos."
+      description: "Você pode ter aprendido que recursos como tempo, dinheiro, amor são escassos e que manter vínculos é a única forma segura de garantir que você não ficará sozinha. O medo de faltar e o medo de ser excluída caminham juntos."
     },
     "pertencimento+poderPessoal": {
       name: "Líder Silenciosa",
@@ -636,7 +632,7 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "culpa+sacrificio": {
       name: "Mártir Consciente",
-      description: "Você pode se sobrecarregar pelos outros e ao mesmo tempo sentir culpa por querer mais para si. Descansar, receber ou prosperar parece sempre exigir que você pague algum preço antes — como se o merecimento precisasse ser justificado pelo esforço."
+      description: "Você pode se sobrecarregar pelos outros e ao mesmo tempo sentir culpa por querer mais para si. Descansar, receber ou prosperar parece sempre exigir que você pague algum preço antes, como se o merecimento precisasse ser justificado pelo esfuerzo."
     },
     "compensacao+sacrificio": {
       name: "Reparador Sobrecarregado",
@@ -648,7 +644,7 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "poderPessoal+sacrificio": {
       name: "Força Contida",
-      description: "Você pode possuir grande capacidade de realização, mas subordiná-la às necessidades alheias parece mais seguro do que assumir plenamente o leme da própria vida. Sua força existe — mas ainda aguarda permissão para se manifestar sem custo relacional."
+      description: "Você pode possuir grande capacidade de realização, mas subordiná-la às necessidades alheias parece mais seguro do que assumir plenamente o leme da própria vida. Sua força existe, mas ainda aguarda permissão para se manifestar sem custo relacional."
     },
     "culpa+escassez": {
       name: "Merecedora Bloqueada",
@@ -656,7 +652,7 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "culpa+invisibilidade": {
       name: "Brilho Suspenso",
-      description: "Você pode diminuir suas conquistas e conter seu brilho para não provocar inveja, comparação ou rejeição. Aparecer com tudo que você é ainda carrega o peso de uma culpa antiga — como se ocupar espaço de destaque fosse, de alguma forma, errado."
+      description: "Você pode diminuir suas conquistas e conter seu brilho para não provocar inveja, comparação ou rejeição. Aparecer com tudo que você é ainda carrega o peso de uma culpa antiga, como se ocupar espaço de destaque fosse, de alguma forma, errado."
     },
     "compensacao+escassez": {
       name: "Guardião da Falta",
@@ -664,10 +660,17 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "compensacao+invisibilidade": {
       name: "Reparador Discreto",
-      description: "Você pode trabalhar silenciosamente para equilibrar dores e injustiças do seu sistema, sem jamais reivindicar reconhecimento por isso. Permanecer invisível enquanto repara parece mais seguro do que ser vista — e talvez cobrada — pelo esforço."
+      description: "Você pode trabalhar silenciosamente para equilibrar dores e injustiças do seu sistema, sem jamais exigir reconhecimento por isso. Permanecer invisível enquanto repara parece mais seguro do que ser vista, e talvez cobrada, pelo esforço."
     },
     "compensacao+poderPessoal": {
       name: "Herdeiro Travado",
+      description: "Você pode sentir que possui um propósito importante, mas que assumir plenamente sua força significaria deixar para trás algo ou alguém que ainda precisa de você. Crescer parece trair uma missão sistêmica que você nunca escolheu conscientemente, mas carrega com lealdade."
+    },
+    "invisibilidade+poderPessoal": {
+      name: "Soberana Oculta",
+      description: "Você pode possuir grande poder interior, mas mantê-lo discreto parece mais seguro do que trazê-lo à luz. Aparecer com autoridade ainda carrega o risco imaginado de ser julgada, atacada ou de perder o vínculo com quem prefere você menor."
+    }
+  };  name: "Herdeiro Travado",
       description: "Você pode sentir que possui um propósito importante, mas que assumir plenamente sua força significaria deixar para trás algo ou alguém que ainda precisa de você. Crescer parece trair uma missão sistêmica que você nunca escolheu conscientemente, mas carrega com lealdade."
     },
     "invisibilidade+poderPessoal": {
