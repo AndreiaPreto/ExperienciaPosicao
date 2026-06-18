@@ -848,9 +848,39 @@ async function startServer() {
       return res.status(400).json({ error: "Missing required fields (quizContext, suggestedFlorais, arcanosList)" });
     }
 
+    const inferFallbackArcano = (context: string, arcanos: string[]) => {
+      const normalized = context.toLowerCase();
+
+      const rules: Array<{ arcano: string; terms: string[] }> = [
+        { arcano: "Imperador", terms: ["controle", "responsabilidade", "estrutura", "rigidez"] },
+        { arcano: "Lua", terms: ["medo", "ansiedade", "confusão", "insegurança"] },
+        { arcano: "Forca", terms: ["aguentar", "sustentar", "força", "repressão"] },
+        { arcano: "Eremita", terms: ["isolamento", "silêncio", "distância", "recuo"] },
+        { arcano: "Enamorados", terms: ["indecisão", "escolha", "decisão", "dúvida"] },
+        { arcano: "Torre", terms: ["crise", "ruptura", "colapso", "quebra"] },
+        { arcano: "Estrela", terms: ["esperança", "cura", "sensibilidade", "fé"] },
+        { arcano: "Morte", terms: ["mudança", "fim", "desapego", "encerrar"] },
+        { arcano: "Temperanca", terms: ["equilíbrio", "harmonia", "ritmo", "paz"] },
+        { arcano: "Mago", terms: ["ação", "manifestar", "iniciativa", "resultado"] },
+      ];
+
+      const scored = rules
+        .map(rule => ({
+          arcano: rule.arcano,
+          score: rule.terms.reduce(
+            (total, term) => total + (normalized.includes(term) ? 1 : 0),
+            0
+          )
+        }))
+        .filter(item => item.score > 0 && arcanos.includes(item.arcano))
+        .sort((a, b) => b.score - a.score);
+
+      return scored[0]?.arcano || arcanos.find(a => a !== "Louco") || "Louco";
+    };
+
     // Beautiful fallback report generator in case all API calls fail (prevents blank screen/errors for the end client)
     const generateFallbackReport = (florais: string, arcanos: string[]) => {
-      const defaultArcano = arcanos[0] || "O Louco";
+      const defaultArcano = inferFallbackArcano(quizContext || "", arcanos);
       return `# Seu Mapeamento Emocional
 
 ARCANO: ${defaultArcano}

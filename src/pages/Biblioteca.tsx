@@ -213,7 +213,7 @@ export default function Biblioteca() {
               Cada e-book aqui foi criado por mim para <strong className="font-medium text-white/80">transformar assuntos complexos do universo emocional e terapêutico</strong> em algo prático, acessível e aplicável no seu dia a dia.
             </p>
             <p className="text-white/30 text-xs leading-relaxed max-w-md mb-8 pl-3 border-l border-gold-main/25">
-              Não é uma livraria. É a minha biblioteca — materiais que uso, ensino e acredito, reunidos num só lugar para facilitar o seu caminho de autoconhecimento.
+              Não é uma livraria. É a minha biblioteca, materiais que uso, ensino e acredito, reunidos num só lugar para facilitar o seu caminho de autoconhecimento.
             </p>
             <a href="#biblioteca_anchor" className="button inline-flex items-center gap-2 w-auto">
               Explorar materiais →

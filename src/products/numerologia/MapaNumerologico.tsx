@@ -176,7 +176,7 @@ const interpretacaoNumeros: Record<number, { expressao: string, sombra: string, 
     bloqueio: "validação externa"
   },
   3: {
-    expressao: "comunicação, criatividade, sociabilidade e expansão",
+    expressao: "comunicação, criatividade, sociabilidade e expressão",
     sombra: "dispersão, fala reprimida, excesso de ideias ou medo de se expor",
     bloqueio: "expressão autêntica"
   },
@@ -187,7 +187,7 @@ const interpretacaoNumeros: Record<number, { expressao: string, sombra: string, 
   },
   5: {
     expressao: "liberdade, movimento, flexibilidade e mudança",
-    sombra: "instabilidade, fuga, inquietação ou dificuldade de sustentar escolhas",
+    sombra: "instabilidade, fuga, inquietação ou dificuldade de sustentar escolher",
     bloqueio: "constância"
   },
   6: {
@@ -423,11 +423,14 @@ const detectarSequenciasRepetidas = (camadas: number[][]) => {
   camadas.forEach((linha, linhaIndex) => {
     for (let i = 0; i <= linha.length - 3; i++) {
       const a = linha[i];
-      const b = linha[i + 1];
-      const c = linha[i + 2];
-      const sequencia = `${a}${b}${c}`;
+      const b = inline => linha[i + 1];
+      const c = lineno => linha[i + 2];
+      const valA = a;
+      const valB = b !== undefined ? b : linha[i + 1];
+      const valC = c !== undefined ? c : linha[i + 2];
+      const sequencia = `${valA}${valB}${valC}`;
 
-      if (a === b && b === c && sequenciasRepetidasNegativas[sequencia]) {
+      if (valA === valB && valB === valC && sequenciasRepetidasNegativas[sequencia]) {
         repetidas.push({
           tipo: "repetida",
           sequencia,
@@ -996,7 +999,7 @@ export const MapaNumerologico: React.FC<MapaNumerologicoProps> = ({
                               </span>
                             )}
                             <div 
-                              className={`w-8 h-8 md:w-9 md:h-9 rounded-full border flex items-center justify-center font-mono font-bold text-xs transition-all ${borderBgClasses}`}
+                              className={`w-8 h-8 md:w-9 md:h-9 rounded-lg border text-xs md:text-sm flex items-center justify-center font-mono transition-all duration-300 ${borderBgClasses}`}
                             >
                               {cell}
                             </div>
@@ -1007,84 +1010,118 @@ export const MapaNumerologico: React.FC<MapaNumerologicoProps> = ({
                   ))}
                 </div>
               </div>
-
-              {/* Map Info Badges */}
-              <div className="flex flex-wrap gap-3 pt-2 text-[10px] tracking-wider uppercase font-semibold">
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-main/20 border border-gold-main/30 text-gold-light">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gold-main animate-ping"></span> Arcano Regente (1ª Linha)
-                </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Bloqueio de Fluxo (Sequência Repetida)
-                </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/30"></span> Elemento Neutro
-                </span>
-              </div>
             </div>
 
-            {/* Detailed Sequencies Section */}
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <h5 className="text-[11px] uppercase tracking-[0.2em] text-red-400 font-bold">⚠️ Sequências Repetidas Localizadas</h5>
-                {currentMap.sequencias.repetidas.length === 0 ? (
-                  <p className="text-xs text-white/40 italic">Nenhum padrão repetitivo instável (111 até 999) foi encontrado no corpo do triângulo.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentMap.sequencias.repetidas.map((seq: any, sIdx: number) => (
-                      <div key={sIdx} className="bg-white/[0.01] border border-red-500/15 p-4 rounded-xl space-y-2">
-                        <span className="text-[9px] uppercase tracking-widest font-mono font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Seq. {seq.sequencia}</span>
-                        <h4 className="serif text-base text-gold-light mt-1">{seq.titulo}</h4>
-                        <p className="text-xs text-white/60 leading-relaxed font-light">{seq.descricao}</p>
-                        <p className="text-[10px] text-white/40 font-mono italic">Bloqueia: {seq.bloqueia}</p>
-                        <div className="text-xs text-gold-main/70 pt-1">
-                          <strong>Orientação:</strong> {seq.orientacao}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <h5 className="text-[11px] uppercase tracking-[0.2em] text-gold-main font-bold">✨ Sequências Cármicas de Ajuste</h5>
-                {currentMap.sequencias.karmicas.length === 0 ? (
-                  <p className="text-xs text-white/40 italic">Nenhum vetor cármico crítico (13, 14, 16 ou 19) foi encontrado nos eixos analisados.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentMap.sequencias.karmicas.map((seq: any, sIdx: number) => (
-                      <div key={sIdx} className="bg-white/[0.01] border border-gold-main/15 p-4 rounded-xl space-y-2">
-                        <span className="text-[9px] uppercase tracking-widest font-mono font-bold text-gold-main bg-gold-main/10 px-2 py-0.5 rounded">Vetor Cármico {seq.numero}</span>
-                        <h4 className="serif text-base text-gold-light mt-1">{seq.titulo}</h4>
-                        <p className="text-xs text-white/60 leading-relaxed font-light">{seq.descricao}</p>
-                        <p className="text-[10px] text-white/40 font-mono italic">Bloqueia: {seq.bloqueia}</p>
-                        <div className="text-xs text-gold-main pt-1">
-                          <strong>Orientação:</strong> {seq.orientacao}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Synthese Section */}
+            {/* Raiz Section */}
             <div className="space-y-4">
-              <h4 className="serif text-xl text-gold-light border-b border-white/5 pb-2">4. Síntese e Leitura Psicoterapêutica</h4>
-              <div className="p-6 bg-gold-main/[0.03] border-l-2 border-gold-main rounded-r-xl">
-                <p className="text-sm text-white/80 leading-relaxed font-light italic">
-                  "{currentMap.leituraIntegrada}"
-                </p>
+              <h4 className="serif text-xl text-gold-light border-b border-white/5 pb-2">4. Base e Alicerce (O Ponto Raiz)</h4>
+              <p className="text-sm text-white/70 leading-relaxed font-light">
+                A raiz do seu triângulo invertido, localizada na última ponta inferior, é o número <strong>{currentMap.raiz}</strong>. Esse núcleo representa as forças subjacentes mais profundas, seu alicerce evolutivo e o padrão-raiz que precisa de sua atenção em sua jornada terrena.
+              </p>
+              {raizInfo && (
+                <div className="bg-white/[0.01] border border-white/[0.05] p-5 rounded-xl space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs uppercase tracking-widest text-[#E5D5C5] font-bold">Resolução de Bloqueio Raiz: {raizInfo.bloqueio}</span>
+                    <span className="text-xs font-mono font-bold text-gold-main">Nível {currentMap.raiz}</span>
+                  </div>
+                  <p className="text-xs text-white/60 leading-relaxed font-light">
+                    <strong>Expressão positiva a buscar:</strong> {raizInfo.expressao}.
+                  </p>
+                  <p className="text-xs text-white/60 leading-relaxed font-light border-t border-white/5 pt-2">
+                    <strong>Armadilhas inconscientes (Sombra):</strong> {raizInfo.sombra}.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Sequencias & Bloqueais Section */}
+            <div className="space-y-6">
+              <h4 className="serif text-xl text-gold-light border-b border-white/5 pb-2">5. Correntes Vibracionais e Desafios Ativos</h4>
+              
+              {/* Sequências Repetidas */}
+              <div className="space-y-4">
+                <h5 className="text-xs uppercase tracking-[0.2em] text-red-400 font-bold">🚫 Bloqueios de Corrente (Sequências Repetidas)</h5>
+                
+                {currentMap.sequencias.repetidas.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentMap.sequencias.repetidas.map((item: any, i: number) => (
+                      <div key={i} className="p-5 border border-red-500/10 bg-red-500/[0.01] rounded-xl space-y-3 text-left">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="font-mono text-base font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded leading-none">
+                            {item.sequencia}
+                          </span>
+                          <span className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Linha {item.linha}</span>
+                        </div>
+                        <h6 className="text-xs font-bold text-white/80">{item.titulo}</h6>
+                        <p className="text-[11px] text-white/50 leading-relaxed font-light">
+                          <strong>O que limita:</strong> {item.bloqueia}.
+                        </p>
+                        <p className="text-[11px] text-white/50 leading-relaxed font-light">
+                          <strong>Manifestação:</strong> {item.descricao}.
+                        </p>
+                        <p className="text-[11px] text-gold-light font-light border-t border-white/5 pt-2 italic">
+                          <strong>Orientação de Posição:</strong> {item.orientacao}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 border border-emerald-500/10 bg-emerald-500/[0.01] rounded-xl text-xs text-white/50 font-light">
+                    Parabéns! Não foram identificadas sequências numéricas repetidas negativas no seu Triângulo Invertido de Posição. Suas correntes basais estão fluindo harmoniosamente.
+                  </div>
+                )}
+              </div>
+
+              {/* Sabedorias Cármicas */}
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center gap-2">
+                  <span id="vsc-label"></span>
+                  <h5 className="text-xs uppercase tracking-[0.2em] text-gold-main font-bold">🔮 Vetores de Sabedoria Cármica</h5>
+                </div>
+                
+                {currentMap.sequencias.karmicas.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentMap.sequencias.karmicas.map((item: any, i: number) => (
+                      <div key={i} className="p-5 border border-gold-main/10 bg-gold-main/[0.01] rounded-xl space-y-3 text-left">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="font-mono text-base font-bold text-gold-main bg-gold-main/10 px-2.5 py-0.5 rounded leading-none">
+                            {item.numero}
+                          </span>
+                          <span className="text-[10px] text-white/30 uppercase tracking-widest font-bold">
+                            {item.origem === 'triangulo' ? `Linha ${item.linha}` : item.origem === 'expressao' ? 'Chave de Expressão' : 'Frequência do Arcano'}
+                          </span>
+                        </div>
+                        <h6 className="text-xs font-bold text-white/80">{item.titulo}</h6>
+                        <p className="text-[11px] text-white/50 leading-relaxed font-light">
+                          <strong>Desafio evolutivo:</strong> {item.bloqueia}.
+                        </p>
+                        <p className="text-[11px] text-white/50 leading-relaxed font-light">
+                          <strong>Indicadores inconscientes:</strong> {item.descricao}.
+                        </p>
+                        <p className="text-[11px] text-gold-light font-light border-t border-white/5 pt-2 italic">
+                          <strong>Caminho de Integração:</strong> {item.orientacao}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 border border-emerald-500/10 bg-emerald-500/[0.01] rounded-xl text-xs text-white/50 font-light">
+                    Não foram detectados vetores cármicos ativos em seu cálculo vibracional atual.
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Recommendations / Disclaimers */}
+            {/* Leitura Integrada (Sintese) */}
             <div className="space-y-4 pt-4 border-t border-white/5">
-              <h5 className="text-[10px] uppercase tracking-widest text-[#E5D5C5] font-bold">Passos Sugeridos:</h5>
-              <p className="text-xs text-white/50 leading-relaxed font-light">
-                Reserve 10 minutos para reler atentamente os pontos principais do seu Arcano e de seu Número de Expressão. Busque observar em sua rotina, na próxima semana, os padrões sutis em que a sombra descrita costuma emergir. O entendimento mental é a base para o alinhamento das suas ações energéticas.
-              </p>
-              <div className="p-4 bg-white/[0.02] border border-white/[0.04] text-[10.5px] text-white/35 font-light leading-relaxed rounded-lg italic">
-                Aviso: Este estudo de numerologia de posição é de natureza simbólica e interpretativa. Não constitui diagnóstico médico, orientação jurídica ou promessa determinista de destino de vida. A autoconsciência é a chave definitiva de cocriação do seu caminho.
+              <h4 className="serif text-xl text-gold-light flex items-center gap-2.5">
+                <Sparkles size={18} className="text-gold-main/40" />
+                Síntese Integrada do Mapa
+              </h4>
+              <div className="relative p-6 bg-white/[0.01] border border-white/5 rounded-2xl">
+                <p id="lint-desc" className="text-white/80 font-light text-[13.5px] leading-relaxed italic pr-6 first-letter:text-3xl first-letter:font-serif first-letter:float-left first-letter:mr-2">
+                  {currentMap.leituraIntegrada}
+                </p>
               </div>
             </div>
           </motion.div>

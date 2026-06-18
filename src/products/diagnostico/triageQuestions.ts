@@ -24,10 +24,10 @@ export const triageQuestions = [
     // Dimensão 2: Medo: qual é a cor do seu medo
     q: "Todo mundo carrega algum tipo de medo. Qual destes ressoa mais com o que você sente quando para e presta atenção em si?",
     a: [
-      "Um medo vago, sem rosto — sei que está lá, mas não consigo definir de quê",
-      "Medos concretos e específicos — de errar, de ser julgada, de não dar conta",
-      "Medo de perder o controle — das minhas reações, das situações, de mim mesma",
-      "Medo de que algo aconteça com quem eu amo — fico em estado de alerta constante por eles",
+      "Um medo vago, sem rosto, sei que está lá, mas não consigo definir de quê",
+      "Medos concretos e específicos, de errar, de ser julgada, de não dar conta",
+      "Medo de perder o controle, das minhas reações, das situações, de mim mesma",
+      "Medo de que algo aconteça com quem eu amo, fico em estado de alerta constante por eles",
       "Não sinto exatamente medo, é mais uma exaustão de tanto ter tentado e não chegado onde queria",
     ]
   },
@@ -81,7 +81,7 @@ export const triageQuestions = [
     a: [
       "Pouco relevante agora, minha questão é mais sobre mim mesma e meu presente",
       "Muito relevante, sinto que repito padrões ou cargo algo da minha história",
-      "Sinto no corpo, minha herança aparece como tensão, bloqueio ou sintoma físico",
+      "Sinto no corpo, minha herança aparece como tension, bloqueio ou sintoma físico",
       "Causou uma ferida específica, que ainda me afeta mesmo que eu já saiba disso",
       "Já trabalhei isso, agora quero sustentar minha trajetória com apoio regular",
     ]

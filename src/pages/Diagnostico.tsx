@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ARCANOS_MATRIZ, ArcanoData } from '../constants/arcanos';
-import { questions } from '../data/questions';
-import { triageQuestions } from '../data/triageQuestions';
-import { mapeamentoQuestions, selectFloraisByWeight } from '../data/mapeamentoQuestions';
-import { lealdadesQuestions, axisData, areaLabels, getProfile, getConsciousnessLevel, getReadinessLevel } from '../data/lealdadesQuestions';
+import { ARCANOS_MATRIZ, ArcanoData } from '../products/diagnostico/arcanos';
+import { questions } from '../products/diagnostico/questions';
+import { triageQuestions } from '../products/diagnostico/triageQuestions';
+import { mapeamentoQuestions, selectFloraisByWeight } from '../products/mapa-floral/mapeamentoQuestions';
+import { lealdadesQuestions, axisData, areaLabels, getProfile, getConsciousnessLevel, getReadinessLevel } from '../products/lealdades/lealdadesQuestions';
 import { auth, db } from '../services/firebase';
 import ReactMarkdown from 'react-markdown';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
@@ -25,7 +25,7 @@ import { useAccess } from '../context/AccessContext';
 import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, Clock, Music, Settings, Plus, Trash2, Upload, ShieldCheck, History, ChevronRight, Calendar, Users, BarChart3, Package, FileText, LayoutDashboard, CheckCircle, MessageCircle, ArrowRight, Tag, X, Check, CreditCard, Eye, EyeOff, Bell, Mail, ShoppingBag, Search, Star } from 'lucide-react';
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
-import { MapaNumerologico } from '../components/MapaNumerologico';
+import { MapaNumerologico } from '../products/numerologia/MapaNumerologico';
 
 interface AppUser {
   id: string;
@@ -61,7 +61,7 @@ const meditations = [
   }
 ];
 
-import { useCiclos, formatarMesAno, diasParaRitual } from '../hooks/useCiclos';
+import { useCiclos, formatarMesAno, diasParaRitual } from '../products/numerologia/useCiclos';
 
 type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro';
 
@@ -2729,6 +2729,7 @@ const Diagnostico = () => {
         page,
         currentIndex,
         answers,
+        arcanoScores,
         triageIndex,
         triageAnswers,
         currentMapeamentoStep,
@@ -2752,6 +2753,7 @@ const Diagnostico = () => {
     page,
     currentIndex,
     answers,
+    arcanoScores,
     triageIndex,
     triageAnswers,
     currentMapeamentoStep,
@@ -4565,21 +4567,43 @@ const Diagnostico = () => {
     setPage('triage_quiz');
   };
 
+  const buildArcanoScoresFromAnswers = (finalAnswers: string[]) => {
+    const rebuiltScores: Record<string, number> = {};
+
+    finalAnswers.forEach((answer, questionIndex) => {
+      const optionIndex = Number(answer);
+      const question = questions[questionIndex];
+      const selectedOption = question?.options?.[optionIndex];
+
+      if (!selectedOption?.arcanos) return;
+
+      selectedOption.arcanos.forEach(({ nome, peso }) => {
+        const cleanName = nome.trim();
+        rebuiltScores[cleanName] = (rebuiltScores[cleanName] || 0) + peso;
+      });
+    });
+
+    return rebuiltScores;
+  };
+
   const finishQuiz = async (
     finalAnswers: string[],
     scores: Record<string, number> = {}
   ) => {
     showPage('analysis');
 
-    // ── 1. Encontrar arcano com maior pontuação ─────────────────
-    const arcanoVencedor = Object.entries(scores).reduce(
-      (max, [nome, pts]) => pts > max.pts ? { nome, pts } : max,
-      { nome: 'Louco', pts: 0 }
-    ).nome;
+    const effectiveScores =
+      Object.keys(scores).length > 0
+        ? scores
+        : buildArcanoScoresFromAnswers(finalAnswers);
 
-    // ── 2. Top 3 arcanos (para exibir na tela de resultado) ─────
-    const top3 = Object.entries(scores)
-      .sort(([, a], [, b]) => b - a)
+    const sortedArcanos = Object.entries(effectiveScores)
+      .filter(([, pts]) => pts > 0)
+      .sort(([, a], [, b]) => b - a);
+
+    const arcanoVencedor = sortedArcanos[0]?.[0] || 'Louco';
+
+    const top3 = sortedArcanos
       .slice(0, 3)
       .map(([nome]) => nome);
 
@@ -4606,7 +4630,7 @@ const Diagnostico = () => {
           florais: arcanoData.florais,
           reprogramacao: arcanoData.reprogramacao,
           top3Arcanos: top3,
-          scores,                    // pontuação completa salva para histórico
+          scores: effectiveScores,                    // pontuação completa salva para histórico
           answers: finalAnswers,
           arcanoData,
           createdAt: new Date().toISOString()
@@ -5969,15 +5993,15 @@ const Diagnostico = () => {
               {currentFlorais && currentFlorais.length > 0 && (() => {
                 const FLORAL_DESC: Record<string, string> = {
                   'Aspen': 'Medos vagos e presentimentos sem causa definida',
-                  'Mimulus': 'Medos conhecidos — timidez, medo de errar ou de julgamento',
+                  'Mimulus': 'Medos conhecidos, timidez, medo de errar ou de julgamento',
                   'Rock Rose': 'Pânico, terror e medo intenso paralisante',
                   'White Chestnut': 'Pensamentos repetitivos que não saem da mente',
                   'Cherry Plum': 'Medo de perder o controle da mente ou das ações',
                   'Red Chestnut': 'Preocupação excessiva com o bem-estar de quem ama',
-                  'Olive': 'Esgotamento total — físico e mental',
+                  'Olive': 'Esgotamento total, físico e mental',
                   'Elm': 'Sobrecarga de responsabilidades',
-                  'Oak': 'Persistência além do limite — dificuldade de parar',
-                  'Hornbeam': 'Cansaço de segunda-feira — falta de energia para começar',
+                  'Oak': 'Persistência além do limite, dificuldade de parar',
+                  'Hornbeam': 'Cansaço de segunda-feira, falta de energia para começar',
                   'Wild Rose': 'Resignação, apatia e falta de vontade de mudar',
                   'Clematis': 'Sonhos distantes, falta de foco e presença no agora',
                   'Impatiens': 'Impaciência, irritação e tensionamento com o próprio ritmo',
@@ -5991,14 +6015,14 @@ const Diagnostico = () => {
                   'Rock Water': 'Autoexigência rígida e inflexibilidade',
                   'Centaury': 'Dificuldade de dizer não e de estabelecer limites',
                   'Cerato': 'Dúvida sobre as próprias percepções e intuições',
-                  'Scleranthus': 'Indecisão entre duas opções — inconstância',
+                  'Scleranthus': 'Indecisão entre duas opções, inconstância',
                   'Wild Oat': 'Indefinição sobre propósito e direção de vida',
-                  'Gentian': 'Desânimo após dificuldades — dúvida sobre continuar',
+                  'Gentian': 'Desânimo após dificuldades, dúvida sobre continuar',
                   'Agrimony': 'Angústia escondida por trás de aparência alegre',
                   'Water Violet': 'Isolamento emocional e orgulho que afasta conexão',
                   'Heather': 'Necessidade excessiva de atenção e companhia',
                   'Chicory': 'Apego emocional e possessiveness nas relações',
-                  'Honeysuckle': 'Apego ao passado — saudade que impede o presente',
+                  'Honeysuckle': 'Apego ao passado, saudade que impede o presente',
                   'Star of Bethlehem': 'Choques emocionais e traumas não processados',
                   'Rescue Remedy': 'Emergências emocionais e estresse agudo',
                 };
@@ -6009,7 +6033,7 @@ const Diagnostico = () => {
                   <div className="glass-card p-8 border-gold-main/20 bg-gold-main/[0.02] space-y-6">
                     <div>
                       <h3 className="serif text-2xl text-gold-light mb-1">Sua Fórmula Floral Recomendada</h3>
-                      <p className="text-white/30 text-xs font-light">4 gotas, 4 vezes ao dia · Percepções em 3–7 dias · Ajustes profundos em 21 dias</p>
+                      <p className="text-white/30 text-xs font-light">4 gotas, 4 vezes ao dia · Percepções em 3 a 7 dias · Ajustes profundos em 21 dias</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {floralList.map((floral: string, idx: number) => (
@@ -6167,13 +6191,13 @@ const Diagnostico = () => {
                 <div className="price mb-10">R$ 129</div>
                 
                 <p className="text-white/40 mb-8 leading-relaxed text-lg font-light">
-                  Uma sessão individual 1:1 online combinada com um áudio de frequência exclusivo, criado especificamente para o seu padrão e momento atual — para dissolver crenças limitantes e reorganizar sua base vibracional interna.
+                  Uma sessão individual 1:1 online combinada com um áudio de frequência exclusivo, criado especificamente para o seu padrão e momento atual, para dissolver crenças limitantes e reorganizar sua base vibracional interna.
                 </p>
 
                 <div className="space-y-3 mb-10 border border-white/5 rounded-2xl p-5 bg-white/[0.01]">
                   <p className="text-[9px] uppercase tracking-widest text-[#d4af37]/45 font-bold mb-4 font-sans">O que está incluído</p>
                   {[
-                    { icon: '🎙️', label: 'Sessão online individual de 1h (Google Meet, seg–sex, 9h–17h)' },
+                    { icon: '🎙️', label: 'Sessão online individual de 1h (Google Meet, seg a sex, 9h às 17h)' },
                     { icon: '🎧', label: 'Áudio de frequência exclusivo criado após a sessão' },
                     { icon: '🧠', label: 'Diagnóstico profundo de padrões e crenças limitantes' },
                     { icon: '🔊', label: 'Frequências sonoras de alinhamento específico ao seu momento' },
@@ -6929,7 +6953,7 @@ const Diagnostico = () => {
 
                   <div className="space-y-3">
                     <label className="text-gold-main/60 text-[10px] uppercase tracking-widest font-bold">
-                      O que você quer sentir — ou deixar de sentir — ao final deste processo? *
+                      O que você quer sentir (ou deixar de sentir) ao final deste processo? *
                     </label>
                     <p className="text-white/25 text-xs font-light -mt-1">Descreva sua intenção de transformação. Pode ser um sentimento, um padrão que quer soltar ou uma nova forma de se sentir.</p>
                     <textarea 

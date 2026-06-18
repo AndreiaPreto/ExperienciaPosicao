@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  src/data/mapeamentoQuestions.ts - 15 PERGUNTAS IMERSIVAS
+//  src/products/mapa-floral/mapeamentoQuestions.ts - 15 PERGUNTAS IMERSIVAS
 //  Baseado nos 7 grupos do Dr. Edward Bach, cobertura completa
 //  dos 38 florais + Rescue Remedy, com Vervain e Vine integrados
 //  de forma sutil e natural.
@@ -499,7 +499,7 @@ export const mapeamentoQuestions = [
         florais: ["Willow", "Holly"]
       },
       {
-        texto: "Uma saudade que me prende, de uma fase, de uma pessoa, de uma versão de mim que ficou no passado",
+        texto: "Uma saudade que me prende, de uma fase, de uma pessoa, de uma versão de mi que ficou no passado",
         emocao: "saudade_paralisante",
         peso: 3,
         florais: ["Honeysuckle", "Clematis"]
@@ -541,6 +541,7 @@ export const mapeamentoQuestions = [
         texto: "\"Você precisa dar conta de tudo. Se parar, tudo desmorona.\"",
         emocao: "hiperresponsabilidade",
         peso: 3,
+        oak_elm: true,
         florais: ["Oak", "Elm"]
       },
       {
@@ -565,7 +566,7 @@ export const mapeamentoQuestions = [
     pergunta: "Se você pudesse receber uma coisa agora, não um conselho, mas um estado interno, o que seu coração pediria?",
     opcoes: [
       {
-        texto: "Paz, que os pensamentos parem, que a mente descanse, que o silêncio interno volte",
+        texto: "Paz, que os pensamentos parem, que a mente descanse, que o silêncio interno voltar",
         emocao: "paz",
         peso: 2,
         florais: ["White Chestnut", "Agrimony"]

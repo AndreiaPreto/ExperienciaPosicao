@@ -299,7 +299,7 @@
 
 /* Indicador minimalista na lista em vez de bullets genéricos */
 .produto-beneficios li::before {
-    content: "—";
+    content: "·";
     position: absolute;
     left: 0;
     color: #9ca3af;

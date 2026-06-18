@@ -544,7 +544,7 @@ export const axisData: { [key: string]: AxisDetail } = {
         "Escolha expor uma crítica justa ou sua perspectiva própria e clara em um ambiente seguro.",
         "Vista uma peça de roupa, acessório ou cor vibrante que normalmente evitaria para experimentar a visibilidade.",
         "Visualize-se erguida na sua verdade íntima e acolhida de forma harmoniosa pelas pessoas ao redor.",
-        "Compartilhe uma ideia, texto ou registro autoral com as pessoas, validando seu domínio criativo.",
+        "Compartilhe uma idea, texto ou registro autoral com as pessoas, validando seu domínio criativo.",
         "Afirme com profunda aceitação corporal: 'É seguro para mim ser vista, amada e escutada no mundo.'"
       ]
     }
@@ -559,7 +559,11 @@ export const axisData: { [key: string]: AxisDetail } = {
     phrase: "Eu ainda não tenho permissão para ser tudo o que sou.",
     liberation: "Eu posso ocupar meu lugar com amor e firmeza.",
     practice: "Durante 7 dias, tome uma pequena decisão por dia sem buscar validação externa. Depois diga: eu sustento minha escolha com presença.",
-    description: "A resistência de crescer emocionalmente e se colocar na cadeira de motorista do pr�    dayPractice: {
+    description: "A resistência de crescer emocionalmente e se colocar na cadeira de motorista do próprio destino, adiando a manifestação genuína de suas capacidades.",
+    unconsciousPhrase: "Somente com a aprovação daqueles que me rodeiam é que posso avançar com segurança e firmeza.",
+    repositioningMovement: "Eu me auto-autorizo a agir, assumo a rédea do meu destino e sou soberana sobre as minhas direções.",
+    reflexiveQuestion: "Qual autorização fantasiada ou bênção mágica eu sinto que deverei obter antes de poder crescer?",
+    dayPractice: {
       name: "Prática dos 7 Dias: Soberania e Tomada de Decisão",
       steps: [
         "Selecione uma decisão ou ação relevante que você suspendeu aguardando a opinião de terceiros.",
@@ -664,13 +668,6 @@ export const getProfile = (dominant: string, secondary: string) => {
     },
     "compensacao+poderPessoal": {
       name: "Herdeiro Travado",
-      description: "Você pode sentir que possui um propósito importante, mas que assumir plenamente sua força significaria deixar para trás algo ou alguém que ainda precisa de você. Crescer parece trair uma missão sistêmica que você nunca escolheu conscientemente, mas carrega com lealdade."
-    },
-    "invisibilidade+poderPessoal": {
-      name: "Soberana Oculta",
-      description: "Você pode possuir grande poder interior, mas mantê-lo discreto parece mais seguro do que trazê-lo à luz. Aparecer com autoridade ainda carrega o risco imaginado de ser julgada, atacada ou de perder o vínculo com quem prefere você menor."
-    }
-  };  name: "Herdeiro Travado",
       description: "Você pode sentir que possui um propósito importante, mas que assumir plenamente sua força significaria deixar para trás algo ou alguém que ainda precisa de você. Crescer parece trair uma missão sistêmica que você nunca escolheu conscientemente, mas carrega com lealdade."
     },
     "invisibilidade+poderPessoal": {
