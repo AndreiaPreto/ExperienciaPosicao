@@ -63,7 +63,7 @@ const meditations = [
 
 import { useCiclos, formatarMesAno, diasParaRitual } from '../products/numerologia/useCiclos';
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro' | 'grupovip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -2093,6 +2093,7 @@ const formatWhatsAppNumber = (phone: string): string => {
 
 // ─── CONSTANTES DO CHECKOUT WHATSAPP ──────────────────────────
 const WHATSAPP_NUM = (import.meta as any).env.VITE_WHATSAPP_NUM || '5548991261832';
+const WHATSAPP_GROUP_URL = (import.meta as any).env.VITE_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/invite/experienciaposicao';
 const PIX_CHAVE   = (import.meta as any).env.VITE_PIX_CHAVE || '48991261832'; // chave pix
 const PIX_TITULAR = (import.meta as any).env.VITE_PIX_TITULAR || 'Andreia Preto';
 
@@ -2131,6 +2132,8 @@ const Diagnostico = () => {
       '/clube-posicao': 'clube_posicao_info',
       '/ciclos': 'rituais_mes_info',
       '/rituais': 'rituais_mes_info',
+      '/grupo': 'grupovip',
+      '/grupovip': 'grupovip',
     };
     const targetPage = pathToPageMap[path];
     if (targetPage && targetPage !== page) {
@@ -2149,6 +2152,7 @@ const Diagnostico = () => {
       'reprogramacao_pessoal_info': '/reset',
       'clube_posicao_info': '/clube-posicao',
       'rituais_mes_info': '/ciclos',
+      'grupovip': '/grupovip',
     };
     const targetPath = pageToPathMap[page];
     if (targetPath && targetPath !== location.pathname) {
@@ -4957,15 +4961,108 @@ const Diagnostico = () => {
               exit={{ opacity: 0, transition: { duration: 0.3 } }}
               className="animate-screen max-w-5xl mx-auto"
             >
-               <motion.header variants={itemVariants} className="mb-16 md:mb-24 flex flex-col md:flex-row justify-between items-center md:items-start text-center md:text-left gap-8">
-                 <div className="max-w-2xl text-left">
+               <motion.header variants={itemVariants} className="mb-16 md:mb-24 flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
+                 <div className="w-full text-center">
                    <div className="text-gold-main/60 uppercase tracking-[0.25em] text-xs font-semibold mb-3">Experiência Posição</div>
-                   <h1 className="serif text-4xl md:text-5xl lg:text-5xl text-gold-light mb-4 font-serif font-semibold leading-tight">
+                   <h1 className="serif text-4xl md:text-5xl lg:text-5xl text-gold-light mb-4 font-serif font-semibold leading-tight text-center">
                      Clareza, equilíbrio e cura para a sua jornada
                    </h1>
-                   <p className="text-white/70 font-light text-sm md:text-base leading-relaxed tracking-wide mb-8 max-w-xl">
+                   <p className="text-white/70 font-light text-sm md:text-base leading-relaxed tracking-wide mb-10 max-w-2xl mx-auto text-center">
                      Atendimentos terapêuticos integrativos através do Tarô, Florais e Terapias Holísticas. Um espaço seguro para você resgatar seu bem-estar, alinhar sua energia e expandir sua consciência.
                    </p>
+                   
+                   {/* Premium Círculo de Posição Banner - Mesmas dimensões e estilo do quiz de entrada */}
+                   <div className="glass-card border-gold-main/20 bg-gold-main/[0.02] p-8 md:p-12 text-center max-w-3xl mx-auto relative overflow-hidden rounded-3xl w-full mb-12 shadow-[0_0_50px_rgba(201,160,74,0.03)] border flex flex-col items-center justify-center">
+                     {/* Decorative gradient circular blurs */}
+                     <div className="absolute top-0 right-12 w-48 h-48 bg-gold-main/5 rounded-full blur-3xl pointer-events-none" />
+                     <div className="absolute bottom-0 left-12 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                     
+                     <div className="flex items-center gap-2 mb-4 justify-center">
+                       <span className="text-emerald-400 text-[10px] uppercase tracking-[0.4em] font-semibold flex items-center gap-1.5 font-sans">
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> GRUPO VIP DE CONTEÚDOS E OFERTAS
+                       </span>
+                     </div>
+                     
+                     <h3 className="serif text-3xl md:text-4xl text-gold-light leading-tight font-serif font-semibold mb-4 text-center">
+                       Entre no Círculo de Posição
+                     </h3>
+                     
+                     <p className="text-white/60 text-sm font-light leading-relaxed max-w-xl mx-auto mb-8 font-sans text-center">
+                       Participe do nosso grupo oficial gratuito no WhatsApp. Receba ensinamentos diários de alinhamento energético, sabedoria do Tarô, florais de Bach e orientações de numerologia diretamente no celular, além de ofertas exclusivas com condições especiais antes de todo mundo.
+                     </p>
+
+                     <button 
+                       type="button" 
+                       onClick={() => window.open(WHATSAPP_GROUP_URL, '_blank')}
+                       className="button w-full sm:w-auto px-10 py-4 bg-emerald-500 hover:bg-emerald-600 border-emerald-400 text-white shadow-[0_4px_15px_rgba(16,185,129,0.25)] hover:shadow-[0_4px_22px_rgba(16,185,129,0.4)] text-[11px] font-bold uppercase tracking-widest transition-all duration-300 font-sans"
+                     >
+                       🟢 Entrar no Grupo Gratuito
+                     </button>
+                     
+                     <p className="text-white/20 text-[10px] mt-4 italic font-sans text-center">
+                       Apenas avisos e conteúdos oficiais • Livre de spam
+                     </p>
+                   </div>
+                   
+                   {/* Legacy Group content to be discarded */}
+                   <div className="hidden">
+                      
+                      {/* Left side visual badge with live indicator */}
+                      <div className="w-12 h-12 rounded-full bg-gold-main/5 border border-gold-main/15 flex items-center justify-center shrink-0 relative">
+                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-stone-950 rounded-full animate-ping" />
+                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-stone-900 rounded-full" />
+                        <MessageCircle size={20} className="text-gold-light/95" />
+                      </div>
+                      {/* Middle text area */}
+                      <div className="space-y-1.5 flex-1 select-none text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] uppercase tracking-[0.3em] font-semibold text-gold-main font-sans">
+                            Círculo de Posição
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-sans text-emerald-400 uppercase tracking-widest font-bold flex items-center justify-center">
+                            Grátis
+                          </span>
+                        </div>
+                        <h4 className="serif text-base text-gold-light font-medium font-serif leading-snug">
+                          Grupo VIP no WhatsApp
+                        </h4>
+                        <p className="text-white/50 text-[11px] font-light leading-relaxed font-sans">
+                          Aconselhamentos diários do Tarô, florais e sabedoria energética direto no celular.
+                        </p>
+                      </div>
+
+                      {/* Right button link */}
+                      <button 
+                        type="button" 
+                        onClick={() => window.open(WHATSAPP_GROUP_URL, '_blank')}
+                        className="w-full sm:w-auto px-5 py-3 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shrink-0 font-sans shadow-[0_4px_12px_rgba(16,185,129,0.05)] hover:scale-[1.02]"
+                      >
+                        <span>Entrar</span>
+                        <ArrowRight size={12} className="group-hover/vip:translate-x-0.5 transition-transform" />
+                      </button>
+
+                      {/* Hidden older element block */}
+                      <div className="hidden flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                       <div className="space-y-1">
+                         <span className="text-emerald-400 text-[10px] uppercase tracking-[0.3em] font-semibold flex items-center gap-1.5 font-sans">
+                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> GRUPO VIP DE CONTEÚDOS E OFERTAS
+                         </span>
+                         <h4 className="serif text-base text-gold-light font-medium font-serif">
+                           Entre no Círculo de Posição (WhatsApp)
+                         </h4>
+                         <p className="text-white/50 text-[11px] font-light leading-relaxed max-w-sm font-sans">
+                           Receba áudios diários de frequência, aconselhamentos de Tarô e cupons exclusivos.
+                         </p>
+                       </div>
+                       <button 
+                         type="button" 
+                         onClick={() => window.open(WHATSAPP_GROUP_URL, '_blank')}
+                         className="button bg-emerald-500 hover:bg-emerald-600 border-emerald-400 text-white shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:shadow-[0_4px_18px_rgba(16,185,129,0.3)] uppercase tracking-widest text-[10px] py-3.5 px-6 font-bold whitespace-nowrap shrink-0 font-sans transition-all duration-300"
+                       >
+                         🟢 Entrar Grátis
+                       </button>
+                     </div>
+                   </div>
                    <div className="hidden">
                      <a 
                         
@@ -4977,7 +5074,7 @@ const Diagnostico = () => {
                      </a>
                    </div>
                  </div>
-                 <div className="flex flex-row md:flex-col gap-4 md:gap-6 items-center md:items-end self-center md:self-start">
+                 <div className="hidden">
                    {isAdmin && (
                      <button 
                        onClick={() => showPage('admin_dashboard')}
@@ -5112,6 +5209,42 @@ const Diagnostico = () => {
                         <button className="button-outline w-full py-3 text-sm">{item.cta}</button>
                       </motion.div>
                     ))}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* WhatsApp VIP Group Callout Banner */}
+              <motion.div 
+                variants={itemVariants}
+                className="mt-16 md:mt-24 max-w-4xl mx-auto"
+              >
+                <div id="whatsapp-vip-banner" className="relative glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12 rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(201,160,74,0.03)] border flex flex-col md:flex-row gap-8 items-center justify-between">
+                  {/* Decorative Glow */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gold-main/5 via-transparent to-transparent opacity-50 pointer-events-none" />
+                  
+                  <div className="text-left space-y-3 max-w-xl relative z-10">
+                    <span className="text-emerald-400 text-[10px] uppercase tracking-[0.4em] font-semibold flex items-center gap-1.5 font-sans">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> GRUPO VIP DE CONTEÚDOS E OFERTAS
+                    </span>
+                    <h3 className="serif text-3xl md:text-4xl text-gold-light leading-tight font-serif font-semibold">
+                      Entre no Círculo de Posição
+                    </h3>
+                    <p className="text-white/60 text-sm font-light leading-relaxed font-sans">
+                      Participe do nosso grupo oficial gratuito no WhatsApp. Receba ensinamentos diários de alinhamento energético, sabedoria do Tarô, florais de Bach e orientações de numerologia diretamente no celular, além de ofertas exclusivas com condições especiais antes de todo mundo.
+                    </p>
+                  </div>
+
+                  <div className="relative z-10 shrink-0 w-full md:w-auto text-center md:text-right">
+                    <button 
+                      type="button"
+                      onClick={() => window.open(WHATSAPP_GROUP_URL, '_blank')}
+                      className="button w-full sm:w-auto px-10 py-4 bg-emerald-500 hover:bg-emerald-600 border-emerald-400 text-white shadow-[0_4px_15px_rgba(16,185,129,0.25)] hover:shadow-[0_4px_22px_rgba(16,185,129,0.4)] text-[11px] font-bold uppercase tracking-widest transition-all duration-300 font-sans"
+                    >
+                      Acessar Grupo Gratuito
+                    </button>
+                    <p className="text-white/20 text-[10px] mt-2.5 italic text-center md:text-right">
+                      Apenas avisos e conteúdos oficiais • Livre de spam
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -5329,6 +5462,101 @@ const Diagnostico = () => {
                     </>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'grupovip' && (
+            <motion.div 
+              key="grupovip"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="animate-screen max-w-2xl mx-auto py-8 md:py-16 text-center w-full"
+            >
+              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] p-8 md:p-12 rounded-3xl relative overflow-hidden shadow-[0_0_50px_rgba(201,160,74,0.05)] border">
+                {/* Visual Accent */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-gold-main/40 to-transparent" />
+                
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-gold-main/10 flex items-center justify-center border border-gold-main/20 text-gold-light">
+                    <MessageCircle size={28} className="animate-pulse text-emerald-400" />
+                  </div>
+                </div>
+
+                <span className="text-gold-main/50 text-[10px] uppercase tracking-[0.5em] block font-bold mb-4 font-sans">
+                  Convite Exclusivo de Andréia Preto
+                </span>
+                
+                <h2 className="serif text-3xl sm:text-4xl text-gold-light mb-6 font-serif leading-tight">
+                  Círculo de Posição <br />
+                  <span className="text-white/80 text-xl font-light font-sans tracking-wide block mt-1">Comunidade & Grupo VIP</span>
+                </h2>
+
+                <p className="text-white/60 font-light text-sm leading-relaxed mb-8 max-w-lg mx-auto font-sans">
+                  Você está a um passo de entrar no nosso canal oficial gratuito no WhatsApp. Um espaço exclusivo criado para compartilhar ensinamentos de alinhamento, ferramentas úteis, rituais e ofertas exclusivas de lançamento com descontos especiais.
+                </p>
+
+                {/* Benefits List */}
+                <div className="text-left space-y-4 max-w-md mx-auto mb-10 bg-white/[0.01] border border-white/5 p-6 rounded-2xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-gold-main/10 flex items-center justify-center text-gold-main mt-0.5 shrink-0 text-xs font-sans">✓</div>
+                    <div>
+                      <p className="text-white/80 font-medium text-xs font-sans">Conteúdo Gratuito Diário</p>
+                      <p className="text-white/40 text-[11px] font-light font-sans mt-0.5 leading-relaxed">
+                        Ensinamentos práticos de Tarô, Florais de Bach, Lealdades Ocultas e Numerologia Cabalística.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-gold-main/10 flex items-center justify-center text-gold-main mt-0.5 shrink-0 text-xs font-sans">✓</div>
+                    <div>
+                      <p className="text-white/80 font-medium text-xs font-sans">Ofertas e Cupons Exclusivos</p>
+                      <p className="text-white/40 text-[11px] font-light font-sans mt-0.5 leading-relaxed">
+                        Acesso antecipado e descontos exclusivos aos nossos produtos pagos (como o Mapa Completo, Reset de Posição e Clube).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-gold-main/10 flex items-center justify-center text-gold-main mt-0.5 shrink-0 text-xs font-sans">✓</div>
+                    <div>
+                      <p className="text-white/80 font-medium text-xs font-sans">Avisos Importantes de Ciclos</p>
+                      <p className="text-white/40 text-[11px] font-light font-sans mt-0.5 leading-relaxed">
+                        Não perca o tempo ideal para realizar os rituais mensais e sintonizar áudios de frequência.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main CTA */}
+                <button 
+                  type="button"
+                  onClick={() => window.open(WHATSAPP_GROUP_URL, '_blank')}
+                  className="button w-full sm:w-auto px-12 py-4 bg-emerald-500 hover:bg-emerald-600 border-emerald-400 text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)] hover:shadow-[0_4px_25px_rgba(16,185,129,0.35)] uppercase tracking-widest text-[11px] font-bold font-sans transition-all duration-300"
+                >
+                  🟢 Entrar no Grupo VIP Gratuitamente
+                </button>
+
+                <div className="mt-8 flex flex-wrap justify-center gap-4 text-[10px] text-white/35 font-light tracking-wide uppercase font-sans">
+                  <span>🔒 Grupo Privado</span>
+                  <span>•</span>
+                  <span>⚡ Apenas Avisos Oficiais</span>
+                  <span>•</span>
+                  <span>🌿 100% Livre de Spam</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button 
+                  type="button"
+                  onClick={() => setPage('home')}
+                  className="text-white/40 hover:text-white/60 transition-colors text-xs font-light underline decoration-white/10 underline-offset-4"
+                >
+                  Voltar para o Início
+                </button>
               </div>
             </motion.div>
           )}

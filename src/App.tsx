@@ -50,6 +50,8 @@ export default function App() {
               <Route path="/clube-posicao" element={<Diagnostico />} />
               <Route path="/ciclos" element={<Diagnostico />} />
               <Route path="/rituais" element={<Diagnostico />} />
+              <Route path="/grupo" element={<Diagnostico />} />
+              <Route path="/grupovip" element={<Diagnostico />} />
               
               <Route path="/compra-diagnostico" element={<CompraDiagnostico />} />
               <Route path="/assinatura-clube" element={<AssinaturaClube />} />
