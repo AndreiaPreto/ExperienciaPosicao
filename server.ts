@@ -766,6 +766,9 @@ async function startServer() {
             if (prod.includes('diagnóstico') || prod.includes('diagnostico')) {
               setDiagnosticoComprado = true;
               updatedFields.diagnostico_comprado = true;
+            } else if (prod.includes('completo')) {
+              updatedFields.mapa_completo_comprado = true;
+              mappingCreditsToAdd += 1;
             } else if (prod.includes('mapa') || prod.includes('floral') || prod.includes('lealdade') || prod.includes('lealdades')) {
               mappingCreditsToAdd += 1;
             } else if (prod.includes('clube')) {
@@ -832,6 +835,7 @@ async function startServer() {
         clube_ativo: userData?.clube_ativo || userAccessData?.clube_ativo || false,
         reprogramacao_pessoal_comprada: userData?.reprogramacao_pessoal_comprada || userAccessData?.reprogramacao_pessoal_comprada || false,
         reprogramar_eu_comprado: userData?.reprogramar_eu_comprado || userAccessData?.reprogramar_eu_comprado || false,
+        mapa_completo_comprado: isAdmin || userData?.mapa_completo_comprado || userAccessData?.mapa_completo_comprado || false,
       });
 
     } catch (error) {

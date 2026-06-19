@@ -10,6 +10,7 @@ interface UserAccess {
   clube_ativo: boolean;
   reprogramacao_pessoal_comprada: boolean;
   reprogramar_eu_comprado: boolean;
+  mapa_completo_comprado?: boolean;
 }
 
 interface AccessContextType {
@@ -50,6 +51,7 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         clube_ativo: false,
         reprogramacao_pessoal_comprada: false,
         reprogramar_eu_comprado: false,
+        mapa_completo_comprado: false,
       });
     } finally {
       setLoading(false);

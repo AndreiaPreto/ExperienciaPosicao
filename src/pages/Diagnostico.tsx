@@ -1316,6 +1316,9 @@ const AdminPedidosTab = ({ pedidos, onRefresh, setNotification }: { pedidos: any
 
       if (prod.includes('diagnóstico') || prod.includes('diagnostico')) {
         acessoUpdate.diagnostico_comprado = true;
+      } else if (prod.includes('completo')) {
+        acessoUpdate.mapa_completo_comprado = true;
+        acessoUpdate.mappingCredits = increment(1);
       } else if (prod.includes('mapa') || prod.includes('floral') || prod.includes('lealdade') || prod.includes('lealdades')) {
         acessoUpdate.mappingCredits = increment(1);
       } else if (prod.includes('clube')) {
@@ -2912,11 +2915,20 @@ const Diagnostico = () => {
                 whatsapp: (data.whatsapp || '').trim(),
                 role: 'user',
                 paidStatus: true,
-                mappingCredits: increment((product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral' || product.name === 'Mapa Numerológico de Posição') ? 1 : 0),
+                mappingCredits: increment((product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral' || product.name === 'Mapa Numerológico de Posição' || product.name.toLowerCase().includes('completo')) ? 1 : 0),
+                mapa_completo_comprado: product.name.toLowerCase().includes('completo'),
                 clube_ativo: product.name.includes('Clube'),
                 lastPurchase: product.name,
                 updatedAt: new Date().toISOString()
               }, { merge: true });
+
+              const isCompleto = product.name.toLowerCase().includes('completo');
+              if (isCompleto) {
+                await setDoc(doc(db, 'user_access', currentUser.uid), {
+                  mapa_completo_comprado: true,
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
+              }
               
               setSelectedProduct(product);
               localStorage.removeItem('pending_auth_data');
@@ -2928,7 +2940,7 @@ const Diagnostico = () => {
               console.log("🚀 Redirecting to correct page...");
               if (product.name === 'Mapa Floral' || product.name === 'Mapa de Posição - Floral' || product.name === 'Mapa de Posição: Floral' || product.name === 'Mapa de Posição' || product.name === 'Mapeamento Emocional Floral') {
                 showPage('mapeamento_form');
-              } else if (product.name === 'Mapa Numerológico de Posição') {
+              } else if (product.name === 'Mapa Numerológico de Posição' || product.name.toLowerCase().includes('completo')) {
                 showPage('numerologia_intro');
               } else {
                 showPage('confirmation');
