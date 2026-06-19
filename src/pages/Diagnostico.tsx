@@ -193,7 +193,7 @@ const AdminDashboardTab = ({ stats, users, onTestMapeamento, onTestDiagnostico, 
           >
             <div className="text-left">
               <p className="text-gold-light text-sm font-medium">Testar Mapeamento Floral</p>
-              <p className="text-[10px] text-white/20 uppercase tracking-widest">Acesso direto ao Quiz de 10 perguntas do Mapa Floral</p>
+              <p className="text-[10px] text-white/20 uppercase tracking-widest">Acesso direto ao Quiz de {mapeamentoQuestions.length} perguntas do Mapa Floral</p>
             </div>
             <ArrowRight size={18} className="text-gold-main/40 group-hover:text-gold-main transition-colors" />
           </button>
@@ -204,7 +204,7 @@ const AdminDashboardTab = ({ stats, users, onTestMapeamento, onTestDiagnostico, 
           >
             <div className="text-left">
               <p className="text-gold-light text-sm font-medium">Testar Diagnóstico POSIÇÃO</p>
-              <p className="text-[10px] text-white/20 uppercase tracking-widest">Acesso direto ao questionário de 25 perguntas do Diagnóstico</p>
+              <p className="text-[10px] text-white/20 uppercase tracking-widest">Acesso direto ao questionário de {questions.length} perguntas do Diagnóstico</p>
             </div>
             <ArrowRight size={18} className="text-gold-main/40 group-hover:text-gold-main transition-colors" />
           </button>
@@ -3956,8 +3956,9 @@ const Diagnostico = () => {
   };
 
   const showPage = (newPage: Page, saveToHistory = true) => {
-    // Guard: proteger o formulário de Reset de Posição
-    if (newPage === 'reprogramacao_form' && !isAdmin && !access?.reprogramacao_pessoal_comprada) {
+    // Guard: proteger o formulário de Reset de Posição e Agendamento
+    const hasResetAccess = !!(isAdmin || access?.reprogramacao_pessoal_comprada || access?.reprogramar_eu_comprado);
+    if (['reprogramacao_form', 'reprogramacao_scheduling'].includes(newPage) && !hasResetAccess) {
       setPage('reprogramacao_pessoal_info');
       return;
     }
@@ -3984,10 +3985,14 @@ const Diagnostico = () => {
       resolvedPage = 'auth';
     } else if (newPage === 'admin_dashboard' && !isAdmin) {
       resolvedPage = 'home';
+    } else if (['diagnostico_quiz_intro', 'intro', 'quiz', 'analysis', 'final'].includes(newPage) && !isAdmin && !access?.diagnostico_comprado) {
+      resolvedPage = 'diagnostico_info';
     } else if (newPage === 'mapeamento_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
       resolvedPage = 'mapeamento_intro';
     } else if (newPage === 'lealdades_form' && !isAdmin && (!access?.mappingCredits || access.mappingCredits <= 0)) {
       resolvedPage = 'lealdades_intro';
+    } else if (['clube_taro_content', 'clube_clarear_content'].includes(newPage) && !isAdmin && !access?.clube_ativo) {
+      resolvedPage = 'clube_posicao_info';
     }
 
     const nonHistoryPages = ['auth', 'analysis', 'mapeamento_analysis', 'lealdades_analysis'];
@@ -4929,7 +4934,8 @@ const Diagnostico = () => {
           </AnimatePresence>
         </header>
 
-        <AnimatePresence mode="wait">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 relative z-10 w-full flex-grow flex flex-col">
+          <AnimatePresence mode="wait">
           {page === 'home' && (
             <motion.div 
               key="home"
@@ -4983,7 +4989,7 @@ const Diagnostico = () => {
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.5em] block font-bold mb-6">Orientação</span>
                   <h2 className="serif text-4xl text-gold-light mb-6">Não sabe por onde começar?</h2>
                   <p className="text-white/40 text-sm font-light leading-relaxed mb-10 max-w-xl mx-auto">
-                    Faça o teste rápido de 10 perguntas para identificar suas necessidades imediatas e descobrir qual a melhor Experiência POSIÇÃO para você seguir neste momento.
+                    Faça o teste rápido de {triageQuestions.length} perguntas para identificar suas necessidades imediatas e descobrir qual a melhor Experiência POSIÇÃO para você seguir neste momento.
                   </p>
                   <button 
                     onClick={startTriage}
@@ -5364,7 +5370,7 @@ const Diagnostico = () => {
                 </ul>
 
                 <p className="text-white/45 mb-8 leading-relaxed text-sm font-light italic">
-                  Responda com sinceridade às 11 perguntas curtas. A sua honestidade guia a assertividade do seu mapeamento floral.
+                  Responda com sinceridade às {mapeamentoQuestions.length} perguntas. A sua honestidade guia a assertividade do seu mapeamento floral.
                 </p>
 
                 <div className="text-center space-y-4 font-serif">
@@ -5628,7 +5634,7 @@ const Diagnostico = () => {
                 <div className="mb-6 p-4 rounded-xl border border-gold-main/30 bg-gold-main/[0.03] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="text-left">
                     <span className="text-[10px] uppercase tracking-wider text-gold-main font-bold block">Painel de Teste Admin (Lealdades)</span>
-                    <span className="text-xs text-white/50 font-light block">Preencha rapidamente as 59 perguntas com um clique para testar as fórmulas e relatórios.</span>
+                    <span className="text-xs text-white/50 font-light block">Preencha rapidamente as {lealdadesQuestions.length} perguntas com um clique para testar as fórmulas e relatórios.</span>
                   </div>
                   <button
                     onClick={() => {
@@ -6085,7 +6091,11 @@ const Diagnostico = () => {
                   </button>
                   <button 
                     onClick={() => {
-                      generatePrescriptionPDF(userData?.name || user?.displayName || 'Cliente', mapeamentoResult || 'Seu Mapeamento Floral');
+                      generatePrescriptionPDF(
+                        userData?.name || user?.displayName || 'Cliente', 
+                        currentFlorais || 'Seu Mapeamento Floral',
+                        'mapeamento_floral'
+                      );
                     }}
                     className="button-outline flex items-center gap-2 justify-center"
                   >
@@ -6117,7 +6127,7 @@ const Diagnostico = () => {
                 <div className="price mb-8 md:mb-10">R$ 69</div>
                 
                 <p className="text-white/40 mb-8 md:mb-12 leading-relaxed text-base md:text-lg font-light">
-                  31 perguntas estruturadas para revelar seu arquétipo dominante, sua sombra ativa, seus florais de suporte e o caminho exato para o seu alinhamento. Tempo estimado: <span className="text-white/60">~10 minutos</span>.
+                  {questions.length} perguntas estruturadas para revelar seu arquétipo dominante, sua sombra ativa, seus florais de suporte e o caminho exato para o seu alinhamento. Tempo estimado: <span className="text-white/60">~10 minutos</span>.
                 </p>
                 
                 <div className="space-y-4 mb-16">
@@ -9072,6 +9082,7 @@ const Diagnostico = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </main>
 
         {/* Modal de Busca Interativo / Lupa de Pesquisa */}
         <AnimatePresence>
