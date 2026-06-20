@@ -473,12 +473,12 @@ const detectarSequenciasRepetidas = (camadas: number[][]) => {
 
   camadas.forEach((linha, linhaIndex) => {
     for (let i = 0; i <= linha.length - 3; i++) {
-      const a = linha[i];
-      const b = inline => linha[i + 1];
-      const c = lineno => linha[i + 2];
-      const valA = a;
-      const valB = b !== undefined ? b : linha[i + 1];
-      const valC = c !== undefined ? c : linha[i + 2];
+      const d = linha[i];
+      const e = linha[i + 1];
+      const f = linha[i + 2];
+      const valA = d;
+      const valB = e;
+      const valC = f;
       const sequencia = `${valA}${valB}${valC}`;
 
       if (valA === valB && valB === valC && sequenciasRepetidasNegativas[sequencia]) {
@@ -863,7 +863,7 @@ export const MapaNumerologico: React.FC<MapaNumerologicoProps> = ({
           <h2 id="epn-title" className="serif text-3xl md:text-4xl text-gold-light mb-6">Mapeamento Clínico Analítico</h2>
           
           <p className="text-white/75 leading-relaxed text-[15px] font-light mb-8">
-            Uma leitura vibracional profunda do seu nome de nascimento completo unindo a as equações da Cabala para identificar bloqueios basais, tendências de fardos, forces de destino e as chaves de harmonização.
+            Uma leitura vibracional profunda do seu nome de nascimento completo unindo as equações da Cabala para identificar bloqueios basais, tendências de fardos, forças de destino e as chaves de harmonização.
           </p>
 
           <div className="border-t border-b border-white/5 py-6 mb-8 space-y-4">
@@ -957,7 +957,7 @@ export const MapaNumerologico: React.FC<MapaNumerologicoProps> = ({
                   <div className="w-full">
                     <h5 className="serif text-lg text-white/80 mb-2">Identificação de Bloqueios</h5>
                     <p className="text-white/50 text-xs font-light mb-4 leading-relaxed">
-                      Diagnóstica as frequências travando as áreas financeira, amorosa ou profissional no seu triângulo de posição.
+                      Diagnostica as frequências travando as áreas financeira, amorosa ou profissional no seu triângulo de posição.
                     </p>
                   </div>
                   <div className="w-full mt-4 space-y-3">
@@ -1286,7 +1286,7 @@ export const MapaNumerologico: React.FC<MapaNumerologicoProps> = ({
                 3: "Citrino (Magnetismo e Visibilidade) e Cristal de Quartzo",
                 4: "Turmalina Negra (Proteção Física) e Quartzo Verde",
                 5: "Água-Marinha (Adaptabilidade) e Sodalita",
-                6: "Quartzo Rosa (Amor Harmónico) e Esmeralda",
+                6: "Quartzo Rosa (Amor Harmônico) e Esmeralda",
                 7: "Ametista (Sabedoria Espiritual) e Lápis-Lazúli",
                 8: "Hematita (Aterramento Material) e Turmalina Negra",
                 9: "Quartzo Verde (Cura Vital) e Jaspe Vermelho"

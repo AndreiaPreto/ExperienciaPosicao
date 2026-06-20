@@ -31,7 +31,7 @@ export const fallbackJunho2026: Ciclo[] = [
     data_exibir: "03 de Junho",
     mes_ano:     "2026-06",
     descricao:   "Ritual de reconhecimento e liberação na lua cheia de junho. Honre tudo que floresceu neste ciclo, libere o que já cumpriu seu papel e equilibre as emoções intensas que a lua amplifica.",
-    importancia: "A lua cheia amplifica tudo que está ativo em você, como intenções, emoções and padrões. Este ritual transforma essa amplitude em consciência.",
+    importancia: "A lua cheia amplifica tudo que está ativo em você, como intenções, emoções e padrões. Este ritual transforma essa amplitude em consciência.",
     beneficios:  ["Clareza emocional", "Liberação energética", "Expansão espiritual"],
     preco:       "R$ 9",
     ativo:       true,
