@@ -26,6 +26,7 @@ import { Menu, LogIn, UserPlus, LogOut, User as UserIcon, Play, Pause, Volume2, 
 import ClubeClarearListaEspera from './ClubeClarear_ListaEspera';
 import { Testimonials } from '../components/Testimonials';
 import { MapaNumerologico } from '../products/numerologia/MapaNumerologico';
+import { CartaSemana } from '../components/CartaSemana';
 
 interface AppUser {
   id: string;
@@ -63,7 +64,7 @@ const meditations = [
 
 import { useCiclos, formatarMesAno, diasParaRitual } from '../products/numerologia/useCiclos';
 
-type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro' | 'grupovip';
+type Page = 'home' | 'diagnostico_info' | 'reprogramacao_pessoal_info' | 'clube_clarear_info' | 'clube_taro_info' | 'clube_posicao_info' | 'rituais_mes_info' | 'reprogramar_eu_info' | 'diagnostico_quiz_intro' | 'intro' | 'quiz' | 'analysis' | 'final' | 'auth' | 'checkout' | 'clube_clarear_content' | 'clube_taro_content' | 'admin_dashboard' | 'dashboard' | 'mapeamento_intro' | 'mapeamento_form' | 'mapeamento_analysis' | 'mapeamento_result' | 'lealdades_intro' | 'lealdades_form' | 'lealdades_analysis' | 'lealdades_result' | 'jornada_emocional' | 'confirmation' | 'reprogramacao_form' | 'reprogramacao_scheduling' | 'triage_quiz' | 'triage_result' | 'lista_espera_clarear' | 'numerologia_intro' | 'grupovip' | 'carta_semana';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -2134,6 +2135,8 @@ const Diagnostico = () => {
       '/rituais': 'rituais_mes_info',
       '/grupo': 'grupovip',
       '/grupovip': 'grupovip',
+      '/carta-semana': 'carta_semana',
+      '/carta': 'carta_semana',
     };
     const targetPage = pathToPageMap[path];
     if (targetPage && targetPage !== page) {
@@ -2153,6 +2156,7 @@ const Diagnostico = () => {
       'clube_posicao_info': '/clube-posicao',
       'rituais_mes_info': '/ciclos',
       'grupovip': '/grupovip',
+      'carta_semana': '/carta-semana',
     };
     const targetPath = pageToPathMap[page];
     if (targetPath && targetPath !== location.pathname) {
@@ -4785,7 +4789,8 @@ const Diagnostico = () => {
                 { label: 'Reset', action: () => showPage('reprogramacao_pessoal_info') },
                 { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
                 { label: 'Ciclos', action: () => showPage('rituais_mes_info') },
-                { label: 'Biblioteca', action: () => navigate('/biblioteca') }
+                { label: 'Biblioteca', action: () => navigate('/biblioteca') },
+                { label: 'Carta da Semana', action: () => showPage('carta_semana') }
               ].map((item, idx) => (
                 <button
                   key={idx}
@@ -4891,7 +4896,8 @@ const Diagnostico = () => {
                     { label: 'Reset de Posição', action: () => showPage('reprogramacao_pessoal_info') },
                     { label: 'Clube Posição', action: () => showPage('clube_posicao_info') },
                     { label: 'Ciclos Posição', action: () => showPage('rituais_mes_info') },
-                    { label: 'Biblioteca', action: () => navigate('/biblioteca') }
+                    { label: 'Biblioteca', action: () => navigate('/biblioteca') },
+                    { label: 'Carta da Semana', action: () => showPage('carta_semana') }
                   ].map((item, idx) => (
                     <button
                       key={idx}
@@ -5187,6 +5193,13 @@ const Diagnostico = () => {
                         desc: 'Sua estante virtual premium de materiais, guias e e-books oficiais da Experiência Posição.',
                         tag: 'Biblioteca',
                         cta: 'Explorar biblioteca',
+                      },
+                      {
+                        id: 'carta_semana',
+                        title: 'Carta da Semana',
+                        desc: 'Respire fundo, silencie a mente e retire sua carta simbólica de reflexão e clareza para a semana.',
+                        tag: 'Tarô',
+                        cta: 'Escolher minha carta',
                       },
                     ].map((item) => (
                       <motion.div 
@@ -5576,6 +5589,18 @@ const Diagnostico = () => {
                 onSaveResult={handleSaveNumerologia}
                 onGoBack={() => setPage('home')}
               />
+            </motion.div>
+          )}
+
+          {page === 'carta_semana' && (
+            <motion.div 
+              key="carta_semana"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="animate-screen"
+            >
+              <CartaSemana onBack={() => setPage('home')} />
             </motion.div>
           )}
 
@@ -9337,6 +9362,7 @@ const Diagnostico = () => {
               { type: 'page', title: 'Clube de Posição', keyword: 'clube assinar taro circulo leitura semanal', desc: 'Círculo exclusivo de orientação semanal, leitura de tarô de autoconhecimento e rituais do mês.', action: () => { showPage('clube_posicao_info'); setSearchOpen(false); } },
               { type: 'page', title: 'Ciclos & Rituais do Mês (Ciclos Posição)', keyword: 'ciclos rituais mes lua sol energia ritos lua', desc: 'Rituais mensais sistêmicos para alinhamento energético e tomada de posição pessoal.', action: () => { showPage('rituais_mes_info'); setSearchOpen(false); } },
               { type: 'page', title: 'Biblioteca de Apoio (Conteúdos)', keyword: 'biblioteca artigos textos pdf audio materiais downloads apoio clareza', desc: 'Artigos, leituras sistêmicas, PDFs, áudios e guias práticos sobre desenvolvimento emocional.', action: () => { navigate('/biblioteca'); setSearchOpen(false); } },
+              { type: 'page', title: 'Carta da Semana', keyword: 'carta semana taro reflexao conselho oraculo', desc: 'Respire fundo e retire sua carta simbólica de reflexão e clareza para a semana.', action: () => { showPage('carta_semana'); setSearchOpen(false); } },
               { type: 'page', title: 'Jornada Emocional', keyword: 'jornada historico dados cadastros notificacoes', desc: 'Seu painel pessoal de membro, histórico e central de notificações.', action: () => { showPage('jornada_emocional'); setMemberTab('mappings'); setSearchOpen(false); } }
             ];
 

@@ -119,6 +119,106 @@ export const fallbackJunho2026: Ciclo[] = [
   },
 ];
 
+// Fallback rituais de Julho 2026
+export const fallbackJulho2026: Ciclo[] = [
+  {
+    id: "julho-2026-1",
+    titulo: "Proteção e Blindagem do Campo Energético",
+    fase: "São Bento",
+    emoji: "🛡️",
+    spiritual: "São Bento",
+    data_iso: "2026-07-11",
+    data_exibir: "11 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Fortaleça sua proteção espiritual e harmonize sua energia através do amparo e força de São Bento.",
+    importancia: "Um portal essencial para blindar seu campo áurico de interferências e firmar seu centro de poder.",
+    beneficios: ["Proteção espiritual ativa", "Harmonização áurica", "Blindagem energética"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 1,
+  },
+  {
+    id: "julho-2026-2",
+    titulo: "Oportunidades e Abertura de Caminhos",
+    fase: "Lua Nova",
+    emoji: "🌑",
+    spiritual: null,
+    data_iso: "2026-07-14",
+    data_exibir: "14 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Um momento ideal para semear novos projetos, atrair oportunidades e abrir portas na energia de renovação.",
+    importancia: "A Lua Nova é o ventre do ciclo, onde o magnetismo para o novo está no ponto mais alto.",
+    beneficios: ["Abertura de caminhos", "Atração de oportunidades", "Foco em novos projetos"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 2,
+  },
+  {
+    id: "julho-2026-3",
+    titulo: "Relacionamentos e Fertilidade",
+    fase: "Lua Crescente",
+    emoji: "🌓",
+    spiritual: null,
+    data_iso: "2026-07-21",
+    data_exibir: "21 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Fortaleça vínculos, favoreça novos relacionamentos e impulsione projetos que deseja ver crescer.",
+    importancia: "Sustentar o crescimento exige nutrição ativa. Esta fase apoia a expansão do amor e do trabalho.",
+    beneficios: ["Fortalecimento de vínculos", "Estímulo à criatividade e fertilidade", "Crescimento de projetos"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 3,
+  },
+  {
+    id: "julho-2026-4",
+    titulo: "Ritual do Sagrado Feminino",
+    fase: "Cura & Amor-Próprio",
+    emoji: "🌹",
+    spiritual: null,
+    data_iso: "2026-07-22",
+    data_exibir: "22 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Um encontro dedicado ao amor-próprio, à cura emocional, à autoestima e à força da energia feminina.",
+    importancia: "Honrar a ancestralidade feminina e as águas emocionais traz paz interior profunda.",
+    beneficios: ["Despertar do amor-próprio", "Cura de feridas emocionais", "Autoestima fortalecida"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 4,
+  },
+  {
+    id: "julho-2026-5",
+    titulo: "Lealdades Sistêmicas",
+    fase: "Limpeza Ancestral",
+    emoji: "🌳",
+    spiritual: null,
+    data_iso: "2026-07-26",
+    data_exibir: "26 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Identificação e limpeza de padrões familiares e emocionais que podem estar limitando sua vida sem que você perceba.",
+    importancia: "A liberação sistêmica nos devolve o direito de viver nosso próprio destino com leveza.",
+    beneficios: ["Quebra de padrões herdados", "Leveza existencial", "Tomada de posição pessoal"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 5,
+  },
+  {
+    id: "julho-2026-6",
+    titulo: "Prosperidade e Abundância",
+    fase: "Lua Cheia",
+    emoji: "🌕",
+    spiritual: null,
+    data_iso: "2026-07-29",
+    data_exibir: "29 de Julho",
+    mes_ano: "2026-07",
+    descricao: "Um ritual para potencializar a energia da prosperidade, da gratidão e da colheita dos seus resultados.",
+    importancia: "A Lua Cheia transborda energia. Direcionar esse fluxo para a abundância sintoniza você com a riqueza da vida.",
+    beneficios: ["Magnetismo de abundância", "Ressonância de prosperidade", "Alinhamento com a colheita"],
+    preco: "R$ 9",
+    ativo: true,
+    ordem: 6,
+  },
+];
+
 // Retorna o mes_ano atual no formato "YYYY-MM" dinamicamente
 const getMesAnoAtual = (): string => {
   const now = new Date();
@@ -166,10 +266,11 @@ export const useCiclos = (mesAnoOverride?: string) => {
         const fbCiclos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ciclo));
         
         if (fbCiclos.length === 0) {
-          // Fallback para junho 2026 apenas se for o mês correto
-          const [ano, mes] = mesAno.split('-');
+          // Fallback para os rituais
           if (mesAno === "2026-06") {
             setCiclos(fallbackJunho2026);
+          } else if (mesAno === "2026-07") {
+            setCiclos(fallbackJulho2026);
           } else {
             setCiclos([]); // Mês sem rituais cadastrados — mostra estado vazio
           }
@@ -180,6 +281,8 @@ export const useCiclos = (mesAnoOverride?: string) => {
         console.error('Erro ao buscar ciclos:', err);
         if (mesAno === "2026-06") {
           setCiclos(fallbackJunho2026);
+        } else if (mesAno === "2026-07") {
+          setCiclos(fallbackJulho2026);
         } else {
           setError('Não foi possível carregar os ciclos.');
         }
