@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Loading } from './components/Loading';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AccessProvider, useAccess } from './context/AccessContext';
+import { CartProvider } from './context/CartContext';
+import { CartDrawer } from './components/CartDrawer';
 
 // Lazy load pages for better performance
 const Diagnostico = lazy(() => import('./pages/Diagnostico'));
@@ -35,9 +37,11 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AccessProvider>
-        <Router>
-          <Suspense fallback={<Loading />}>
-            <Routes>
+        <CartProvider>
+          <Router>
+            <CartDrawer />
+            <Suspense fallback={<Loading />}>
+              <Routes>
               <Route path="/" element={<Diagnostico />} />
               <Route path="/diagnostico" element={<Diagnostico />} />
               <Route path="/mapafloral" element={<Diagnostico />} />
@@ -54,6 +58,9 @@ export default function App() {
               <Route path="/grupovip" element={<Diagnostico />} />
               <Route path="/carta-semana" element={<Diagnostico />} />
               <Route path="/carta" element={<Diagnostico />} />
+              <Route path="/leituras-taro" element={<Diagnostico />} />
+              <Route path="/baralho-cigano" element={<Diagnostico />} />
+              <Route path="/leituras" element={<Diagnostico />} />
               
               <Route path="/compra-diagnostico" element={<CompraDiagnostico />} />
               <Route path="/assinatura-clube" element={<AssinaturaClube />} />
@@ -79,7 +86,8 @@ export default function App() {
             </Routes>
           </Suspense>
         </Router>
-      </AccessProvider>
+      </CartProvider>
+    </AccessProvider>
     </ErrorBoundary>
   );
 }
