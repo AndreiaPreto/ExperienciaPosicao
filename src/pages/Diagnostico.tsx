@@ -163,7 +163,30 @@ import { formatWhatsAppNumber, WHATSAPP_NUM, WHATSAPP_GROUP_URL, PIX_CHAVE, PIX_
 
 
 const Diagnostico = () => {
-  const { totalItems, toggleDrawer } = useCart();
+  const { totalItems, toggleDrawer, addItem, items: cartItems } = useCart();
+  const [addedRitualIds, setAddedRitualIds] = useState<{ [id: string]: boolean }>({});
+
+  const parsePriceToNumber = (priceStr: string): number => {
+    if (!priceStr) return 0;
+    const cleaned = priceStr.replace(/[^\d.,]/g, '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
+  };
+
+  const handleAddToCartRitual = (e: React.MouseEvent, ritual: any) => {
+    e.stopPropagation();
+    const numericPrice = parsePriceToNumber(ritual.preco);
+    const ritualCartId = `ritual-${ritual.id}`;
+    addItem({
+      id: ritualCartId,
+      nome: `Ritual: ${ritual.titulo}`,
+      preco: numericPrice,
+    });
+
+    setAddedRitualIds((prev) => ({ ...prev, [ritual.id]: true }));
+    setTimeout(() => {
+      setAddedRitualIds((prev) => ({ ...prev, [ritual.id]: false }));
+    }, 1500);
+  };
   const { access, refreshAccess } = useAccess();
   const location = useLocation();
   const navigate = useNavigate();
@@ -267,7 +290,7 @@ const Diagnostico = () => {
   const [copied, setCopied] = useState(false);
   
   // Hook de ciclos do mês
-  const { ciclos, mesAno, loading: ciclosLoading } = useCiclos();
+  const { ciclos, mesAno, setMesAno, loading: ciclosLoading } = useCiclos();
   
   // Scheduling State
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -3030,7 +3053,7 @@ const Diagnostico = () => {
           </AnimatePresence>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 relative z-10 w-full flex-grow flex flex-col">
+        <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-16 relative z-10 w-full max-w-full flex-grow flex flex-col min-w-0 overflow-x-hidden">
           <AnimatePresence mode="wait">
           {page === 'home' && (
             <motion.div 
@@ -3109,6 +3132,62 @@ const Diagnostico = () => {
                  </div>
                </motion.div>
 
+               {/* Card em Destaque: Ciclos de Posição / Rituais do Mês */}
+               <motion.div variants={itemVariants} className="mb-10 md:mb-16">
+                 <div 
+                   onClick={() => showPage('rituais_mes_info')}
+                   className="glass-card border border-gold-main/40 bg-gradient-to-br from-purple-950/40 via-black/90 to-gold-main/[0.08] rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 relative overflow-hidden group cursor-pointer hover:border-gold-main transition-all duration-300 shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_50px_rgba(201,160,74,0.25)]"
+                 >
+                   {/* Background Decorative Glow */}
+                   <div className="absolute top-0 left-0 w-64 sm:w-80 h-64 sm:h-80 bg-gold-main/10 rounded-full blur-3xl pointer-events-none group-hover:bg-gold-main/20 transition-all" />
+                   <div className="absolute bottom-0 right-0 w-52 sm:w-64 h-52 sm:h-64 bg-purple-900/20 rounded-full blur-3xl pointer-events-none" />
+
+                   <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 text-center md:text-left">
+                     <div className="max-w-2xl space-y-3 sm:space-y-4">
+                       <div className="inline-flex items-center gap-2 bg-gold-main/15 border border-gold-main/30 px-3 py-1 rounded-full">
+                         <Calendar size={13} className="text-gold-main" />
+                         <span className="text-gold-main font-bold uppercase tracking-[0.2em] text-[9px] sm:text-xs font-sans">
+                           AGENDA DE AGOSTO · RITUAIS DE POSIÇÃO
+                         </span>
+                       </div>
+
+                       <h2 className="serif text-2xl sm:text-3xl lg:text-4xl text-gold-light font-serif font-semibold leading-tight group-hover:text-gold-main transition-colors">
+                         Ciclos de Posição & Rituais do Mês
+                       </h2>
+
+                       <p className="text-white/70 font-light text-xs sm:text-sm md:text-base leading-relaxed font-sans">
+                         Rituais de Reiki dos Anjos, limpezas nas fases da lua, abertura de caminhos e o Portal 8/8 da Prosperidade para agendar sua prática de agosto.
+                       </p>
+
+                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 sm:gap-3 text-xs text-white/60 font-sans font-light pt-1">
+                         <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg sm:rounded-xl">
+                           <Sparkles size={13} className="text-gold-main shrink-0" />
+                           <span>6 Rituais de Agosto</span>
+                         </span>
+                         <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg sm:rounded-xl">
+                           <Eye size={13} className="text-gold-main shrink-0" />
+                           <span>A partir de R$ 6,00</span>
+                         </span>
+                       </div>
+                     </div>
+
+                     <div className="w-full md:w-auto shrink-0">
+                       <button
+                         type="button"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           showPage('rituais_mes_info');
+                         }}
+                         className="button py-3.5 sm:py-4 px-6 sm:px-8 text-xs sm:text-sm font-bold uppercase tracking-[0.14em] font-sans inline-flex items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto shadow-[0_4px_25px_rgba(201,160,74,0.3)] group-hover:scale-105 transition-all cursor-pointer"
+                       >
+                         <span>Ver Rituais do Mês</span>
+                         <ArrowRight size={16} />
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+               </motion.div>
+
               <motion.div variants={itemVariants} className="space-y-12 md:space-y-24">
                 {/* Triage Quiz Section */}
                 <div className="glass-card border-gold-main/20 bg-gold-main/[0.02] p-8 md:p-12 text-center max-w-3xl mx-auto">
@@ -3157,6 +3236,13 @@ const Diagnostico = () => {
                         cta: 'Iniciar diagnóstico',
                       },
                       {
+                        id: 'rituais_mes_info',
+                        title: 'Ciclos de Posição do Mês',
+                        desc: 'Reconecte-se com os ciclos da vida. Acompanhamento energético com rituais entregues mensalmente.',
+                        tag: 'Ciclos',
+                        cta: 'Ver rituais do mês',
+                      },
+                      {
                         id: 'mapeamento_intro',
                         title: 'Mapa Floral',
                         desc: 'Descubra sua emoção dominante, seu arquétipo ativo e obtenha sua fórmula de floral personalizada.',
@@ -3190,13 +3276,6 @@ const Diagnostico = () => {
                         desc: 'Acompanhamento contínuo através de nossos dois núcleos de clareza e reorganização.',
                         tag: 'Clube',
                         cta: 'Acessar Clube',
-                      },
-                      {
-                        id: 'rituais_mes_info',
-                        title: 'Ciclos de Posição do Mês',
-                        desc: 'Reconecte-se com os ciclos da vida. Acompanhamento energético com rituais entregues mensalmente.',
-                        tag: 'Ciclos',
-                        cta: 'Ver rituais do mês',
                       },
                       {
                         id: 'biblioteca',
@@ -3495,16 +3574,16 @@ const Diagnostico = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="animate-screen max-w-5xl mx-auto py-2 sm:py-6 px-2 sm:px-4"
+              className="animate-screen max-w-5xl mx-auto py-2 sm:py-6 px-1 sm:px-4 w-full max-w-full overflow-hidden"
             >
-              <div className="mb-4 sm:mb-6 text-center sm:text-left">
+              <div className="mb-3 sm:mb-6 text-left w-full">
                 <button
                   type="button"
                   onClick={() => setPage('home')}
-                  className="inline-flex items-center gap-2 text-xs sm:text-sm text-gold-main hover:text-gold-light bg-gold-main/10 hover:bg-gold-main/20 border border-gold-main/30 px-4 py-2 rounded-full transition-all cursor-pointer font-sans shadow-sm"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs md:text-sm text-gold-main hover:text-gold-light bg-gold-main/10 hover:bg-gold-main/20 border border-gold-main/30 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full transition-all cursor-pointer font-sans shadow-sm max-w-full"
                 >
-                  <ArrowLeft size={16} />
-                  <span>Voltar para a Página Inicial</span>
+                  <ArrowLeft size={15} className="shrink-0" />
+                  <span className="truncate">Voltar para a Página Inicial</span>
                 </button>
               </div>
               <CatalogSection initiallyExpanded={true} />
@@ -4624,26 +4703,64 @@ const Diagnostico = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="animate-screen text-left max-w-2xl mx-auto"
+              className="animate-screen text-left max-w-2xl mx-auto w-full max-w-full overflow-hidden"
             >
               <div className="back" onClick={() => showPage('home')}>← Voltar</div>
               <p className="text-[10px] text-white/15 uppercase tracking-widest mb-6 font-bold">
                 Início → Ciclos de Posição · {formatarMesAno(mesAno)}
               </p>
-              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] mb-12">
-                <div className="flex justify-between items-center mb-8">
+              <div className="glass-card border-gold-main/20 bg-gold-main/[0.01] mb-8 sm:mb-12 p-5 sm:p-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
                   <span className="text-gold-main/30 text-[10px] uppercase tracking-[0.4em] block font-bold">Agenda Mensal</span>
+
+                  {/* Month Selector Pills */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { key: '2026-08', label: 'Agosto 2026' },
+                      { key: '2026-07', label: 'Julho 2026' },
+                      { key: '2026-06', label: 'Junho 2026' },
+                    ].map((m) => (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setMesAno(m.key)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-sans tracking-wide transition-all cursor-pointer ${
+                          mesAno === m.key
+                            ? 'bg-gold-main text-black font-bold shadow-[0_0_15px_rgba(201,160,74,0.3)]'
+                            : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80 border border-white/10'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <h2 className="serif text-5xl text-gold-light mb-3 leading-tight">
+                <h2 className="serif text-3xl sm:text-5xl text-gold-light mb-3 leading-tight">
                   Ciclos Posição
                 </h2>
-                <p className="font-serif text-2xl text-gold-main/50 italic font-light mb-6">
+                <p className="font-serif text-xl sm:text-2xl text-gold-main/50 italic font-light mb-4 sm:mb-6">
                   {formatarMesAno(mesAno)}
                 </p>
-                <p className="text-white/40 mb-8 leading-relaxed text-lg font-light">
+                <p className="text-white/40 mb-6 leading-relaxed text-sm sm:text-lg font-light">
                   Rituais coletivos, realizados off-line e enviados por mensagem vídeo e áudio para sua prática individual. Escolha abaixo o ritual que deseja participar:
                 </p>
               </div>
+
+              {totalItems > 0 && (
+                <div className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl border border-gold-main/40 bg-gold-main/10 flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(201,160,74,0.15)] animate-fade-in">
+                  <div className="flex items-center gap-2.5 text-gold-light text-xs sm:text-sm font-sans font-medium">
+                    <ShoppingBag size={18} className="text-gold-main shrink-0" />
+                    <span>Você tem <strong className="text-gold-light font-bold">{totalItems}</strong> {totalItems === 1 ? 'item' : 'itens'} na sua sacola</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleDrawer}
+                    className="bg-gold-main text-[#0a0a0a] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider font-sans hover:bg-gold-light transition-all cursor-pointer whitespace-nowrap shadow-sm"
+                  >
+                    Ver Sacola
+                  </button>
+                </div>
+              )}
 
               {ciclosLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -4663,14 +4780,17 @@ const Diagnostico = () => {
                   {ciclos.map((ritual) => {
                     const dias = diasParaRitual(ritual.data_iso);
                     const isPast = dias < 0;
+                    const ritualCartId = `ritual-${ritual.id}`;
+                    const isAddedInCart = cartItems.some((i) => i.id === ritualCartId || i.id === ritual.id);
+                    const isJustAdded = !!addedRitualIds[ritual.id];
 
                     return (
                       <motion.div 
                         key={ritual.id}
-                        whileHover={!isPast ? { y: -5 } : undefined}
-                        className={`glass-card p-8 border-gold-main/10 bg-white/[0.02] group ${isPast ? 'opacity-60 hover:cursor-not-allowed' : ''}`}
+                        whileHover={!isPast ? { y: -3 } : undefined}
+                        className={`glass-card p-5 sm:p-8 border-gold-main/10 bg-white/[0.02] group ${isPast ? 'opacity-60 hover:cursor-not-allowed' : ''}`}
                       >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
                           <div>
                             <div className="flex flex-wrap items-center gap-2 mb-2">
                               <span className="text-gold-main/40 text-[10px] uppercase tracking-widest block">{ritual.data_exibir}</span>
@@ -4701,17 +4821,17 @@ const Diagnostico = () => {
                                 </>
                               )}
                             </div>
-                            <h3 className="serif text-2xl text-gold-light group-hover:text-gold-main transition-colors">{ritual.titulo}</h3>
+                            <h3 className="serif text-xl sm:text-2xl text-gold-light group-hover:text-gold-main transition-colors">{ritual.titulo}</h3>
                           </div>
-                          <div className="text-gold-main font-medium">{ritual.preco}</div>
+                          <div className="text-gold-main font-bold text-lg sm:text-xl shrink-0 font-serif">{ritual.preco}</div>
                         </div>
-                        <p className="text-white/40 text-sm font-light mb-6 leading-relaxed">
+                        <p className="text-white/40 text-xs sm:text-sm font-light mb-6 leading-relaxed">
                           {ritual.descricao}
                         </p>
                         
                         {ritual.importancia && (
                           <div className="mb-6">
-                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Importância</p>
+                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-2 font-bold">Importância</p>
                             <p className="text-white/30 text-xs italic font-light leading-relaxed">
                               "{ritual.importancia}"
                             </p>
@@ -4719,8 +4839,8 @@ const Diagnostico = () => {
                         )}
 
                         {ritual.beneficios && ritual.beneficios.length > 0 && (
-                          <div className="mb-8">
-                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-3 font-bold">Benefícios</p>
+                          <div className="mb-6">
+                            <p className="text-gold-main/30 text-[9px] uppercase tracking-widest mb-2 font-bold">Benefícios</p>
                             <div className="flex flex-wrap gap-2">
                               {ritual.beneficios.map((benefit, idx) => (
                                 <span key={idx} className="text-[9px] text-white/40 bg-white/5 px-2 py-1 rounded-full border border-white/5">
@@ -4734,19 +4854,51 @@ const Diagnostico = () => {
                         {isPast ? (
                           <button 
                             disabled 
-                            className="w-full py-4 text-xs tracking-[0.2em] border border-white/10 rounded-lg text-white/20 bg-white/[0.01] uppercase font-mono cursor-not-allowed"
+                            className="w-full py-3.5 text-xs tracking-[0.2em] border border-white/10 rounded-lg text-white/20 bg-white/[0.01] uppercase font-mono cursor-not-allowed"
                           >
                             Ciclo encerrado
                           </button>
                         ) : (
-                          <button 
-                            onClick={() => {
-                              handleCheckout(`Ritual: ${ritual.titulo}`, ritual.preco);
-                            }}
-                            className="button-outline w-full py-4 text-xs tracking-[0.2em]"
-                          >
-                            Participar deste Ritual
-                          </button>
+                          <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 mt-4 pt-4 border-t border-white/10 w-full">
+                            <button 
+                              type="button"
+                              onClick={(e) => handleAddToCartRitual(e, ritual)}
+                              className={`py-3 sm:py-3.5 px-4 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.14em] font-sans transition-all duration-300 flex items-center justify-center gap-2 w-full sm:flex-1 cursor-pointer min-h-[42px] ${
+                                isJustAdded
+                                  ? 'bg-emerald-500 text-white border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                                  : isAddedInCart
+                                  ? 'bg-gold-main/20 text-gold-light border border-gold-main/50 hover:bg-gold-main hover:text-[#0a0a0a]'
+                                  : 'bg-gold-main text-[#0a0a0a] hover:bg-gold-light border border-gold-main shadow-[0_4px_20px_rgba(201,160,74,0.2)]'
+                              }`}
+                            >
+                              {isJustAdded ? (
+                                <>
+                                  <Check size={15} className="text-white shrink-0" />
+                                  <span>Adicionado à Sacola!</span>
+                                </>
+                              ) : isAddedInCart ? (
+                                <>
+                                  <Check size={15} className="shrink-0 text-gold-main" />
+                                  <span>Na Sacola (+1)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Plus size={15} className="shrink-0" />
+                                  <span>Adicionar à Sacola</span>
+                                </>
+                              )}
+                            </button>
+                            
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                handleCheckout(`Ritual: ${ritual.titulo}`, ritual.preco);
+                              }}
+                              className="btn-secondary w-full sm:w-auto py-3 sm:py-3.5 px-4 text-[11px] sm:text-xs tracking-[0.08em] sm:tracking-[0.12em] font-sans cursor-pointer whitespace-nowrap min-h-[42px]"
+                            >
+                              Participar Direto
+                            </button>
+                          </div>
                         )}
                       </motion.div>
                     );

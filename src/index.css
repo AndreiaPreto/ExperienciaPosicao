@@ -48,6 +48,14 @@
   ::-webkit-scrollbar-track  { background: transparent; }
   ::-webkit-scrollbar-thumb  { background: #8B6812; border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: #C9A04A; }
+
+  /* Corrige o bug clássico de flexbox: <main> é flex-col, e sem min-width:0
+     seu filho direto (a página ativa via AnimatePresence) nunca encolhe
+     abaixo da largura do próprio conteúdo — causa raiz do corte horizontal
+     no mobile em qualquer página do site. */
+  main > * {
+    min-width: 0;
+  }
 }
 
 /* ── Atmosphere ──────────────────────────── */
@@ -84,8 +92,8 @@
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid var(--color-glass-border);
     border-radius: 16px;
-    padding: 1.5rem;
-    @apply md:p-10;
+    padding: 1rem;
+    @apply sm:p-6 md:p-10 max-w-full overflow-hidden;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
   }
@@ -103,8 +111,8 @@
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid var(--color-glass-border);
     border-radius: 16px;      /* era rounded-3xl/40px — padronizado */
-    padding: 1.5rem;
-    @apply md:p-10;
+    padding: 1rem;
+    @apply sm:p-6 md:p-10 max-w-full overflow-hidden;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     margin-bottom: 1.5rem;
   }
@@ -123,14 +131,14 @@
   .button,
   .btn-primary {
     @apply bg-gold-main text-deep-black font-semibold
-           px-8 py-4 md:px-12 md:py-5
+           px-4 py-3 sm:px-8 sm:py-4 md:px-12 md:py-5
            rounded-lg                /* ← retangular, padrão biblioteca */
            transition-all duration-500
            hover:bg-gold-light hover:scale-[1.01]
            active:scale-[0.99]
-           text-center uppercase tracking-[0.16em]
-           text-[13px] md:text-[11px]
-           relative overflow-hidden w-full;
+           text-center uppercase tracking-[0.1em] sm:tracking-[0.16em]
+           text-xs sm:text-[13px] md:text-[11px]
+           relative overflow-hidden w-full max-w-full;
     box-shadow: 0 4px 20px rgba(201,160,74,.15);
   }
   .button::after,
@@ -144,25 +152,25 @@
   /* Secundário — borda branca, texto claro */
   .btn-secondary {
     @apply border border-white/10 text-text-main/70 font-medium
-           px-8 py-4 md:px-12 md:py-5
+           px-4 py-3 sm:px-8 sm:py-4 md:px-12 md:py-5
            rounded-lg
            transition-all duration-500
            hover:bg-white/5 hover:text-text-main
-           text-center uppercase tracking-[0.12em]
-           text-[13px] md:text-[11px]
-           relative overflow-hidden w-full;
+           text-center uppercase tracking-[0.08em] sm:tracking-[0.12em]
+           text-xs sm:text-[13px] md:text-[11px]
+           relative overflow-hidden w-full max-w-full;
   }
 
   /* Outline dourado */
   .button-outline {
     @apply border border-gold-main/25 text-gold-main font-medium
-           px-8 py-4 md:px-12 md:py-5
+           px-4 py-3 sm:px-8 sm:py-4 md:px-12 md:py-5
            rounded-lg
            transition-all duration-500
            hover:bg-gold-main/6 hover:border-gold-main/50
-           text-center uppercase tracking-[0.14em]
-           text-[13px] md:text-[11px]
-           backdrop-blur-sm;
+           text-center uppercase tracking-[0.08em] sm:tracking-[0.14em]
+           text-xs sm:text-[13px] md:text-[11px]
+           backdrop-blur-sm max-w-full;
   }
 
   /* ── Input ──────────────────────────── */

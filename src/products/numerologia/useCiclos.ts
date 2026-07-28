@@ -219,12 +219,114 @@ export const fallbackJulho2026: Ciclo[] = [
   },
 ];
 
-// Retorna o mes_ano atual no formato "YYYY-MM" dinamicamente
+// Fallback rituais de Agosto 2026
+export const fallbackAgosto2026: Ciclo[] = [
+  {
+    id: "agosto-2026-1",
+    titulo: "Reiki da Consagração de Agosto",
+    fase: "Reiki dos Anjos",
+    emoji: "✨",
+    spiritual: "Anjos & Proteção",
+    data_iso: "2026-08-01",
+    data_exibir: "01/08 (sábado)",
+    mes_ano: "2026-08",
+    descricao: "Abençoando todo o mês que começa.",
+    importancia: "Consagrar e abençoar todo o mês que começa estabelece harmonia, paz e um manto de luz para todos os seus dias.",
+    beneficios: ["Proteção e bênçãos angélicas", "Equilíbrio energético", "Abertura do mês de agosto"],
+    preco: "R$ 6,00",
+    ativo: true,
+    ordem: 1,
+  },
+  {
+    id: "agosto-2026-2",
+    titulo: "Lua Minguante – Limpeza e Desapego",
+    fase: "Lua Minguante",
+    emoji: "🌗",
+    spiritual: null,
+    data_iso: "2026-08-05",
+    data_exibir: "05/08 (quarta)",
+    mes_ano: "2026-08",
+    descricao: "Limpeza de crenças limitantes e padrões repetitivos que impedem a prosperidade e a evolução.",
+    importancia: "Momento sagrado de esvaziamento para soltar bloqueios e pesos do passado antes de plantar o novo.",
+    beneficios: ["Limpeza de crenças limitantes", "Quebra de padrões repetitivos", "Esvaziamento libertador"],
+    preco: "R$ 9,00",
+    ativo: true,
+    ordem: 2,
+  },
+  {
+    id: "agosto-2026-3",
+    titulo: "Portal 8/8 – Ritual da Prosperidade (8 dias)",
+    fase: "Portal 8/8 de Leão",
+    emoji: "🦁",
+    spiritual: "Portal Sirius & Prosperidade",
+    data_iso: "2026-08-08",
+    data_exibir: "08 a 15/08",
+    mes_ano: "2026-08",
+    descricao: "Jornada completa de 8 dias de desbloqueio, expansão e ativação da prosperidade.",
+    importancia: "Alinhamento cósmico do Sol em Leão com a estrela Sirius: o portal mais potente do ano para magnetizar riqueza e poder pessoal.",
+    beneficios: ["Jornada de 8 dias de ativação", "Desbloqueio do fluxo de prosperidade", "Expansão de consciência"],
+    preco: "R$ 33,00",
+    ativo: true,
+    ordem: 3,
+  },
+  {
+    id: "agosto-2026-4",
+    titulo: "Lua Nova – Abertura de Caminhos",
+    fase: "Lua Nova",
+    emoji: "🌑",
+    spiritual: null,
+    data_iso: "2026-08-12",
+    data_exibir: "12/08 (quarta)",
+    mes_ano: "2026-08",
+    descricao: "Abertura de caminhos, novas oportunidades e novos projetos.",
+    importancia: "Ventre fértil para semear intenções claras e abrir portas que pareciam fechadas.",
+    beneficios: ["Abertura de caminhos", "Atração de novas oportunidades", "Foco em novos projetos"],
+    preco: "R$ 9,00",
+    ativo: true,
+    ordem: 4,
+  },
+  {
+    id: "agosto-2026-5",
+    titulo: "Lua Crescente – Expansão e Crescimento",
+    fase: "Lua Crescente",
+    emoji: "🌓",
+    spiritual: null,
+    data_iso: "2026-08-19",
+    data_exibir: "19/08 (quarta)",
+    mes_ano: "2026-08",
+    descricao: "Expansão de projetos, relacionamentos e crescimento pessoal.",
+    importancia: "Nutra o que foi plantado. A fase crescente acelera os resultados e fortalece conexões amorosas e profissionais.",
+    beneficios: ["Expansão de projetos", "Fortalecimento de relacionamentos", "Crescimento pessoal"],
+    preco: "R$ 9,00",
+    ativo: true,
+    ordem: 5,
+  },
+  {
+    id: "agosto-2026-6",
+    titulo: "Lua Cheia – Manifestação e Gratidão",
+    fase: "Lua Cheia",
+    emoji: "🌕",
+    spiritual: null,
+    data_iso: "2026-08-28",
+    data_exibir: "28/08 (sexta)",
+    mes_ano: "2026-08",
+    descricao: "Manifestação, magnetismo, gratidão e colheita dos resultados.",
+    importancia: "Transbordo energético para ancorar o que você atraiu, celebrar e colher com plenitude.",
+    beneficios: ["Manifestação de resultados", "Magnetismo e atração", "Gratidão e colheita"],
+    preco: "R$ 9,00",
+    ativo: true,
+    ordem: 6,
+  },
+];
+
+// Retorna o mes_ano atual no formato "YYYY-MM" dinamicamente (padrão 2026-08 se no mês de agosto)
 const getMesAnoAtual = (): string => {
   const now = new Date();
   const ano = now.getFullYear();
   const mes = String(now.getMonth() + 1).padStart(2, '0');
-  return `${ano}-${mes}`;
+  const actual = `${ano}-${mes}`;
+  if (actual === '2026-06' || actual === '2026-07') return actual;
+  return '2026-08';
 };
 
 // Retorna "Junho 2026" a partir de "2026-06"
@@ -267,24 +369,28 @@ export const useCiclos = (mesAnoOverride?: string) => {
         
         if (fbCiclos.length === 0) {
           // Fallback para os rituais
-          if (mesAno === "2026-06") {
-            setCiclos(fallbackJunho2026);
+          if (mesAno === "2026-08") {
+            setCiclos(fallbackAgosto2026);
           } else if (mesAno === "2026-07") {
             setCiclos(fallbackJulho2026);
+          } else if (mesAno === "2026-06") {
+            setCiclos(fallbackJunho2026);
           } else {
-            setCiclos([]); // Mês sem rituais cadastrados — mostra estado vazio
+            setCiclos(fallbackAgosto2026);
           }
         } else {
           setCiclos(fbCiclos);
         }
       } catch (err) {
         console.error('Erro ao buscar ciclos:', err);
-        if (mesAno === "2026-06") {
-          setCiclos(fallbackJunho2026);
+        if (mesAno === "2026-08") {
+          setCiclos(fallbackAgosto2026);
         } else if (mesAno === "2026-07") {
           setCiclos(fallbackJulho2026);
+        } else if (mesAno === "2026-06") {
+          setCiclos(fallbackJunho2026);
         } else {
-          setError('Não foi possível carregar os ciclos.');
+          setCiclos(fallbackAgosto2026);
         }
       } finally {
         setLoading(false);
